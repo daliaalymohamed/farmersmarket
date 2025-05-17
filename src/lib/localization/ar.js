@@ -1,0 +1,53 @@
+// localization/ar.js
+export const ar = {
+    english: "الإنجليزية",
+    arabic: "العربية",
+    headTitle: "متجر المزارع",
+    home: "الرئيسية",
+    about: "اتصل بنا",
+    profile: "الملف الشخصي",
+    orders: "طلباتي",
+    cart: "العربة",
+    login: "تسجيل الدخول",
+    addAccount: "إضافة حساب آخر",
+    settings: "الإعدادات",
+    logout: "تسجيل الخروج",
+    "From Our Store to Your Door": "من متجرنا إلى بابك",
+    "Fast & smooth shopping experience": "تجربة تسوق سريعة وسلسة للأسر.",
+    order: "أطلب الآن",
+    topDeals: "أفضل العروض",
+    allRightsReserved: "جميع الحقوق محفوظة.",
+    // login
+    welcomeMsg: "أهلآ بكم في فارمرز ماركت",
+    slogan: "طازج، محلي، ومستدام—قم بتسجيل الدخول لاستكشاف أفضل المنتجات.",
+    signUpQuestion: "ليس لديك حساب؟",
+    register: "انشىء حساب",
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    rememberMe: "تذكرني",
+    hidePassword: "إخفاء كلمة المرور",
+    showPassword: "إظهار كلمة المرور",
+    // login validation
+    loginSuccessfullMsg: "تم تسجيل الدخول بنجاح",
+    invalidEmail: "البريد الإلكتروني خطأ",
+    emailRequired: "البريد الإلكتروني مطلوب",
+    passwordLength: "يجب أن تتراوح كلمة المرور بين 8 و 20 حرفًا",
+    passwordRequired: "كلمة المرور مطلوبة",
+    // register
+    firstName: "الاسم الأول",
+    lastName: "الاسم الثاني",
+    phoneNumber: "رقم الهاتف",
+    enterPhoneNumber: "ادخل رقم الهاتف الخاص بك",
+    alreadyHaveAnAccountQuestion: "لديك حساب؟",
+    // register validation
+    registrationSuccessfullMsg: "تم التسجيل بنجاح! يرجى تسجيل الدخول.",
+    nameLength: "يجب أن يكون الاسم بين 3 و 30 حرفًا.",
+    nameRegexError: "يمكن أن يحتوي الاسم فقط على أحرف وأرقام ومسافات وشرطات (_) و (-)",
+    nameRequired: "الاسم مطلوب",
+    invalidEmail: "يرجى إدخال بريد إلكتروني صالح",
+    emailRequired: "البريد الإلكتروني مطلوب",
+    passwordRegexError: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل وحرف خاص واحد على الأقل",
+    phoneNumberRequired: "رقم الهاتف مطلوب",
+    phoneNumberRegex: "يجب أن يبدأ رقم الهاتف بـ 010 أو 011 أو 012 أو 015 وأن يكون مكونًا من 11 رقمًا"
+  };
+  

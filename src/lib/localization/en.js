@@ -1,0 +1,53 @@
+// localization/en.js
+export const en = {
+  english: "English",
+  arabic: "Arabic",
+  headTitle: "Farmer's Market",
+  home: "Home",
+  about: "Contact Us",
+  profile: "Profile",
+  orders: "My Orders",
+  cart: "Cart",
+  login: "Login",
+  addAccount: "Add Another Account",
+  settings: "Settings",
+  logout: "Logout",
+  "From Our Store to Your Door": "From Our Store to Your Door",
+  "Fast & smooth shopping experience": "Fast & smooth shopping experience for the household.",
+  order: "Order Now",
+  topDeals: "Top Deals",
+  allRightsReserved: " All Rights Reserved.",
+  // login
+  welcomeMsg: "Welcome to Farmer's Market!",
+  slogan: "Fresh, local, and sustainable—sign in to explore the best produce.",
+  signUpQuestion: "Don't have an account?",
+  register: "Register",
+  email: "Email",
+  password: "Password",
+  rememberMe: "Remember Me",
+  hidePassword: "Hide Password",
+  showPassword: "Show Password",
+  // login validation
+  loginSuccessfullMsg: "Login successful! Welcome back",
+  invalidEmail: "Invalid Email",
+  emailRequired: "Email is required",
+  passwordLength: "Password must be at least 8 characters",
+  passwordRequired: "Password is required",
+  // register
+  firstName: "First Name",
+  lastName: "Last Name",
+  phoneNumber: "Phone Number",
+  enterPhoneNumber: "Enter your phone number",
+  alreadyHaveAnAccountQuestion: "Already have an account ?",
+  // register validation
+  registrationSuccessfullMsg: "Registration successful! Please Login.",
+  nameLength: "Name must be between 3 and 30 characters",
+  nameRegexError: "Name can only contain letters, numbers, spaces, hyphens, and underscores",
+  nameRequired: "Name is required",
+  invalidEmail: "Please enter a valid email address",
+  emailRequired: "Email is required",
+  passwordRegexError: "Password must contain at least one letter and one special character.",
+  phoneNumberRequired: "Phone number is required",
+  phoneNumberRegex: "Phone number must start with 010, 011, 012, or 015 and be 11 digits long"
+
+  };
