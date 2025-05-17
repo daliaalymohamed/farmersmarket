@@ -1,6 +1,6 @@
-# Next.js E-commerce Example
+# Farmers Market
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). It is an e-commerce application built using modern web technologies.
+Farmers Market is a [Next.js](https://nextjs.org) e-commerce application built using modern web technologies. It provides a platform for users to browse and purchase products, with an admin dashboard for managing the application.
 
 ## Technologies Used
 
@@ -33,11 +33,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Features
 
-- User authentication and registration with JWT.
-- State management using Redux Toolkit.
-- Responsive design with Material-UI components.
-- Integration with MongoDB for storing user and product data.
-- Dynamic routing and server-side rendering with Next.js.
+- **User Authentication:** Secure login and registration with JWT.
+- **State Management:** Global state management using Redux Toolkit.
+- **Responsive Design:** Built with Material-UI for a seamless experience across devices.
+- **MongoDB Integration:** Store and manage user and product data.
+- **Dynamic Routing:** Server-side rendering and dynamic routing with Next.js.
+- **Admin Dashboard:** Manage products, users, and orders through an intuitive dashboard.
+- **Dynamic Access Roles:** Role-based access control (RBAC) to manage permissions for different user roles (e.g., admin, editor, user).
+
 
 ## Folder Structure
 
