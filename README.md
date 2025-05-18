@@ -9,6 +9,15 @@ Farmers Market is a [Next.js](https://nextjs.org) e-commerce application built u
 - **[MongoDB](https://www.mongodb.com):** A NoSQL database for storing application data.
 - **[Redux](https://redux.js.org):** A state management library for managing global application state.
 
+
+## Prerequisites
+
+Make sure you have the following installed on your system:
+
+- **Node.js:** v22.11.0
+- **npm:** Comes bundled with Node.js or use **yarn** as an alternative.
+
+
 ## Getting Started
 
 First, clone the repository and install the dependencies:
