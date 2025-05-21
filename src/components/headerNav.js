@@ -255,11 +255,14 @@ export default function HeaderNav() {
                   <Link href="/cart" passHref>
                     <StyledTypography>{t("cart")}</StyledTypography>
                   </Link>
+                  <Link href="/dashboard" passHref>
+                    <StyledTypography>{t("dashboard")}</StyledTypography>
+                  </Link>
                 </>
               ) : 
-                <Link href="/login" passHref>
-                  <StyledTypography>{t("login")}</StyledTypography>
-                </Link>
+                  <Link href="/login" passHref>
+                    <StyledTypography>{t("login")}</StyledTypography>
+                  </Link>
                                 
             }
 

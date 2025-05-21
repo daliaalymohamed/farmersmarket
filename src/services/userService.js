@@ -7,7 +7,16 @@ import bcrypt from "bcrypt";
 // Fetch a user by ID
 export const getUserById = async (id) => {
     try {
-        const user = await User.findById(id); // Fetch user by ID from the database
+        const user = await User.findById(id) // Fetch user by ID from the database
+                        .select("-password") // Hide password from the response
+                        .populate({
+                            path: "roleId",
+                            populate: {
+                                path: "actions", // <== Make sure this matches your schema
+                                model: "Action", // <== Replace with your actual model name
+                            }
+                        });
+        
         return user;
     } catch (error) {
         console.error('Error fetching user by ID:', error);

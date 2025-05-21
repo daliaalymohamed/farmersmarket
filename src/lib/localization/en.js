@@ -48,6 +48,16 @@ export const en = {
   emailRequired: "Email is required",
   passwordRegexError: "Password must contain at least one letter and one special character.",
   phoneNumberRequired: "Phone number is required",
-  phoneNumberRegex: "Phone number must start with 010, 011, 012, or 015 and be 11 digits long"
-
+  phoneNumberRegex: "Phone number must start with 010, 011, 012, or 015 and be 11 digits long",
+  // dashboard
+  dashboard: "Dashboard",
+  welcomeToDashboardMsg: "Welcome to the Dashboard",
+  stats: "Stats",
+  recentActivity: "Recent Activity",
+  recentOrders: "Recent Orders",
+  recentReviews: "Recent Reviews",
+  recentMessages: "Recent Messages",
+  recentProducts: "Recent Products",
+  recentUsers: "Recent Users",
+  recentOrders: "Recent Orders"
   };

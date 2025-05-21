@@ -48,6 +48,18 @@ export const ar = {
     emailRequired: "البريد الإلكتروني مطلوب",
     passwordRegexError: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل وحرف خاص واحد على الأقل",
     phoneNumberRequired: "رقم الهاتف مطلوب",
-    phoneNumberRegex: "يجب أن يبدأ رقم الهاتف بـ 010 أو 011 أو 012 أو 015 وأن يكون مكونًا من 11 رقمًا"
+    phoneNumberRegex: "يجب أن يبدأ رقم الهاتف بـ 010 أو 011 أو 012 أو 015 وأن يكون مكونًا من 11 رقمًا",
+    // dashboard
+    dashboard: "لوحة التحكم",
+    welcomeToDashboardMsg: "مرحبًا بك في لوحة التحكم",
+    stats: "الإحصائيات",
+    recentActivity: "النشاطات الأخيرة",
+    recentOrders: "الطلبات الأخيرة",
+    recentReviews: "المراجعات الأخيرة",
+    recentMessages: "الرسائل الأخيرة",
+    recentProducts: "المنتجات الأخيرة",
+    recentUsers: "المستخدمين الأخيرين",
+    recentOrders: "الطلبات الأخيرة",
+    
   };
   
