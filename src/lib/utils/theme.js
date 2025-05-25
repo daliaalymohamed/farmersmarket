@@ -11,7 +11,7 @@ const theme = createTheme({
     },
     text: {
       primary: 'rgba(233, 141, 8, 0.6)', // Primary text color
-      secondary: '#757575', // Secondary text color
+      secondary:  '#3f3c3c', // Secondary text color
     },
     hoverBackground: {
       color: "#f0f0f0"

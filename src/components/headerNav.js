@@ -168,6 +168,14 @@ export default function HeaderNav() {
                       </ListItem>
                     </Link>
                     <Divider />
+                    <Link href="/dashboard" passHref legacyBehavior>
+                      <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
+                        <ListItemButton component="a">
+                          <ListItemIcon><PersonAdd /></ListItemIcon>
+                          <ListItemText primary={t("dashboard")} />
+                        </ListItemButton>
+                      </ListItem>
+                    </Link>
                     <Link href="/home" passHref legacyBehavior>
                       <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
                         <ListItemButton component="a">

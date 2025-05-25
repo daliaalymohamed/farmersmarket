@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { useTranslation } from "../../contexts/translationContext"; // Import useTranslation
 import Dashboard from '@/components/dashboard';
-import { Typography } from '@mui/material';
+import { Typography ,Box } from '@mui/material';
 import { useSelector } from "react-redux";
 import withAuth  from "@/components/withAuth"; // Import withAuth HOC
 
@@ -22,12 +22,41 @@ const DashboardPage = () => {
     
      return (
         <Dashboard>
-            <Typography variant="h4" gutterBottom>
-                {t('Welcome to the Dashboard!')}
-            </Typography>
-            <Typography>
-                {t('Here you can see your stats, recent activity, and more.')}
-            </Typography>
+            <Box sx={{ 
+                mt: 4, // Add top margin (32px)
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2 // Add gap between Typography elements (16px)
+            }}>
+                <Typography variant="h4" gutterBottom>
+                    {t('welcomeToDashboardMsg')}
+                </Typography>
+                <Typography>
+                    {t('dashboardSlogan')}
+                </Typography>
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDFsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
+                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
+                
+            </Box>
         </Dashboard>
     );
 }

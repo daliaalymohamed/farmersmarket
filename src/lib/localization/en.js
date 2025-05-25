@@ -52,6 +52,7 @@ export const en = {
   // dashboard
   dashboard: "Dashboard",
   welcomeToDashboardMsg: "Welcome to the Dashboard",
+  dashboardSlogan: "Here you can see your stats, recent activity, and more.",
   stats: "Stats",
   recentActivity: "Recent Activity",
   recentOrders: "Recent Orders",

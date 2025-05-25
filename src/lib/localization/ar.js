@@ -52,6 +52,7 @@ export const ar = {
     // dashboard
     dashboard: "لوحة التحكم",
     welcomeToDashboardMsg: "مرحبًا بك في لوحة التحكم",
+    dashboardSlogan:"هنا يمكنك رؤية إحصائياتك ونشاطاتك الأخيرة والمزيد.",
     stats: "الإحصائيات",
     recentActivity: "النشاطات الأخيرة",
     recentOrders: "الطلبات الأخيرة",
