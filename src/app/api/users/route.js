@@ -24,7 +24,10 @@ export const GET = authMiddleware(async (req) => {
         if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
         
         // ✅ Proceed with the request
-        const users = await User.find({ active: true }, { firstName: 1, lastName: 1, email: 1, phoneNumber: 1, roleId: 1, orders: 1, active: 1 });
+        const users = await User.find({ active: true }, 
+            { firstName: 1, lastName: 1, email: 1, phoneNumber: 1, 
+                roleId: 1, orders: 1, active: 1 , address: 1
+            });
         return NextResponse.json(users, { status: 200 }); // ✅ Success
     } catch (error) {
         console.error('❌ Error fetching users:', error);

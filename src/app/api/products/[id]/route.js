@@ -9,9 +9,10 @@ import { getProductById } from '@/services/productService';
 
 // Handle GET (Fetch product by ID)
 // routing: /api/products/[id]
-export const GET = async (req, {params}) => {
+export const GET = async (req, context) => {
   console.log("🚀 GET /api/products/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
 
   try {
     // Connect to the database
@@ -33,9 +34,10 @@ export const GET = async (req, {params}) => {
 
 // Handle PUT (Update product by ID)
 // routing: /api/products/[id]
-export const PUT = authMiddleware(async (req, {params}) => {
+export const PUT = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/products/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "edit_product"; // Define the required action for this route
 
   try {
@@ -51,7 +53,12 @@ export const PUT = authMiddleware(async (req, {params}) => {
     
     // ✅ Proceed with the request
     const productData = await req.json(); // Assuming the request body contains the updated user data
-    const updatedProduct = await Product.findByIdAndUpdate(id, productData, { new: true });
+    const updatedProduct = await Product.findByIdAndUpdate(id, productData, 
+      { 
+        new: true, 
+        runValidators: true,  // Run model validators
+        upsert: true // This will create the nested object if it doesn't exist
+       });
     if (!updatedProduct) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 }); // ❌ Not found
     }
@@ -63,9 +70,10 @@ export const PUT = authMiddleware(async (req, {params}) => {
 
 // Handle DELETE (Delete product by ID)
 // routing: /api/products/[id]
-export const DELETE = authMiddleware(async (req, {params}) => {
+export const DELETE = authMiddleware(async (req, context) => {
   console.log("🚀 DELETE /api/products/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "delete_product"; // Define the required action for this route
 
   try {

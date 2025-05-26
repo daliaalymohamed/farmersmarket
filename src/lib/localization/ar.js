@@ -61,6 +61,9 @@ export const ar = {
     recentProducts: "المنتجات الأخيرة",
     recentUsers: "المستخدمين الأخيرين",
     recentOrders: "الطلبات الأخيرة",
-    
+    // dashboard/customers
+    customersManagement: "إدارة العملاء",
+    customersList: "قائمة العملاء",
+    customersDescription: "إدارة حسابات العملاء وعرض تفاصيل العملاء.",
   };
   

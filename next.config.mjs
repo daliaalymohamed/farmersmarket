@@ -15,13 +15,9 @@ const nextConfig = {
     async rewrites() {
       console.log("🚀 Rewrites applied!"); // ✅ Check if this runs
       return [
-        {
-          source: "/dashboard/customers", // ✅ The actual-facing route that users will access in the browser
-          destination: "/api/users/", // ✅ Internally serves /api/users/
-        },
         // {
-        //   source: "/login", // ✅ The public-facing route that users will access
-        //   destination: "/api/users/login", // ✅ Internally serves /api/users/login
+        //   source: "/path", // ✅ The actual-facing route that users will access in the browser
+        //   destination: "/api/path/", // ✅ Internally serves /api/users/
         // },
       ];
     },

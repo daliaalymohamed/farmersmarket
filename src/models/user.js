@@ -11,7 +11,14 @@ const UserSchema = new mongoose.Schema(
     roleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true }, // Reference to Role
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }], // Reference to Order
     active: { type: Boolean, default: true }, // For soft delete
-    tokenVersion: { type: Number, default: 0 }, // For token invalidation
+    tokenVersion: { type: Number, default: 0 }, // For token invalidation,
+    address: {
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      zipCode: { type: String },
+      country: { type: String },
+    },
   },
   { 
     timestamps: true,

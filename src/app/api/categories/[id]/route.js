@@ -10,9 +10,10 @@ import { getCategoryById } from '@/services/categoryService';
 
 // Handle GET (Fetch category by ID)
 // routing: /api/categories/[id]
-export const GET = async (req, {params}) => {
+export const GET = async (req, context) => {
   console.log("🚀 GET /api/categories/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
 
   try {
     // Connect to the database
@@ -34,9 +35,10 @@ export const GET = async (req, {params}) => {
 
 // Handle PUT (Update category by ID)
 // routing: /api/categories/[id]
-export const PUT = authMiddleware(async (req, {params}) => {
+export const PUT = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/categories/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "edit_category"; // Define the required action for this route
 
   try {
@@ -52,7 +54,12 @@ export const PUT = authMiddleware(async (req, {params}) => {
     
     // ✅ Proceed with the request
     const categoryData = await req.json(); // Assuming the request body contains the updated user data
-    const updatedCategory = await Category.findByIdAndUpdate(id, categoryData, { new: true });
+    const updatedCategory = await Category.findByIdAndUpdate(id, categoryData, 
+      { 
+        new: true, 
+        runValidators: true,  // Run model validators
+        upsert: true // This will create the nested object if it doesn't exist
+      });
     if (!updatedCategory) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 }); // ❌ Not found
     }
@@ -64,9 +71,10 @@ export const PUT = authMiddleware(async (req, {params}) => {
 
 // Handle DELETE (Delete category by ID)
 // routing: /api/categories/[id]
-export const DELETE = authMiddleware(async (req, {params}) => {
+export const DELETE = authMiddleware(async (req, context) => {
   console.log("🚀 DELETE /api/categories/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "delete_category"; // Define the required action for this route
 
   try {

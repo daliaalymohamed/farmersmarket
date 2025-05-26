@@ -34,28 +34,7 @@ const DashboardPage = () => {
                 <Typography>
                     {t('dashboardSlogan')}
                 </Typography>
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDFsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                sdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdf
-                SDFSDFFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSDFSFSDFSDFSDFSDFSDFSDF
-                
+                Dashboard home page content goes here.
             </Box>
         </Dashboard>
     );

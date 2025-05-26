@@ -31,7 +31,7 @@ const menuItems = [
   { text: 'Categories', icon: <CategoryIcon />, path: '/dashboard/categories' },
   { text: 'Products', icon: <ProductionQuantityLimitsIcon />, path: '/dashboard/products' },
   { text: 'Orders', icon: <ShoppingCartIcon />, path: '/dashboard/orders' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/dashboard/customers' },
+  { text: 'Customers', icon: <PeopleIcon />, path: '/dashboard/customers/list' },
   { text: 'Reports', icon: <TableChartIcon />, path: '/dashboard/reports' },
   { text: 'Analytics', icon: <BarChartIcon />, path: '/dashboard/analytics' },
   { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles' },  

@@ -60,5 +60,9 @@ export const en = {
   recentMessages: "Recent Messages",
   recentProducts: "Recent Products",
   recentUsers: "Recent Users",
-  recentOrders: "Recent Orders"
+  recentOrders: "Recent Orders",
+  // dashboard/customers
+  customersManagement: "Customers Management",
+  customersList: "Customers List",
+  customersDescription: "Manage your customer accounts and view customer details."
   };

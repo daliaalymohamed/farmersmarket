@@ -14,6 +14,16 @@ const ProductSchema = new mongoose.Schema(
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     stock: { type: Number, default: 0 },
     imageUrl: { type: String, required: true },
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who added the product
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who updated the product
+    isActive: { type: Boolean, default: true }, // Soft delete
+    isFeatured: { type: Boolean, default: false }, // For highlighting products
+    isOnSale: { type: Boolean, default: false }, // For sale products
+    salePrice: { type: Number }, // Optional discounted price
+    saleStart: { type: Date },
+    saleEnd: { type: Date },
+    tags: [{ type: String }], // Optional tags for filtering
   },
   { 
     timestamps: true,

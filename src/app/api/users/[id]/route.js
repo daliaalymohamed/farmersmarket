@@ -8,9 +8,10 @@ import { getUserById } from '@/services/userService';
 
 // Handle GET (Fetch user by ID)
 // routing: /api/users/[id]
-export const GET = authMiddleware(async (req, {params}) => {
+export const GET = authMiddleware(async (req, context) => {
   console.log("🚀 GET /api/users/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "view_user"; // Define the required action for this route
     
   try {
@@ -40,9 +41,10 @@ export const GET = authMiddleware(async (req, {params}) => {
 
 // Handle PUT (Update user by ID)
 // routing: /api/users/[id]
-export const PUT = authMiddleware(async (req, {params}) => {
+export const PUT = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/users/:id route hit!"); // ✅ Log that the route was hit
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "edit_user"; // Define the required action for this route
     
   try {
@@ -58,7 +60,18 @@ export const PUT = authMiddleware(async (req, {params}) => {
     
     // ✅ Proceed with the request
     const userData = await req.json(); // Assuming the request body contains the updated user data
-    const updatedUser = await User.findByIdAndUpdate(id, userData, { new: true });
+    
+    // Use the $set operator to properly update nested fields
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $set: userData },  // Use $set to update nested objects
+      { 
+        new: true,        // Return updated document
+        runValidators: true,  // Run model validators
+        upsert: true // This will create the nested object if it doesn't exist
+      }
+    );
+    
     if (!updatedUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 }); // ❌ Not found
     }
@@ -71,10 +84,10 @@ export const PUT = authMiddleware(async (req, {params}) => {
 // Handle PATCH (activate or deactivate user by ID)
 // The PATCH method is used for partial updates, which is appropriate for activating/deactivating a user.
 // routing: /api/users/[id]
-export const PATCH = authMiddleware(async (req, { params }) => {
+export const PATCH = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/users/:id route hit!"); // ✅ Log that the route was hit
-
-  const { id } = params;
+  const params = await context.params;
+  const id = params.id;
   const requiredAction = "toggle_user_status"; // Define the required action for this route
 
   try {

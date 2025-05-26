@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Head from "next/head";
 import { usePathname } from 'next/navigation'; 
 import { useTranslation } from "../contexts/translationContext";
@@ -11,11 +11,21 @@ import Footer from "@/components/footer";
 const LayoutContent = ({ children }) => {
   const { t } = useTranslation();
   const pathname = usePathname(); // Get current path
-  const isDashboard = pathname === '/dashboard'; // Check if current path is dashboard
+  const [mounted, setMounted] = useState(false);
+
+// Update the dashboard check to include all dashboard routes
+  const isDashboard = pathname.startsWith('/dashboard');
 
   // ✅ Prevent hydration issues with useMemo
   const title = useMemo(() => t("headTitle") || "Default Title", [t]);
 
+   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
   return (
     <>
       <Head>
