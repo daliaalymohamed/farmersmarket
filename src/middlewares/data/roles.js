@@ -1,1 +1,2 @@
-export const defaultRoles = ["admin", "editor", "user"];
+export const defaultRoles = ["admin", "content", "user", "warehouse", "customerSupport"];
+
