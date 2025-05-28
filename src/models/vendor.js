@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 // Vendor model for managing vendors in the e-commerce application
 const VendorSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  contactPhone: String,
-  location: String,
-  description: String,
+  contactPhone: { type: String },
+  location: { type: String },
+  description: { type: String },
   socialLinks: {
-    facebook: String,
-    instagram: String,
+    facebook: { type: String },
+    instagram: { type: String },
   },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who added the vendor
 }, { 

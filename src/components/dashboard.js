@@ -1,10 +1,11 @@
 // app/components/Dashboard.js
 'use client';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { useTheme } from "@mui/material/styles";
 import { styled } from "@mui/system";
 import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, 
-  ListItem, ListItemText, ListItemButton, ListItemIcon, IconButton } from '@mui/material';
+  ListItem, ListItemText, ListItemButton, ListItemIcon, IconButton, 
+  Divider, MenuItem, Select } from '@mui/material';
 import Link from "next/link";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 // Import icons
@@ -20,6 +21,10 @@ import ProductionQuantityLimitsIcon from '@mui/icons-material/ProductionQuantity
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import AirportShuttleIcon from '@mui/icons-material/AirportShuttle';
+import LanguageIcon from "@mui/icons-material/Language"
 
 const drawerWidth = 240;
 const minimizedDrawerWidth = 65; // Width when drawer is minimized
@@ -35,6 +40,9 @@ const menuItems = [
   { text: 'Reports', icon: <TableChartIcon />, path: '/dashboard/reports' },
   { text: 'Analytics', icon: <BarChartIcon />, path: '/dashboard/analytics' },
   { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles' },  
+  { text: 'Warehouses', icon: <WarehouseIcon />, path: '/dashboard/warehouses' },
+  { text: 'Inventories', icon: <InventoryIcon />, path: '/dashboard/inventories' },
+  { text: 'Vendors', icon: <AirportShuttleIcon />, path: '/dashboard/vendors' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings' },
 ];
 
@@ -54,6 +62,13 @@ const Dashboard = ({ children }) => {
     }
     setMounted(true);
   }, []);
+  // Add useLayoutEffect for RTL/LTR transitions
+  useLayoutEffect(() => {
+    document.body.dir = language === 'ar' ? 'rtl' : 'ltr';
+    return () => {
+      document.body.dir = 'ltr';
+    };
+  }, [language]);
 
   const toggleDrawer = () => {
     const newState = !isDrawerOpen;
@@ -61,6 +76,12 @@ const Dashboard = ({ children }) => {
     // Save state to localStorage
     localStorage.setItem('drawerOpen', String(newState));
   };
+
+  // Function to handle language change
+  const handleLanguageChange = (event) => {
+    changeLanguage(event.target.value); // Change language on selection
+  };
+
 
      // Prevent hydration issues by not rendering until mounted
   if (!mounted) {
@@ -74,13 +95,19 @@ const Dashboard = ({ children }) => {
     );
   }
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{  
+      display: 'flex',
+      minHeight: '100vh',
+      overflow: 'hidden',
+      direction: language === 'ar' ? 'rtl' : 'ltr'
+      }}>
       <CssBaseline />
       
       <AppBar position="fixed" sx={{ 
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundColor: (theme) => theme.palette.background.default, 
           color: (theme) => theme.palette.text.secondary, // Add contrast text color
+          ...(language === 'ar' ? { right: 0, left: 'auto' } : { left: 0, right: 'auto' })
         }}>
         <Toolbar>
           <IconButton
@@ -92,7 +119,7 @@ const Dashboard = ({ children }) => {
           >
             {isDrawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ pr: 5, pl: 5  }}>
             {t("dashboard")}
           </Typography>
         </Toolbar>
@@ -100,10 +127,11 @@ const Dashboard = ({ children }) => {
       
        <Drawer
         variant="permanent"
+        anchor={language === 'ar' ? 'right' : 'left'} // Add anchor based on language
         sx={{
           width: isDrawerOpen ? drawerWidth : minimizedDrawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { 
+          '& .MuiDrawer-paper': { 
             width: isDrawerOpen ? drawerWidth : minimizedDrawerWidth,
             boxSizing: 'border-box',
             overflowX: 'hidden',
@@ -111,6 +139,9 @@ const Dashboard = ({ children }) => {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.enteringScreen,
             }),
+            ...(language === 'ar' 
+              ? { right: 0, left: 'auto' } 
+              : { left: 0, right: 'auto' })
           },
         }}
       >
@@ -151,53 +182,105 @@ const Dashboard = ({ children }) => {
               </ListItem>
             ))}
           </List>
+          <Divider/>
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  justifyContent: isDrawerOpen ? 'initial' : 'center',
+                  px: 2.5,
+                  color: (theme) => theme.palette.text.secondary
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 0,
+                  mr: isDrawerOpen ? 3 : 'auto',
+                  justifyContent: 'center',
+                  color: 'inherit',
+                }}>
+                  <LanguageIcon />
+                </ListItemIcon>
+                {isDrawerOpen && (
+                  <Select
+                    value={language}
+                    onChange={handleLanguageChange}
+                    sx={{ 
+                      width: '100%',
+                      color: 'inherit',
+                      '& .MuiSelect-select': {
+                        py: 0,
+                        color: 'inherit'
+                      }
+                    }}
+                    variant="standard"
+                  >
+                    <MenuItem value="en">{t("english")}</MenuItem>
+                    <MenuItem value="ar">{t("arabic")}</MenuItem>
+                  </Select>
+                )}
+              </ListItemButton>
+            </ListItem>
+          </List>
         </Box>
       </Drawer>
       
-     <Box component="main" sx={{ 
-        flexGrow: 1, 
-        bgcolor: 'background.paper', 
-        p: 3,
-        pb: 0,
-        marginLeft: 0,
-        transition: theme => theme.transitions.create(['margin', 'width'], {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        width: isDrawerOpen ? 
-          `calc(100% - ${drawerWidth}px)` : 
-          `calc(100% - ${minimizedDrawerWidth}px)`,
+     <Box component="main" sx={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative',
+          bgcolor: 'background.paper',
+          ...(language === 'ar' 
+            ? {
+                marginRight: isDrawerOpen ? `${drawerWidth}px` : `${minimizedDrawerWidth}px`,
+                marginLeft: 0
+              }
+            : {
+                marginLeft: isDrawerOpen ? `${drawerWidth}px` : `${minimizedDrawerWidth}px`,
+                marginRight: 0
+              }
+          ),
+          transition: theme => theme.transitions.create(['margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
         }}>
           <Toolbar />
           <Box sx={{ 
               flex: 1,
+              p: 3,
+              pb: 7, // Add bottom padding to prevent content from being hidden by footer
+              overflow: 'auto',
               width: '100%',
-              overflow: 'hidden' // Prevent content from overflowing
+              height: '100%'
             }}>
             {children}
           </Box>
           <Box 
             component="footer" 
             sx={{
-              mt: 'auto',
-              width: '100vw',
-              position: 'fixed',
-              left: isDrawerOpen ? drawerWidth : minimizedDrawerWidth,
-              right: 0,
-              bottom: 0,
-              py: 2,
-              px: 3,
-              bgcolor: 'background.default',
-              borderTop: 1,
-              borderColor: 'divider',
-              transition: theme => theme.transitions.create(['left', 'margin'], {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-            }}
+            position: 'fixed',
+            bottom: 0,
+            width: `calc(100% - ${isDrawerOpen ? drawerWidth : minimizedDrawerWidth}px)`,
+            py: 2,
+            px: 3,
+            bgcolor: 'background.default',
+            borderTop: 1,
+            borderColor: 'divider',
+            ...(language === 'ar' 
+              ? { right: isDrawerOpen ? drawerWidth : minimizedDrawerWidth }
+              : { left: isDrawerOpen ? drawerWidth : minimizedDrawerWidth }
+            ),
+            transition: theme => theme.transitions.create(['width', 'left', 'right'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+          }}
           >
             <Typography variant="body2" color="text.secondary" align="center">
               © {new Date().getFullYear()} Farmer's Market
