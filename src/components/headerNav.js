@@ -30,8 +30,8 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LanguageIcon from "@mui/icons-material/Language"
 import Image from "next/image";
 import Link from "next/link";
-import logo from '../assets/logo.png';
-import { styled } from "@mui/system";
+import logo from '../assets/new-logo.jpg';
+import { borderRadius, styled } from "@mui/system";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../store/slices/authSlice"; 
@@ -44,6 +44,11 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
     cursor: "pointer", // Show a pointer cursor on hover
   },
 }));
+
+const StyledImageWrapper = styled(Box)({
+  borderRadius: '5%',
+  overflow: 'hidden' // This is important to make borderRadius work with images
+});
 
 export default function HeaderNav() {
   const router = useRouter(); 
@@ -110,7 +115,9 @@ export default function HeaderNav() {
       {isMobile ? (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2 }}>
           {/* Logo */}
-          <Image src={logo} alt="Logo" width={100} height={70} priority/>
+          <StyledImageWrapper>
+            <Image src={logo} alt="Logo" width={100} height={70} priority />
+          </StyledImageWrapper>
 
           {/* Menu Button */}
           <IconButton onClick={toggleDrawer(true)}>
@@ -124,7 +131,9 @@ export default function HeaderNav() {
                 <ListItem onClick={toggleDrawer(false)}>
                   <Link href="/home" passHref legacyBehavior>
                     <a>
-                      <Image src={logo} alt="Logo" width={150} height={75} priority />
+                      <StyledImageWrapper>
+                        <Image src={logo} alt="Logo" width={150} height={75} priority />
+                      </StyledImageWrapper>
                     </a>
                   </Link>
                 </ListItem>
@@ -243,7 +252,9 @@ export default function HeaderNav() {
         >
           {/* Logo */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Image src={logo} alt="Logo" width={200} height={150} priority />
+            <StyledImageWrapper>
+              <Image src={logo} alt="Logo" width={200} height={150} priority />
+            </StyledImageWrapper>
           </Box>
 
           {/* Navigation Links */}

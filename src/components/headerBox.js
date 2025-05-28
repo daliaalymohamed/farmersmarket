@@ -2,7 +2,7 @@
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 import Image from "next/image";
 import { Box, Typography } from '@mui/material';
-import main from '../assets/main.jpg'
+import banner from '../assets/banner.jpg'
 
 const HeaderBox = () => {
     const { t } = useTranslation();  // Get the translation function
@@ -32,6 +32,7 @@ const HeaderBox = () => {
                 width: "100%",
                 height: "auto",
                 gap: 2,
+                mt: 4
             }}
             >
             {/* Image container with fixed aspect ratio */}
@@ -43,11 +44,11 @@ const HeaderBox = () => {
                 aspectRatio: "16/9", // Ensures image stays visible
                 }}>
                 <Image
-                src={main}
+                src={banner}
                 alt="Farmer's Market"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw" // Add this line
-                style={{ objectFit: "cover", borderRadius: "50%" }}
+                style={{ objectFit: "cover", borderRadius: "5%" }}
                 priority
                 />
             </Item>

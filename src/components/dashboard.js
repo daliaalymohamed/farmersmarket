@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { styled } from "@mui/system";
 import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, 
   ListItem, ListItemText, ListItemButton, ListItemIcon, IconButton, 
-  Divider, MenuItem, Select } from '@mui/material';
+  Divider, MenuItem, Select, Tooltip } from '@mui/material';
 import Link from "next/link";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 // Import icons
@@ -163,14 +163,16 @@ const Dashboard = ({ children }) => {
                       px: 2.5,
                       color: (theme) => theme.palette.text.secondary
                     }}>
-                     <ListItemIcon sx={{
-                        minWidth: 0,
-                        mr: isDrawerOpen ? 3 : 'auto',
-                        justifyContent: 'center',
-                        color: 'inherit', // This will inherit the color from ListItemButton
-                      }}>
-                        {item.icon}
-                      </ListItemIcon>
+                     <Tooltip title={!isDrawerOpen ? item.text : ""} placement={language === 'ar' ? 'left' : 'right'}>
+                        <ListItemIcon sx={{
+                          minWidth: 0,
+                          mr: isDrawerOpen ? 3 : 'auto',
+                          justifyContent: 'center',
+                          color: 'inherit',
+                        }}>
+                          {item.icon}
+                        </ListItemIcon>
+                      </Tooltip>
                       {isDrawerOpen && (
                         <ListItemText 
                           primary={item.text}
@@ -193,17 +195,23 @@ const Dashboard = ({ children }) => {
                   color: (theme) => theme.palette.text.secondary
                 }}
                 onClick={(event) => {
+                  if (!isDrawerOpen) {
+                    // If drawer is closed, open it when clicking the language icon
+                    toggleDrawer();
+                  }
                   event.preventDefault();
                 }}
               >
-                <ListItemIcon sx={{
-                  minWidth: 0,
-                  mr: isDrawerOpen ? 3 : 'auto',
-                  justifyContent: 'center',
-                  color: 'inherit',
-                }}>
-                  <LanguageIcon />
-                </ListItemIcon>
+                <Tooltip title={!isDrawerOpen ? t("openToSwitchLanguage") : ""} placement={language === 'ar' ? 'left' : 'right'}>
+                  <ListItemIcon sx={{
+                    minWidth: 0,
+                    mr: isDrawerOpen ? 3 : 'auto',
+                    justifyContent: 'center',
+                    color: 'inherit',
+                  }}>
+                    <LanguageIcon />
+                  </ListItemIcon>
+                </Tooltip>
                 {isDrawerOpen && (
                   <Select
                     value={language}

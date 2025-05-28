@@ -65,5 +65,7 @@ export const ar = {
     customersManagement: "إدارة العملاء",
     customersList: "قائمة العملاء",
     customersDescription: "إدارة حسابات العملاء وعرض تفاصيل العملاء.",
+    openToSwitchLanguage: "انقر لتغيير اللغة",
+
   };
   

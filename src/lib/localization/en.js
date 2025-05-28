@@ -64,5 +64,6 @@ export const en = {
   // dashboard/customers
   customersManagement: "Customers Management",
   customersList: "Customers List",
-  customersDescription: "Manage your customer accounts and view customer details."
+  customersDescription: "Manage your customer accounts and view customer details.",
+  openToSwitchLanguage: "Click to switch language",
   };

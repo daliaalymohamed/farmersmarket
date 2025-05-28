@@ -6,15 +6,15 @@ const theme = createTheme({
       main: '#dc004e',    // Your secondary color
     },
     background: {
-      default: 'rgba(255,233,201,.6)', // Your default background color
+      default: '#A8A559', // Your default background color
       paper: '#ffffff',   // Background color for components like Paper
     },
     text: {
-      primary: 'rgba(233, 141, 8, 0.6)', // Primary text color
-      secondary:  '#3f3c3c', // Secondary text color
+      primary: '#985C4A', // Primary text color
+      secondary:  '#040301', // Secondary text color
     },
     hoverBackground: {
-      color: "#f0f0f0"
+      color: "#A8A559"
     }
   },
 });
