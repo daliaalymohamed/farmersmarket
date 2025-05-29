@@ -12,8 +12,11 @@ export const ar = {
     addAccount: "إضافة حساب آخر",
     settings: "الإعدادات",
     logout: "تسجيل الخروج",
+    // home page
     "From Our Store to Your Door": "من متجرنا إلى بابك",
     "Fast & smooth shopping experience": "تجربة تسوق سريعة وسلسة للأسر.",
+    prevArrow: "السابق",
+    nextArrow: "التالي",
     order: "أطلب الآن",
     topDeals: "أفضل العروض",
     allRightsReserved: "جميع الحقوق محفوظة.",

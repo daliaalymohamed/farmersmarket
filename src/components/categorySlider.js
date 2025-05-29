@@ -16,9 +16,10 @@ import { useTranslation } from "../contexts/translationContext"; // Import useTr
 import { fetchCategories } from "@/store/slices/categorySlice";
 
 // Custom Arrow Component
-const CustomPrevArrow = ({ onClick }) => (
+const CustomPrevArrow = ({ onClick, ariaLabel }) => (
     <IconButton
       onClick={onClick}
+      aria-label={ariaLabel}
       sx={{
         position: "absolute",
         left: 0,
@@ -34,9 +35,10 @@ const CustomPrevArrow = ({ onClick }) => (
     </IconButton>
   );
   
-  const CustomNextArrow = ({ onClick }) => (
+  const CustomNextArrow = ({ onClick, ariaLabel }) => (
     <IconButton
       onClick={onClick}
+      aria-label={ariaLabel}
       sx={{
         position: "absolute",
         right: 0,
@@ -76,8 +78,8 @@ const CategorySlider = () => {
     // autoplay: true, // Enable auto-move
     // autoplaySpeed: 2000, // Move every 2 seconds
     // pauseOnHover: false, // Keep moving even when hovered
-    prevArrow: <CustomPrevArrow />,
-    nextArrow: <CustomNextArrow />,
+    prevArrow: <CustomPrevArrow ariaLabel={t('prevArrow')}/>,
+    nextArrow: <CustomNextArrow ariaLabel={t('nextArrow')}/>,
     responsive: [
       {
         breakpoint: 768, // Tablet

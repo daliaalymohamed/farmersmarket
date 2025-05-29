@@ -2,12 +2,12 @@
 'use client';
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { useTheme } from "@mui/material/styles";
-import { styled } from "@mui/system";
 import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, 
   ListItem, ListItemText, ListItemButton, ListItemIcon, IconButton, 
   Divider, MenuItem, Select, Tooltip } from '@mui/material';
 import Link from "next/link";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
+import { usePathname } from 'next/navigation';
 // Import icons
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -48,6 +48,7 @@ const menuItems = [
 
 const Dashboard = ({ children }) => {
   const theme = useTheme();
+  const pathname = usePathname();
   const { language, changeLanguage, t } = useTranslation(); // Access language and changeLanguage
   // Initialize drawer state from localStorage if available, default to true
   const [mounted, setMounted] = useState(false);
@@ -161,7 +162,18 @@ const Dashboard = ({ children }) => {
                       minHeight: 48,
                       justifyContent: isDrawerOpen ? 'initial' : 'center',
                       px: 2.5,
-                      color: (theme) => theme.palette.text.secondary
+                      color: (theme) => theme.palette.text.secondary,
+                      backgroundColor: (theme) => 
+                        pathname === item.path 
+                          ? theme.palette.action.selected
+                          : 'transparent',
+                      '&:hover': {
+                        backgroundColor: (theme) => theme.palette.action.hover,
+                      },
+                      // Add transition for smooth color changes
+                      transition: theme => theme.transitions.create(['background-color'], {
+                        duration: theme.transitions.duration.shortest,
+                      }),
                     }}>
                      <Tooltip title={!isDrawerOpen ? item.text : ""} placement={language === 'ar' ? 'left' : 'right'}>
                         <ListItemIcon sx={{

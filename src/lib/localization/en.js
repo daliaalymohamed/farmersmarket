@@ -12,8 +12,11 @@ export const en = {
   addAccount: "Add Another Account",
   settings: "Settings",
   logout: "Logout",
+  // home page
   "From Our Store to Your Door": "From Our Store to Your Door",
   "Fast & smooth shopping experience": "Fast & smooth shopping experience for the household.",
+  prevArrow: "Previous",
+  nextArrow: "Next",
   order: "Order Now",
   topDeals: "Top Deals",
   allRightsReserved: " All Rights Reserved.",
