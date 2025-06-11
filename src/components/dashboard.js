@@ -4,7 +4,7 @@ import React, { useState, useEffect, useLayoutEffect } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, 
   ListItem, ListItemText, ListItemButton, ListItemIcon, IconButton, 
-  Divider, MenuItem, Select, Tooltip } from '@mui/material';
+  Divider, MenuItem, Select, Tooltip, InputLabel } from '@mui/material';
 import Link from "next/link";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 import { usePathname } from 'next/navigation';
@@ -157,6 +157,7 @@ const Dashboard = ({ children }) => {
                     textDecoration: 'none', 
                     width: '100%' 
                   }}
+                  aria-label={item.text}
                 >
                   <ListItemButton sx={{
                       minHeight: 48,
@@ -199,50 +200,74 @@ const Dashboard = ({ children }) => {
           <Divider/>
           <List>
             <ListItem disablePadding>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: isDrawerOpen ? 'initial' : 'center',
-                  px: 2.5,
-                  color: (theme) => theme.palette.text.secondary
-                }}
-                onClick={(event) => {
-                  if (!isDrawerOpen) {
-                    // If drawer is closed, open it when clicking the language icon
-                    toggleDrawer();
-                  }
-                  event.preventDefault();
-                }}
-              >
-                <Tooltip title={!isDrawerOpen ? t("openToSwitchLanguage") : ""} placement={language === 'ar' ? 'left' : 'right'}>
-                  <ListItemIcon sx={{
-                    minWidth: 0,
-                    mr: isDrawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    color: 'inherit',
-                  }}>
-                    <LanguageIcon />
-                  </ListItemIcon>
-                </Tooltip>
-                {isDrawerOpen && (
-                  <Select
-                    value={language}
-                    onChange={handleLanguageChange}
-                    sx={{ 
+              {!isDrawerOpen ? (
+                <Tooltip 
+                  title={t("openToSwitchLanguage")} 
+                  placement={language === 'ar' ? 'left' : 'right'}
+                >
+                  <IconButton
+                    onClick={toggleDrawer}
+                    aria-label={t("openToSwitchLanguage")}
+                    aria-expanded={isDrawerOpen}
+                    sx={{
                       width: '100%',
-                      color: 'inherit',
-                      '& .MuiSelect-select': {
-                        py: 0,
-                        color: 'inherit'
+                      justifyContent: 'center',
+                      color: 'inherit', // Change this to inherit
+                      '& .MuiSvgIcon-root': {
+                        color: (theme) => theme.palette.text.secondary // Explicitly set icon color
                       }
                     }}
-                    variant="standard"
                   >
-                    <MenuItem value="en">{t("english")}</MenuItem>
-                    <MenuItem value="ar">{t("arabic")}</MenuItem>
+                    <LanguageIcon aria-hidden="true"/>
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    px: 2,
+                    minHeight: 48,
+                    color: (theme) => theme.palette.text.secondary // Add this
+                  }}
+                >
+                  <LanguageIcon sx={{ mr: 2, color: 'inherit' }} aria-hidden="true"/>
+                  <InputLabel 
+                    id="language-select-label"
+                    sx={{ display: 'none' }}
+                  >
+                    {t("selectLanguage")}
+                  </InputLabel>
+                  <Select
+                    id="language-select"
+                    value={language}
+                    onChange={handleLanguageChange}
+                    variant="standard"
+                    labelId="language-select-label"
+                    inputProps={{
+                      'aria-label': t("selectLanguage"),
+                      'name': 'language-selector'
+                    }}
+                    sx={{ 
+                      flexGrow: 1,
+                      color: (theme) => theme.palette.text.secondary,
+                      '& .MuiSelect-select': {
+                        py: 0
+                      }
+                    }}
+                  >
+                    <MenuItem value="en" 
+                              selected={language === 'en'}>
+                        {t("english")}
+                    </MenuItem>
+                    <MenuItem value="ar" 
+                              selected={language === 'ar'}>
+                        {t("arabic")}
+                    </MenuItem>
                   </Select>
-                )}
-              </ListItemButton>
+                </Box>
+              )}
             </ListItem>
           </List>
         </Box>

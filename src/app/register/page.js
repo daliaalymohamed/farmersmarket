@@ -10,7 +10,7 @@ import Image from "next/image";
 import { registerSchema } from "../../lib/utils/validation";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "@/store/slices/authSlice";
-import main from "../../assets/main.jpg";
+import registerImg from "../../assets/registerImg.jpeg";
 import { toast } from "react-toastify";
 
 const countries = [
@@ -93,7 +93,7 @@ const Register = () => {
         {/* Image Section */}
         <Grid xs={12} md={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 3 }}>
           <Image
-            src={main}
+            src={registerImg}
             alt="Fresh Market"
             width={500}
             height={500}
@@ -150,6 +150,10 @@ const Register = () => {
                 </Grid>
               </Grid>
 
+              {/* ✅ Loading & Error Messages */}
+              {loading && <Typography color="primary">{t("loading")}</Typography>}
+              {error && <Typography color="error">{error}</Typography>}
+              
               <Button fullWidth type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
                 {t("register")}
               </Button>

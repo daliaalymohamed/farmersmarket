@@ -2,13 +2,15 @@ import { configureStore } from "@reduxjs/toolkit";
 import { api, apiWithoutAuth } from "@/lib/utils/apiInstance";
 import authReducer from "./slices/authSlice";
 import categoriesReducer from "./slices/categorySlice";
+import usersReducer from "./slices/userSlice";
 
 // Create a function to initialize the store
 export const makeStore = () =>
   configureStore({
     reducer: {
       categories: categoriesReducer,
-      auth: authReducer
+      auth: authReducer,
+      users: usersReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({

@@ -11,7 +11,7 @@ import Image from "next/image";
 import { loginSchema } from "../../lib/utils/validation";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "@/store/slices/authSlice";
-import main from "../../assets/main.jpg";
+import loginImg from "../../assets/loginImg.jpeg";
 import { toast } from "react-toastify";
 
 const Login = () => {
@@ -32,6 +32,13 @@ const Login = () => {
     reValidateMode: "onSubmit",
     resolver: yupResolver(loginSchema(t)), // Initialize with translated schema
   });
+
+  // Add this effect to redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.push('/home');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     reset(getValues()); // Keeps values but clears errors when language changes
@@ -62,7 +69,7 @@ const Login = () => {
         {/* Image Section */}
         <Grid xs={12} md={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 3 }}>
           <Image
-            src={main}
+            src={loginImg}
             alt="Fresh Market"
             width={500}
             height={500}
@@ -124,7 +131,7 @@ const Login = () => {
               />
 
               {/* ✅ Loading & Error Messages */}
-              {loading && <Typography color="primary">{t("loading")}...</Typography>}
+              {loading && <Typography color="primary">{t("loading")}</Typography>}
               {error && <Typography color="error">{error}</Typography>}
 
               <Button fullWidth type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>

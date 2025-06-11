@@ -57,4 +57,9 @@ UserSchema.methods.comparePassword = async function (password) {
 };
 /************** Hashing passwords *********************** */
 
+// add compound index for active and CreatedAt fields
+// This will help in filtering users based on their active status and creation date
+//  it can jump directly to the relevant documents.
+UserSchema.index({ active: 1, CreatedAt: 1 }); // compound index
+
 export default mongoose.models.User || mongoose.model("User", UserSchema);

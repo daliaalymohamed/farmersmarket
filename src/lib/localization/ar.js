@@ -12,6 +12,7 @@ export const ar = {
     addAccount: "إضافة حساب آخر",
     settings: "الإعدادات",
     logout: "تسجيل الخروج",
+    loading: "جار التحميل...",
     // home page
     "From Our Store to Your Door": "من متجرنا إلى بابك",
     "Fast & smooth shopping experience": "تجربة تسوق سريعة وسلسة للأسر.",
@@ -64,11 +65,25 @@ export const ar = {
     recentProducts: "المنتجات الأخيرة",
     recentUsers: "المستخدمين الأخيرين",
     recentOrders: "الطلبات الأخيرة",
+    languageSelector: "اختيار اللغة",
+    selectLanguage: "اختر اللغة",
+    openToSwitchLanguage: "انقر لتغيير اللغة",
     // dashboard/customers
     customersManagement: "إدارة العملاء",
+    customers: "العملاء",
     customersList: "قائمة العملاء",
+    createdAt: "تاريخ الإنشاء",
+    search: "بحث",
+    status: "الحالة",
+    startDate: "تاريخ البدء",
+    endDate: "تاريخ الانتهاء",
+    all: "الكل",
+    active: "نشط",
+    inactive: "غير نشط",
+    pleaseSubmitToSearch: "يرجى إرسال النموذج للبحث عن العملاء",
+    noCustomersFound: "لا توجد عملاء",
+    submit: "إرسال",
+    reset: "إعادة تعيين",
     customersDescription: "إدارة حسابات العملاء وعرض تفاصيل العملاء.",
-    openToSwitchLanguage: "انقر لتغيير اللغة",
-
   };
   

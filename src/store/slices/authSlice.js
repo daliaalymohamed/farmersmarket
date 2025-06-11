@@ -74,7 +74,7 @@ const initialState = {
   token: storedToken || null,
   user: storedUser || null,
   isloggedIn: !!storedToken,
-  loading: true,
+  loading: false,
   error: null,
   actions: storedUser?.roleId?.actions || null,
 };
