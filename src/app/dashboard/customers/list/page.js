@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "../../../../contexts/translationContext"; // Import useTranslation
 import Dashboard from '@/components/dashboard';
@@ -22,9 +22,9 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchIcon from '@mui/icons-material/Search';
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Breadcrumb from "@/components/breadcrumb"; 
-import { getCustomers } from '@/store/slices/userSlice';
+import { getCustomers, clearCustomers } from '@/store/slices/userSlice';
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 
@@ -34,8 +34,22 @@ const CustomersListPage = () => {
     const pathname = usePathname();
     const dispatch = useDispatch();
     // Redux Selectors
-    const actions = useSelector((state) => state.auth?.actions || []);
-    const { list, loading, error, pagination } = useSelector((state) => state.users || []);
+    const actions = useSelector(
+        (state) => state.auth?.actions || [],
+        shallowEqual 
+    ); // With shallowEqual - only re-renders if selected values actually changed
+
+    // const { list, loading, error, pagination } = useSelector((state) => state.users || []);
+    const { list, loading, error, pagination } = useSelector(
+        state => ({
+            list: state.users?.list || [],
+            loading: state.users?.loading || false,
+            error: state.users?.error || null,
+            pagination: state.users?.pagination || {}
+        }),
+        shallowEqual
+    ); // With shallowEqual - only re-renders if selected values actually changed
+    
     // Add local states for filtering and pagination
     const [filtersObj, setFilters] = useState({
         search: '',
@@ -68,6 +82,15 @@ const CustomersListPage = () => {
         }
     }, [pagination]);
 
+    // Add cleanup effect when component unmounts
+    // This ensures we clear the customers when leaving the page
+    // This is useful to reset the state when navigating away
+    // and prevents stale data when returning to the page
+    useEffect(() => {
+        return () => {
+        dispatch(clearCustomers()); 
+        };
+    }, [dispatch]);
 
     // 🔹 Handle filter changes
     const handleFilterChange = ({ target }) => {
@@ -78,10 +101,10 @@ const CustomersListPage = () => {
         }));
     };
     
-    // 🔹 Format date
-    const formatDate = (date) => {
+    // Memoize formatted date function
+    const formatDate = useCallback((date) => {
         return date ? dayjs(date).format("YYYY-MM-DD") : null;
-    };
+    }, []);
 
     // 🔹 Fetch users from API
     const fetchUsers = async () => {
@@ -386,4 +409,4 @@ const CustomersListPage = () => {
     );
 }
 
-export default withAuth(CustomersListPage);
+export default memo(withAuth(CustomersListPage));

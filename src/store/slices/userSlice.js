@@ -15,7 +15,6 @@ export const getCustomers = createAsyncThunk(
 );
 
 
-
 // ✅ Initial state for the users slice
 // This state is used to manage the customers/users data in the Redux store
 const initialState = {
@@ -42,7 +41,14 @@ const initialState = {
 const userSlice = createSlice({
   name: "users",
   initialState: initialState,
-    reducers: {},
+  reducers: {
+    clearCustomers: (state) => {
+      state.list = [];
+      state.pagination = initialState.pagination;
+      state.loading = false;
+      state.error = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getCustomers.pending, (state) => {
@@ -67,5 +73,8 @@ const userSlice = createSlice({
       });
   },
 });
+
+// ✅ Export actions
+export const { clearCustomers } = userSlice.actions;
 
 export default userSlice.reducer;
