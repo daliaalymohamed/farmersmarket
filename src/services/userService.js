@@ -3,10 +3,15 @@ import User from '@/models/user';
 import Role from "@/models/role";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import mongoose from 'mongoose';
 
 // Fetch a user by ID
 export const getUserById = async (id) => {
     try {
+        // Validate MongoDB ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new Error('Invalid user ID format');
+        }
         const user = await User.findById(id) // Fetch user by ID from the database
                         .select("-password") // Hide password from the response
                         .populate({

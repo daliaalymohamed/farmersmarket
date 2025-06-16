@@ -10,11 +10,21 @@ import { getUserById } from '@/services/userService';
 // routing: /api/users/[id]
 export const GET = authMiddleware(async (req, context) => {
   console.log("🚀 GET /api/users/:id route hit!"); // ✅ Log that the route was hit
-  const params = await context.params;
-  const id = params.id;
-  const requiredAction = "view_user"; // Define the required action for this route
-    
+  
   try {
+   // Get params asynchronously
+    const params = await context.params;
+    
+    // Validate ID parameter
+    if (!params?.id) {
+      return NextResponse.json({ 
+        error: 'Missing user ID parameter' 
+      }, { status: 400 });
+    }
+
+    const id = params.id;
+    const requiredAction = "view_user"; // Define the required action for this route
+
     // Connect to the database
     await connectToDatabase();
 
@@ -32,22 +42,49 @@ export const GET = authMiddleware(async (req, context) => {
       return NextResponse.json('User not found', { status: 404 }); // ❌ Not found
     }
 
-    return NextResponse.json(user, { status: 200 }); // ✅ Success
+    return NextResponse.json(user, 
+      { status: 200, headers: {
+          'Cache-Control': 'no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+       } }); // ✅ Success
   } catch (error) {
-    console.error('❌ Error fetching user:', error);
-    return NextResponse.json({message: 'Internal Server Error'}, { status: 500 }); // ❌ Server error
-  }
+      console.error('❌ Error fetching user:', error);
+
+      // Handle specific errors
+      if (error.name === 'CastError') {
+        return NextResponse.json({
+          error: 'Invalid user ID format',
+          details: error.message
+        }, { status: 400 });
+      }
+      // Handle generic errors
+      return NextResponse.json({
+        error: 'Internal Server Error',
+        details: error.message
+      }, { status: 500 });
+    } // ❌ Server error
 });
 
 // Handle PUT (Update user by ID)
 // routing: /api/users/[id]
 export const PUT = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/users/:id route hit!"); // ✅ Log that the route was hit
-  const params = await context.params;
-  const id = params.id;
-  const requiredAction = "edit_user"; // Define the required action for this route
     
   try {
+    // Get params asynchronously
+    const params = await context.params;
+    
+    // Validate ID parameter
+    if (!params?.id) {
+      return NextResponse.json({ 
+        error: 'Missing user ID parameter' 
+      }, { status: 400 });
+    }
+
+    const id = params.id;
+    const requiredAction = "edit_user"; // Define the required action for this route
+
     // Connect to the database
     await connectToDatabase();
 
@@ -86,11 +123,21 @@ export const PUT = authMiddleware(async (req, context) => {
 // routing: /api/users/[id]
 export const PATCH = authMiddleware(async (req, context) => {
   console.log("🚀 PUT /api/users/:id route hit!"); // ✅ Log that the route was hit
-  const params = await context.params;
-  const id = params.id;
-  const requiredAction = "toggle_user_status"; // Define the required action for this route
-
+  
   try {
+    // Get params asynchronously
+    const params = await context.params;
+    
+    // Validate ID parameter
+    if (!params?.id) {
+      return NextResponse.json({ 
+        error: 'Missing user ID parameter' 
+      }, { status: 400 });
+    }
+
+    const id = params.id;
+    const requiredAction = "toggle_user_status"; // Define the required action for this route
+    
     // Connect to the database
     await connectToDatabase();
 

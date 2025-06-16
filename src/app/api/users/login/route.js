@@ -23,11 +23,25 @@ export const POST = async (req) => {
         // ✅ Call login function (returns user data or error)
         const loggedInUser = await loginUser(userData);
 
-        // ✅ If login is successful, return user data
-        return NextResponse.json({
+        // ✅ Create the response
+        const response = NextResponse.json({
             message: 'You are logged in successfully',
             user: loggedInUser
         }, { status: 200 }); // ✅ HTTP 200 OK
+
+        // ✅ Set the token in an HTTP-only cookie
+        response.cookies.set({
+            name: 'token',
+            value: loggedInUser.token,
+            httpOnly: true,
+            secure: process.env.SECURECOOKIE,
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: '/',
+        });
+
+        return response;
+
     } catch (error) {
         console.error('Login Error:', error); // ❌ Log the error for debugging
 

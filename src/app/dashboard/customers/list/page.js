@@ -1,3 +1,4 @@
+// This as a client side rendering component, it's used if we need to render data from the client side "CSR" so we return renaming this file as page.js
 'use client';
 import { useEffect, useState, useCallback, memo } from 'react';
 import { useRouter, usePathname } from "next/navigation";
@@ -24,7 +25,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Breadcrumb from "@/components/breadcrumb"; 
+import Loading from "@/components/loading";
+import Error from "@/components/error";
 import { getCustomers, clearCustomers } from '@/store/slices/userSlice';
+import Link from 'next/link';
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 
@@ -174,7 +178,12 @@ const CustomersListPage = () => {
             <Box sx={{ mt: 4, display: 'flex', gap: 2,
                     flexDirection: "column" 
              }}>
-                <Breadcrumb sideNavItem={t("customers")} href={"dashboard/customers/list"} urlText={t("customersList")}/>
+                {/* Breadcrumb */}
+                <Breadcrumb 
+                    sideNavItem={t("customers")} 
+                    href={"list"} 
+                    urlText={t("customersList")}
+                />
                 <Typography variant="h4" gutterBottom>
                     {t('customersManagement')}
                 </Typography>
@@ -352,13 +361,13 @@ const CustomersListPage = () => {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={7} align="center">
-                                    <Typography>{t('loading')}</Typography>
+                                    <Loading />
                                 </TableCell>
                             </TableRow>
                         ) : error ? (
                             <TableRow>
                                 <TableCell colSpan={7} align="center">
-                                    <Typography color="error">{error}</Typography>
+                                    <Error message={error} />
                                 </TableCell>
                             </TableRow>
                         ) : !list || list.length === 0 ? (
@@ -382,12 +391,14 @@ const CustomersListPage = () => {
                                     <TableCell>{customer.active ? t('active') : t('inactive')}</TableCell>
                                     <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell>
-                                    <Button
-                                        size="small"
-                                        onClick={() => router.push(`/dashboard/customers/${customer._id}`)}
+                                    <Link 
+                                        href={`/dashboard/customers/${customer._id}`}
+                                        passHref
                                     >
+                                        <Button size="small">
                                         {t('view')}
-                                    </Button>
+                                        </Button>
+                                    </Link>
                                     </TableCell>
                                 </TableRow>
                                 ))

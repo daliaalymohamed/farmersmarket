@@ -19,17 +19,17 @@ const Breadcrumb = ({ sideNavItem, href, urlText }) => {
                 <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
                 {t('dashboard')}
             </Link>
-            <Typography color="text.primary">
-                {sideNavItem}
-            </Typography>
             <Link
                 component={NextLink}
                 href={href}
                 underline="hover"
                 color="inherit"
             >
-                {urlText}
+                {sideNavItem}
             </Link>
+            <Typography color="text.primary">
+                {urlText}
+            </Typography>
             
         </Breadcrumbs>
     )

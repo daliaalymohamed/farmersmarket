@@ -10,9 +10,9 @@ import dayjs from 'dayjs';
 // routing: /api/users
 export const GET = authMiddleware(async (req) => {
     console.log("🚀 GET /api/users route hit!"); // ✅ Log that the route was hit
-    const requiredAction = "view_users"; // Define the required action for this route
     
     try {
+        const requiredAction = "view_users"; // Define the required action for this route
         // Connect to the database
         await connectToDatabase();
 
@@ -102,11 +102,21 @@ export const GET = authMiddleware(async (req) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             }
-        }, { status: 200 });
+        }, { status: 200, headers: {
+                'Cache-Control': 'no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            } });
 
     } catch (error) {
         console.error('❌ Error fetching users:', error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ message: "Internal Server Error" }, { status: 500,
+            headers: {
+                'Cache-Control': 'no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+         });
     }
 
 });

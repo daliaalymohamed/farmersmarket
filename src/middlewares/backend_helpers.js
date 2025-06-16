@@ -1,7 +1,9 @@
 import Action from '@/models/action';
 import Role from '@/models/role';
+import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 
-/// Function to ensure an action exists and assign it to the admin role
+// Function to ensure an action exists and assign it to the admin role
 export const ensureActionExistsAndAssignToAdmin = async(actionName) => {
     try {
         // Check if the action already exists
@@ -31,4 +33,28 @@ export const ensureActionExistsAndAssignToAdmin = async(actionName) => {
         console.error('Error ensuring action exists:', error);
         throw error; // Propagate the error
     }
+}
+
+// Server-side function to get authentication headers
+// This function retrieves the authentication token and language from cookies and headers
+// and returns them in a format suitable for API requests.
+export async function getServerSideAuthHeaders() {
+  const cookieStore = await cookies();
+  const headersList = await headers();
+
+  const token = await cookieStore.get('token')?.value;
+  const acceptLanguage = await headersList.get('accept-language') || 'en';
+
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Accept-Language': acceptLanguage,
+    'Cache-Control': 'no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  };
 }
