@@ -1,7 +1,7 @@
 // This is client-side code for a Next.js page that fetches customer data based on the provided ID.
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../../../contexts/translationContext';
 import Dashboard from '@/components/dashboard';
@@ -23,6 +23,7 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material';
 import Breadcrumb from "@/components/breadcrumb";
+import withAuth  from "@/components/withAuth"; // Import withAuth HOC
 
 const CustomerProfile = ({ initialData }) => {
   const router = useRouter();
@@ -247,4 +248,4 @@ const CustomerProfile = ({ initialData }) => {
   );
 };
 
-export default CustomerProfile;
+export default memo(withAuth(CustomerProfile));
