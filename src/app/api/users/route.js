@@ -77,7 +77,7 @@ export const GET = authMiddleware(async (req) => {
             roleId: 1,
             orders: 1,
             active: 1,
-            address: 1,
+            addresses: 1,
             createdAt: 1
         })
         .sort(sort)

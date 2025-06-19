@@ -47,4 +47,30 @@ function autoPopulateCategoryName(next) {
   next();
 }
 
+// Virtual populate for getting inventory information
+ProductSchema.virtual('inventories', {
+  ref: 'Inventory',
+  localField: '_id',
+  foreignField: 'productId'
+});
+
+// Get total stock across all warehouses
+ProductSchema.virtual('totalStock').get(async function() {
+  const inventories = await this.model('Inventory')
+    .find({ productId: this._id })
+    .select('quantity');
+  return inventories.reduce((sum, inv) => sum + inv.quantity, 0);
+});
+
+// Virtual populate for getting all vendors through inventory
+ProductSchema.virtual('additionalVendors', {
+  ref: 'Inventory',
+  localField: '_id',
+  foreignField: 'productId',
+  match: { vendorId: { $exists: true } }
+});
+
+// Add compound index for category and active status
+ProductSchema.index({ categoryId: 1, vendorId: 1, active: 1 });
+
 export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

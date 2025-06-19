@@ -61,9 +61,26 @@ const CustomerProfile = ({ initialData }) => {
     phoneNumber,
     active,
     createdAt,
-    address,
+    addresses = [],    
     orders = []
   } = initialData;
+
+  // Get default addresses
+  const defaultShippingAddress = addresses.find(addr => addr.isDefaultShipping);
+  const defaultBillingAddress = addresses.find(addr => addr.isDefaultBilling);
+
+  const renderAddress = (address) => (
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+      <LocationIcon color="primary" />
+      <Typography>
+        {address.street}, {address.city}
+        <br />
+        {address.state}, {address.country}
+        <br />
+        {address.zipCode}
+      </Typography>
+    </Box>
+  );
 
   return (
     <Dashboard>
@@ -158,17 +175,36 @@ const CustomerProfile = ({ initialData }) => {
                 <Typography variant="h6" gutterBottom>
                   {t('addressInformation')}
                 </Typography>
-                {address ? (
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                    <LocationIcon color="primary" />
-                    <Typography>
-                      {address.street}, {address.city}
-                      <br />
-                      {address.state}, {address.country}
-                      <br />
-                      {address.zipCode}
-                    </Typography>
-                  </Box>
+                {addresses.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {/* Shipping Address */}
+                        <Box>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                {t('shippingAddress')}
+                            </Typography>
+                            {defaultShippingAddress ? (
+                                renderAddress(defaultShippingAddress)
+                            ) : (
+                                <Typography color="text.secondary">
+                                {t('noDefaultShippingAddress')}
+                                </Typography>
+                            )}
+                        </Box>
+
+                        {/* Billing Address */}
+                        <Box>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                {t('billingAddress')}
+                            </Typography>
+                            {defaultBillingAddress ? (
+                                renderAddress(defaultBillingAddress)
+                            ) : (
+                                <Typography color="text.secondary">
+                                {t('noDefaultBillingAddress')}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
                 ) : (
                   <Typography color="text.secondary">
                     {t('noAddressProvided')}
