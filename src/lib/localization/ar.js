@@ -117,6 +117,10 @@ export const ar = {
     orderTotalAmount: "المبلغ الإجمالي",
     orderActions: "الإجراءات",
     noOrders: "لا توجد طلبات لهذا العميل",
+    updating: "جار التحديث...",
+    deactivate: "إلغاء التفعيل",
+    activate: "تفعيل",
+    userStatusUpdatedSuccessfully: "تم تحديث حالة المستخدم بنجاح",
   };
 
   

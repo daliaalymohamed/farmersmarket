@@ -23,10 +23,11 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchIcon from '@mui/icons-material/Search';
+import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import Breadcrumb from "@/components/breadcrumb"; 
-import Loading from "@/components/loading";
-import Error from "@/components/error";
+import Breadcrumb from "@/components/UI/breadcrumb"; 
+import Loading from "@/components/UI/loading";
+import Error from "@/components/UI/error";
 import { getCustomers, clearCustomers } from '@/store/slices/userSlice';
 import Link from 'next/link';
 import withAuth from "@/components/withAuth";
@@ -43,7 +44,6 @@ const CustomersListPage = () => {
         shallowEqual 
     ); // With shallowEqual - only re-renders if selected values actually changed
 
-    // const { list, loading, error, pagination } = useSelector((state) => state.users || []);
     const { list, loading, error, pagination } = useSelector(
         state => ({
             list: state.users?.list || [],
@@ -66,14 +66,18 @@ const CustomersListPage = () => {
     });
     const [hasSearched, setHasSearched] = useState(false);
 
-   
+    // Check permissions on mount
+    // This effect runs once when the component mounts
+    // and checks if the user has the required permissions to view this page.
+    // If not, it redirects to the home page.
     useEffect(() => {
-        const hasAccess = actions && actions.some(action => action.name === "view_users");
+        const requiredPermissions = ["view_users"];
+        const hasAccess = checkPermission(actions, requiredPermissions);
+        
         if (!hasAccess) {
-            router.push("/home");
+        router.push("/home");
         }
     }, [actions, router]);
-    
    
     useEffect(() => {
         // When pagination changes in Redux, update local filters

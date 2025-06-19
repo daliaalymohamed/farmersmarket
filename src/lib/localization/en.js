@@ -117,4 +117,8 @@ export const en = {
     orderTotalAmount: "Total Amount",
     orderActions: "Actions",
     noOrders: "No orders found for this customer",
+    updating: "Updating...",
+    deactivate: "Deactivate",
+    activate: "Activate",
+    userStatusUpdatedSuccessfully: "User status updated successfully",
 };

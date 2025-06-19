@@ -122,7 +122,7 @@ export const PUT = authMiddleware(async (req, context) => {
 // The PATCH method is used for partial updates, which is appropriate for activating/deactivating a user.
 // routing: /api/users/[id]
 export const PATCH = authMiddleware(async (req, context) => {
-  console.log("🚀 PUT /api/users/:id route hit!"); // ✅ Log that the route was hit
+  console.log("🚀 PATCH /api/users/:id route hit!"); // ✅ Log that the route was hit
   
   try {
     // Get params asynchronously
@@ -150,7 +150,6 @@ export const PATCH = authMiddleware(async (req, context) => {
 
     // ✅ Proceed with the request
     const { active } = await req.json(); // Assuming the request body contains the updated active status
-
     // Validate that `active` is a boolean
     if (typeof active !== "boolean") {
       return NextResponse.json(

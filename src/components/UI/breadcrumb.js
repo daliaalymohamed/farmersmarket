@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
+import { useTranslation } from "../../contexts/translationContext"; // Import useTranslation
 import { Typography, Breadcrumbs, Link } from '@mui/material';
 import NextLink from 'next/link';
 import HomeIcon from '@mui/icons-material/Home';

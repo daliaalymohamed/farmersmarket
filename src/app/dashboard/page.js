@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "../../contexts/translationContext"; // Import useTranslation
 import Dashboard from '@/components/dashboard';
 import { Typography ,Box } from '@mui/material';
+import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useSelector } from "react-redux";
 import withAuth  from "@/components/withAuth"; // Import withAuth HOC
 
@@ -13,12 +14,18 @@ const DashboardPage = () => {
     const { t } = useTranslation();  // Get the translation function
     const actions = useSelector((state) => state.auth?.actions || []);
     
+    // Check permissions on mount
+    // This effect runs once when the component mounts
+    // and checks if the user has the required permissions to view this page.
+    // If not, it redirects to the home page.
     useEffect(() => {
-        const hasAccess = actions && actions.some(action => action.name === "view_dashboard");
+        const requiredPermissions = ["view_dashboard"];
+        const hasAccess = checkPermission(actions, requiredPermissions);
+        
         if (!hasAccess) {
         router.push("/home");
         }
-  }, [actions, router]);
+    }, [actions, router]);
     
      return (
         <Dashboard>

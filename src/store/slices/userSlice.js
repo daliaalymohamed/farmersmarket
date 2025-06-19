@@ -14,6 +14,16 @@ export const getCustomers = createAsyncThunk(
     }
 );
 
+// ✅ Async toggle User Active Status Thunk
+export const toggleUserActiveStatus = createAsyncThunk(
+  "users/toggleUserActiveStatus",
+  async ({ userId, isActive }) => {
+    console.log("Toggling user active status:", userId, isActive);
+    const data = await customersApi.toggleUserActiveStatus(userId, isActive);
+    console.log("User active status toggled:", data);
+    return data;
+  }
+);
 
 // ✅ Initial state for the users slice
 // This state is used to manage the customers/users data in the Redux store
@@ -70,7 +80,23 @@ const userSlice = createSlice({
       .addCase(getCustomers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(toggleUserActiveStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+     .addCase(toggleUserActiveStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update user in the list
+        const index = state.list.findIndex(user => user._id === action.payload.user._id);
+        if (index !== -1) {
+          state.list[index] = action.payload.user;
+        }
+      })
+      .addCase(toggleUserActiveStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   },
 });
 
