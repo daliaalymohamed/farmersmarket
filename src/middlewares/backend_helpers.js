@@ -1,7 +1,8 @@
 import Action from '@/models/action';
 import Role from '@/models/role';
-import { cookies } from 'next/headers';
-import { headers } from 'next/headers';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Function to ensure an action exists and assign it to the admin role
 export const ensureActionExistsAndAssignToAdmin = async(actionName) => {
@@ -35,26 +36,33 @@ export const ensureActionExistsAndAssignToAdmin = async(actionName) => {
     }
 }
 
-// Server-side function to get authentication headers
-// This function retrieves the authentication token and language from cookies and headers
-// and returns them in a format suitable for API requests.
-export async function getServerSideAuthHeaders() {
-  const cookieStore = await cookies();
-  const headersList = await headers();
-
-  const token = await cookieStore.get('token')?.value;
-  const acceptLanguage = await headersList.get('accept-language') || 'en';
-
-  if (!token) {
-    throw new Error('No authentication token found');
+// Function to verify JWT token
+export const verifyJWT = async (token) => {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
   }
 
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-    'Accept-Language': acceptLanguage,
-    'Cache-Control': 'no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  };
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded;
+  } catch (error) {
+    console.error('JWT verification failed:', error);
+    throw new Error('Invalid token');
+  }
+};
+// Function to verify JWT token on the server side
+export async function verifyTokenServer(token) {
+  try {
+    // Verify token directly on server side
+    const decoded = await verifyJWT(token);
+    
+    if (!decoded?.userId) {
+      throw new Error('Invalid token');
+    }
+
+    return decoded;
+  } catch (error) {
+    console.error('Server token verification failed:', error);
+    throw error;
+  }
 }

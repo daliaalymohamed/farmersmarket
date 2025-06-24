@@ -1,47 +1,58 @@
-// This is a server-side function to fetch customers data
-import { getServerSideAuthHeaders } from '@/middlewares/backend_helpers';
+import { getAuthenticatedUser } from '@/lib/services/serverSideServices/auth/serverAuth';
 
-export async function getCustomerById(id) {
+// This is a server-side function to fetch customers data
+export const getCustomerById = async (id) => {
   try {
-    if (!id) {
+    // Validate inputs
+    if (!id?.trim()) {
       throw new Error('Customer ID is required');
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // Get authenticated user data and headers
+    const { headers } = await getAuthenticatedUser();
+    
+    // Get base URL from environment
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
     if (!baseUrl) {
       throw new Error('API URL is not configured');
     }
 
+    // Make the API request
+    const response = await fetch(`${baseUrl}/api/users/${id}`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store'
+    });
 
-    // Get authentication headers and cookies
-    const headers = await getServerSideAuthHeaders();
-
-    const response = await fetch(
-      `${baseUrl}/api/users/${id}`,
-      {
-        headers: headers,
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      }
-    );
-
-      // Parse response first
+    // Handle response
     const data = await response.json();
 
-    if (!response.ok) {
-      if (response.status === 404) {
+    // Response handling
+    switch (response.status) {
+      case 200:
+        return data;
+      case 404:
         return null;
-      }
-      throw new Error(data.error || `API error: ${response.status}`);
+      case 401:
+        throw new Error('Unauthorized access');
+      case 403:
+        throw new Error('Forbidden access');
+      default:
+        throw new Error(data.error || `API error: ${response.status}`);
     }
 
-    return data;
+
   } catch (error) {
-    console.error('Server-side fetch error:', error);
-    // Enhance error message based on error type
+    console.error('[getCustomerById] Error:', {
+      message: error.message,
+      type: error.name,
+      id
+    });
+
     if (error.name === 'TypeError') {
       throw new Error('Network or fetch configuration error');
     }
+    
     throw error;
   }
-}
+};

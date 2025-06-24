@@ -12,9 +12,11 @@ export const GET = authMiddleware(async (req, context) => {
   console.log("🚀 GET /api/users/:id route hit!"); // ✅ Log that the route was hit
   
   try {
-   // Get params asynchronously
+    // Get params asynchronously
     const params = await context.params;
-    
+    // Get current user from auth middleware
+    const currentUser = req.user; 
+
     // Validate ID parameter
     if (!params?.id) {
       return NextResponse.json({ 
@@ -28,13 +30,19 @@ export const GET = authMiddleware(async (req, context) => {
     // Connect to the database
     await connectToDatabase();
 
-    // Ensure the required action exists and is assigned to the admin role
-    await ensureActionExistsAndAssignToAdmin(requiredAction);
-    // ✅ Check if the user has the required permission
-    // ✅ Check permission before executing
-    const permissionCheck = await checkPermission(requiredAction)(req);
-    if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
-    
+    // Check if user is requesting their own profile
+    const isOwnProfile = currentUser.userId.toString() === id;
+
+    // If not own profile, check admin permissions
+    if (!isOwnProfile) {
+      // Ensure the required action exists and is assigned to the admin role
+      await ensureActionExistsAndAssignToAdmin(requiredAction);
+      // ✅ Check if the user has the required permission
+      // ✅ Check permission before executing
+      const permissionCheck = await checkPermission(requiredAction)(req);
+      if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
+    }
+
     // ✅ Proceed with the request
     // Fetch the user by ID
     const user = await getUserById(id);
@@ -42,12 +50,28 @@ export const GET = authMiddleware(async (req, context) => {
       return NextResponse.json('User not found', { status: 404 }); // ❌ Not found
     }
 
-    return NextResponse.json(user, 
-      { status: 200, headers: {
+    // Filter sensitive data if not admin
+    if (!isOwnProfile) {
+      // Remove sensitive fields for non-admin users
+      const { password, tokenVersion, ...safeUserData } = user.toObject();
+      return NextResponse.json(safeUserData, { 
+        status: 200,
+        headers: {
           'Cache-Control': 'no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
-       } }); // ✅ Success
+        }
+      });
+    }
+
+    return NextResponse.json(user, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    }); // ✅ Success
   } catch (error) {
       console.error('❌ Error fetching user:', error);
 
@@ -99,22 +123,61 @@ export const PUT = authMiddleware(async (req, context) => {
     const userData = await req.json(); // Assuming the request body contains the updated user data
     
     // Use the $set operator to properly update nested fields
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { $set: userData },  // Use $set to update nested objects
-      { 
-        new: true,        // Return updated document
-        runValidators: true,  // Run model validators
-        upsert: true // This will create the nested object if it doesn't exist
-      }
-    );
-    
-    if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 }); // ❌ Not found
+    let updatedUser = null;
+
+    // 1. Edit profile fields (excluding addresses)
+    if (userData.profile) {
+      updatedUser = await User.findByIdAndUpdate(
+        id,
+        { $set: userData.profile },
+        { new: true, runValidators: true }
+      );
     }
-    return NextResponse.json({message: 'User has been updated successfully', user: updatedUser}, { status: 200 }); // ✅ Success
+
+    // 2. Add a new address
+    if (userData.newAddress) {
+      updatedUser = await User.findByIdAndUpdate(
+        id,
+        { $push: { addresses: userData.newAddress } },
+        { new: true, runValidators: true }
+      );
+    }
+
+    // 3. Edit an existing address
+    if (userData.editAddress && userData.editAddress._id) {
+      const addr = userData.editAddress;
+      updatedUser = await User.findOneAndUpdate(
+        { _id: id, "addresses._id": addr._id },
+        {
+          $set: {
+            "addresses.$.street": addr.street,
+            "addresses.$.city": addr.city,
+            "addresses.$.state": addr.state,
+            "addresses.$.zipCode": addr.zipCode,
+            "addresses.$.country": addr.country,
+            "addresses.$.isDefaultShipping": addr.isDefaultShipping,
+            "addresses.$.isDefaultBilling": addr.isDefaultBilling,
+          }
+        },
+        { new: true, runValidators: true }
+      );
+    }
+
+    // 4. Remove an address
+    if (userData.removeAddressId) {
+      updatedUser = await User.findByIdAndUpdate(
+        id,
+        { $pull: { addresses: { _id: userData.removeAddressId } } },
+        { new: true, runValidators: true }
+      );
+    }
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "User not found or nothing updated" }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'User has been updated successfully', user: updatedUser }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update user" }, { status: 500 }); // ❌ Server error
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 });
 

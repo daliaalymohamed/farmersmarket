@@ -25,4 +25,10 @@ export const customersApi = {
     const response = await api.patch(`${API_BASE_URL}/${userId}`, { active: isActive });
     return response.data;
   },
+
+  // editProfile
+  editProfile: async (userId, payload) => {
+    const response = await api.put(`${API_BASE_URL}/${userId}`, payload);
+    return response.data;
+  }
 };

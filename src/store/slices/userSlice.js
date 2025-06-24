@@ -25,6 +25,25 @@ export const toggleUserActiveStatus = createAsyncThunk(
   }
 );
 
+// ✅ Async Edit Profile Thunk
+export const editProfile = createAsyncThunk(
+  "users/editProfile",
+  async ({ userId, profile, newAddress, editAddress, removeAddressId }, { rejectWithValue }) => {
+    try {
+      const payload = {};
+      if (profile) payload.profile = profile;
+      if (newAddress) payload.newAddress = newAddress;
+      if (editAddress) payload.editAddress = editAddress;
+      if (removeAddressId) payload.removeAddressId = removeAddressId;
+
+      const data = await customersApi.editProfile(userId, payload);
+      return data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 // ✅ Initial state for the users slice
 // This state is used to manage the customers/users data in the Redux store
 const initialState = {
@@ -61,6 +80,7 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // getCustomers
       .addCase(getCustomers.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -81,6 +101,7 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      // toggleUserActiveStatus
       .addCase(toggleUserActiveStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -97,6 +118,26 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      // editProfile
+      .addCase(editProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(editProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update the user in the list
+        const updatedUser = action.payload;
+        const idx = state.list.findIndex(u => u._id === updatedUser._id);
+        if (idx !== -1) {
+          state.list[idx] = updatedUser;
+        } else {
+          state.list.push(updatedUser);
+        }
+      })
+      .addCase(editProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
