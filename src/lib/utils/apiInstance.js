@@ -50,7 +50,7 @@ const responseInterceptor = (error) => {
 const api = axios.create({
   baseURL: baseUrl,
   headers: {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
   },
 });
 
@@ -76,7 +76,7 @@ api.interceptors.response.use(
 const apiWithoutAuth = axios.create({
   baseURL: baseUrl,
   headers: {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
   },
 });
 

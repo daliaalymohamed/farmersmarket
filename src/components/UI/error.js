@@ -7,7 +7,7 @@ export default function Error({ error, reset }) {
     return (
         <Box sx={{ textAlign: 'center', py: 4 }}>
         <Typography variant="h6" color="error" gutterBottom>
-            {error.message || 'Something went wrong!'}
+            {error || 'Something went wrong!'}
         </Typography>
         <Button 
             onClick={reset} 

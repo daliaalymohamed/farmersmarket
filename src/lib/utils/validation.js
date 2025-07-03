@@ -94,3 +94,43 @@ export const addressSchema = (t) => yup.object().shape({
   isDefaultShipping: yup.boolean(),
   isDefaultBilling: yup.boolean(),
 });
+
+
+// Category validation Schema (for both create and update)
+export const categorySchema = (t, isEditMode = false) => yup.object().shape({
+  name: yup.object().shape({
+    en: yup.string().min(3).max(50).required(t("nameRequired")),
+    ar: yup.string().min(3).max(50).required(t("nameRequired"))
+  }),
+  image: yup.mixed()
+      .when([], {
+        is: () => !isEditMode, // If NOT edit mode (i.e., add mode)
+        then: (schema) => schema.required(t("imageRequired")), // Image is required
+        otherwise: (schema) => schema.nullable(), // Image is optional in edit mode
+      })
+      .test("file-format", t("invalidImageFormat"), function (value) {
+        // Skip validation if no value and in edit mode
+        if (!value && isEditMode) {
+          return true;
+        }
+        
+        // If it's a File object, validate the format
+        if (value instanceof File) {
+          const allowedExtensions = /\.(jpe?g|png|gif|webp)$/i;
+          return allowedExtensions.test(value.name);
+        }
+        
+        // If it's a string (existing image path), it's valid
+        if (typeof value === 'string' && value.length > 0) {
+          return true;
+        }
+        
+        // For add mode with no value, let the required validation handle it
+        if (!isEditMode && !value) {
+          return true; // Let .required() handle this
+        }
+        
+        return false;
+      }),
+  color: yup.string().matches(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, t("invalidColorCode")).required(t("colorRequired")),
+});

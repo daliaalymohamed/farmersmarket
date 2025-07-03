@@ -6,7 +6,8 @@ const CategorySchema = new mongoose.Schema(
       en: { type: String, required: true }, // English name
       ar: { type: String, required: true }, // Arabic name
     },
-    imageUrl: { type: String, required: true }
+    image: { type: String, required: true },
+    color: { type: String, required: false }
   },
   { 
     timestamps: true,

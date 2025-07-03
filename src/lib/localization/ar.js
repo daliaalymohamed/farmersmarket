@@ -157,6 +157,29 @@ export const ar = {
     addressSaveFailed: "فشل حفظ العنوان",
     addressRemovedSuccessfully: "تمت إزالة العنوان بنجاح",
     addressRemoveFailed: "فشل إزالة العنوان",
+    // dashboard/categories
+    categoriesManagement: "إدارة الفئات",
+    categories: "الفئات",
+    categoriesList: "قائمة الفئات",
+    noCategoriesFound: "لا يوجد فئات",
+    addCategory: "إضافة فئة جديدة",
+    editCategory: "تعديل الفئة",
+    deleteCategory: "مسح الفئة",
+    searchCategory: "البحث عن فئة",
+    nameEn: "اسم الفئة (بالإنجليزية)",
+    nameAr: "اسم الفئة (بالعربية)",
+    textColor: "لون النص",
+    categoryImage: "صورة الفئة",
+    uploadImage: "تحميل الصورة",
+    imageRequired: "صورة الفئة مطلوبة",
+    categoryupdatedSuccessfully: "تم تحديث الفئة بنجاح",
+    categoryaddedSuccessfully: "تمت إضافة الفئة بنجاح",
+    categorySaveFailed: "فشل حفظ الفئة",
+    confirmDelete: "تأكيد مسح",
+    deleteConfirmMessage: "هل أنت متأكد من مسح  ",
+    delete: "إمسح",
+    categoryDeletedSuccessfully: "تم مسح الفئة بنجاح",
+    categoryDeleteFailed: "فشل مسح الفئة"
   };
 
   

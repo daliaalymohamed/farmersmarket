@@ -1,29 +1,22 @@
-'use client';
-import { Box, Divider } from '@mui/material';
-import HeaderBox from '@/components/headerBox';
-import CategorySlider from "@/components/categorySlider";
-import DealsSlider from '@/components/dealsSlider';
+// This is server-side code for a Next.js page that fetches customer data based on the provided ID.import { getCustomerById } from '@/lib/services/serverServices/users/serverUserData';
+import { getCategories } from '@/lib/services/serverSideServices/categories/serverCategoriesData';
+import Home from './home';
+import { notFound } from 'next/navigation';
 
-const Home  = () => {
-  return (
-    <Box sx={{ width: "100%", display: "flex", flexWrap: "wrap", gap: 2 }}>
-      {/**HeaderBox section  */}
-      <HeaderBox />
+const HomePage = async () => {
+  
+  try {
+    const categories = await getCategories();
+    
+    if (!categories) {
+      notFound();
+    }
 
-      <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
-
-      {/** Category slider section  */}
-      <CategorySlider/>
-
-      <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
-
-      {/** Deals slider section  */}
-      <DealsSlider/>
-
-      <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
-
-    </Box>
-  );
+    return <Home categories={categories} />;
+  } catch (error) {
+    console.error('Error loading Data:', error);
+    throw error; // This will be caught by the error.js boundary
+  }
 }
 
-export default Home
+export default HomePage

@@ -1,3 +1,5 @@
+import { editCategory } from "@/store/slices/categorySlice";
+
 // localization/en.js
 export const en = {
     english: "English",
@@ -157,4 +159,27 @@ export const en = {
     addressSaveFailed: "Address save failed",
     addressRemovedSuccessfully: "Address removed successfully",
     addressRemoveFailed: "Address remove failed",
+    // dashboard/categories
+    categoriesManagement: "Categories Management",
+    categories: "Categories",
+    categoriesList: "Categories List",
+    noCategoriesFound: "No Categories Found",
+    addCategory: "Add New Category",
+    editCategory: "Edit Category",
+    deleteCategory: "Delete Category",
+    searchCategory: "Search for a Category",
+    nameEn: "Category Name (English)",
+    nameAr: "Category Name (Arabic)",
+    textColor: "Text Color",
+    categoryImage: "Category Image",
+    uploadImage: "Upload Image",
+    imageRequired: "Category image is required",
+    categoryupdatedSuccessfully: "Category updated successfully",
+    categoryaddedSuccessfully: "Category added successfully",
+    categorySaveFailed: "Category save failed",
+    confirmDelete: "Confirm Delete",
+    deleteConfirmMessage: "Are you sure you want to delete ",
+    delete: "Delete",
+    categoryDeletedSuccessfully: "Category deleted successfully",
+    categoryDeleteFailed: "Category delete failed"
 };

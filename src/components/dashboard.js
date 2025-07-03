@@ -33,7 +33,7 @@ const minimizedDrawerWidth = 65; // Width when drawer is minimized
 const menuItems = [
   { text: 'Web Site', icon: <Web />, path: '/home' },
   { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-  { text: 'Categories', icon: <CategoryIcon />, path: '/dashboard/categories' },
+  { text: 'Categories', icon: <CategoryIcon />, path: '/dashboard/categories/list' },
   { text: 'Products', icon: <ProductionQuantityLimitsIcon />, path: '/dashboard/products' },
   { text: 'Orders', icon: <ShoppingCartIcon />, path: '/dashboard/orders' },
   { text: 'Customers', icon: <PeopleIcon />, path: '/dashboard/customers/list' },

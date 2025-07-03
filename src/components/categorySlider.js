@@ -1,6 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux"; // Import Redux hooks
+import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
@@ -13,7 +12,6 @@ import Image from "next/image";
 // import spices from '../../uploads/spices.jpeg';
 // import plasticsGlass from '../../uploads/plastics&glass.jpg';
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
-import { fetchCategories } from "@/store/slices/categorySlice";
 
 // Custom Arrow Component
 const CustomPrevArrow = ({ onClick, ariaLabel }) => (
@@ -54,20 +52,9 @@ const CustomPrevArrow = ({ onClick, ariaLabel }) => (
     </IconButton>
   );
 
-const CategorySlider = () => {
-  const dispatch = useDispatch()
+const CategorySlider = ({initialData}) => {
   const { t, language } = useTranslation()
-  // Combine selectors to optimize re-renders
-  const { items: categories = [], loading, error } = useSelector((state) => state.categories) || {};
-  console.log(categories)
- 
 
-  // ✅ Fetch categories only if empty
-  useEffect(() => {
-    if (!categories.length) {
-      dispatch(fetchCategories());
-    }
-  }, [dispatch, categories.length]);
   // slider slick settings
   const settings = {
     dots: true,
@@ -101,7 +88,7 @@ const CategorySlider = () => {
           {t("order")}
       </Typography>
       <Slider {...settings}>
-        {categories.map((item) => (
+        {initialData.map((item) => (
           <Card
           sx={{
             textAlign: "center",
@@ -122,9 +109,9 @@ const CategorySlider = () => {
                 margin: "auto", // Centers the container
               }}
             >
-              {item.img ? (
+              {item.image ? (
                   <Image
-                    src={""}
+                    src={`/uploads/categories/images/${item.image}`}
                     alt={language === "en" ? item.name.en : item.name.ar}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
