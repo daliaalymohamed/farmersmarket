@@ -3,12 +3,16 @@ const nextConfig = {
     images: {
       remotePatterns: [
         {
-          protocol: 'https',
-          hostname: 'cdn.breadfast.com', // ✅ Keep this
+          protocol: 'http',
+          hostname: 'localhost',
+          port: '3000',
+          pathname: '/api/images/**',
         },
+        // Add your production domain
         {
-          protocol: "https",
-          hostname: "www.breadfast.com" // ✅ Corrected hostname
+          protocol: 'https',
+          hostname: 'yourdomain.com',
+          pathname: '/api/images/**',
         }
       ],
     },

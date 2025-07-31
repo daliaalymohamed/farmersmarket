@@ -127,6 +127,7 @@ const CustomerProfile = ({ initialData }) => {
           sideNavItem={t("customers")} 
           href="/dashboard/customers/list" 
           urlText={t("customerDetails")}
+          ariaLabel="/dashboard/customers/list" 
         />
 
         {loading ? (
@@ -217,17 +218,17 @@ const CustomerProfile = ({ initialData }) => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PersonIcon color="primary" />
-                      <Typography>
+                      <Typography color="text.secondary">
                         {firstName} {lastName}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <EmailIcon color="primary" />
-                      <Typography>{email}</Typography>
+                      <Typography color="text.secondary">{email}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PhoneIcon color="primary" />
-                      <Typography>{phoneNumber}</Typography>
+                      <Typography color="text.secondary">{phoneNumber}</Typography>
                     </Box>
                   </Box>
                 </Grid>

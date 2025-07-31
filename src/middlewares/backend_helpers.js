@@ -1,7 +1,11 @@
 import Action from '@/models/action';
 import Role from '@/models/role';
 import jwt from 'jsonwebtoken';
-
+// Only import fs when on server-side
+let fs;
+if (typeof window === 'undefined') {
+  fs = require('fs/promises');
+}
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Function to ensure an action exists and assign it to the admin role
@@ -66,3 +70,27 @@ export async function verifyTokenServer(token) {
     throw error;
   }
 }
+
+
+// delete file from the file system
+export const deleteFile = async (filePath) => {
+  if (typeof window !== 'undefined') {
+    throw new Error('File operations can only be performed server-side');
+  }
+  console.log('Deleting file:', filePath);
+  try {
+    // Check if the file exists and delete it
+    await fs.access(filePath); // Check if file exists
+    await fs.unlink(filePath); // Delete it
+    console.log(`File ${filePath} deleted successfully`);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      // File not found, log a warning
+      console.warn(`File ${filePath} does not exist. Skipping deletion.`);
+    } else {
+      // Other errors, log and reject
+      console.error(`Error deleting file ${filePath}:`, err);
+      throw err;
+    }
+  }
+};

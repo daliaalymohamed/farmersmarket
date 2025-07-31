@@ -99,14 +99,21 @@ export const addressSchema = (t) => yup.object().shape({
 // Category validation Schema (for both create and update)
 export const categorySchema = (t, isEditMode = false) => yup.object().shape({
   name: yup.object().shape({
-    en: yup.string().min(3).max(50).required(t("nameRequired")),
-    ar: yup.string().min(3).max(50).required(t("nameRequired"))
+    en: yup.string()
+          .min(3, t("categoryNameLength"))
+          .max(50, t("categoryNameLength"))
+          .matches(/^[\u0600-\u065F\u066A-\u06EF\u06FA-\u06FFa-zA-Z0-9 . ]+[\u0600-\u065F\u066A-\u06EF\u06FA-\u06FFa-zA-Z-_0-9 . ]$/, t("categoryNameRegexError"))
+          .required(t("categoryNameEnRequired")),
+    ar: yup.string()
+          .min(3, t("categoryNameLength"))
+          .max(50, t("categoryNameLength"))
+          .required(t("categoryNameArRequired"))
   }),
   image: yup.mixed()
-      .when([], {
-        is: () => !isEditMode, // If NOT edit mode (i.e., add mode)
-        then: (schema) => schema.required(t("imageRequired")), // Image is required
-        otherwise: (schema) => schema.nullable(), // Image is optional in edit mode
+      .when([], (_, schema) => {
+        return !isEditMode // If NOT edit mode (i.e., add mode)
+          ? schema.required(t("imageRequired")) // Image is required in add mode
+          : schema.nullable(); // Image is optional in edit mode
       })
       .test("file-format", t("invalidImageFormat"), function (value) {
         // Skip validation if no value and in edit mode
@@ -133,4 +140,116 @@ export const categorySchema = (t, isEditMode = false) => yup.object().shape({
         return false;
       }),
   color: yup.string().matches(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, t("invalidColorCode")).required(t("colorRequired")),
+});
+
+
+// Product validation Schema (for both create and update)
+export const productSchema = (t, isEditMode = false) => yup.object().shape({
+  name: yup.object().shape({
+    en: yup.string()
+          .min(3, t("productNameLength"))
+          .max(50, t("productNameLength"))
+          .required(t("productNameEnRequired")),
+    ar: yup.string()
+          .min(3, t("productNameLength"))
+          .max(50, t("productNameLength"))
+          .required(t("productNameArRequired"))
+  }),
+  description: yup.object().shape({
+    en: yup.string()
+          .min(10, t("productDescriptionLength"))
+          .max(500, t("productDescriptionLength"))
+          .required(t("productDescriptionEnRequired")),
+    ar: yup.string()
+          .min(10, t("productDescriptionLength"))
+          .max(500, t("productDescriptionLength"))
+          .required(t("productDescriptionArRequired"))
+  }),
+  price: yup.number()
+    .typeError(t("priceNumber"))
+    .min(0, t("priceMin"))
+    .required(t("productPriceRequired")),
+  stock: yup.number()
+    .typeError(t("stockNumber"))
+    .min(0, t("stockMin"))
+    .required(t("productStockRequired")),
+  categoryId: yup.string().required(t("productCategoryRequired")),
+  // vendorId: yup.string().required(t("productVendorRequired")),
+  isActive: yup.boolean().default(true),
+  isFeatured: yup.boolean().default(false),
+  isOnSale: yup.boolean().default(false),
+  salePrice: yup.number()
+    .transform(value => (isNaN(value) ? undefined : value))
+    .nullable()
+    .when('isOnSale', {
+      is: true,
+      then: schema => schema
+        .required(t("productSalePriceRequired"))
+        .min(0, t("salePriceMin")),
+      otherwise: schema => schema.notRequired()
+    }),
+    saleStart: yup.date()
+    .nullable()
+    .transform((value, originalValue) => (originalValue === "" ? null : value))
+    .when('isOnSale', {
+      is: true,
+      then: schema => schema.required(t("saleStartDateRequired")),
+      otherwise: schema => schema.notRequired().nullable(),
+    }),
+  saleEnd: yup.date()
+    .nullable()
+    .transform((value, originalValue) => (originalValue === "" ? null : value))
+    .when('isOnSale', {
+      is: true,
+      then: schema => schema
+        .required(t("saleEndDateRequired"))
+        .min(yup.ref('saleStart'), t("saleEndAfterStart")),
+      otherwise: schema => schema.notRequired().nullable(),
+    }),
+  tags: yup.array()
+    .of(
+      yup.string()
+        .trim()
+        .min(2, t("tagMinLength"))
+        .max(30, t("tagMaxLength"))
+        .matches(/^[a-zA-Z0-9\s\-_&]+$/, t("tagInvalidCharacters"))
+    )
+    .max(10, t("tagsMaxCount"))
+    .test('tags-length-total', t("tagsLengthTotalError"), function(value) {
+      if (!Array.isArray(value)) return true;
+      
+      const totalLength = value.join('').length;
+      return totalLength <= 200; // Total characters across all tags
+    })
+    .default([]),
+  image: yup.mixed()
+      .when([], (_, schema) => {
+        return !isEditMode 
+          ? schema.required(t("imageRequired")) // Image is required in add mode
+          : schema.nullable(); // Image is optional in edit mode
+      })
+      .test("file-format", t("invalidImageFormat"), function (value) {
+        // Skip validation if no value and in edit mode
+        if (!value && isEditMode) {
+          return true;
+        }
+        
+        // If it's a File object, validate the format
+        if (value instanceof File) {
+          const allowedExtensions = /\.(jpe?g|png|gif|webp)$/i;
+          return allowedExtensions.test(value.name);
+        }
+        
+        // If it's a string (existing image path), it's valid
+        if (typeof value === 'string' && value.length > 0) {
+          return true;
+        }
+        
+        // For add mode with no value, let the required validation handle it
+        if (!isEditMode && !value) {
+          return true; // Let .required() handle this
+        }
+        
+        return false;
+      }),
 });

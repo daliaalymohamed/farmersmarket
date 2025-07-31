@@ -6,8 +6,16 @@ import Category from "@/models/category";
 import Product from "@/models/product";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
-import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
+import { ensureActionExistsAndAssignToAdmin, deleteFile } from '@/middlewares/backend_helpers';
 import { getCategoryById } from '@/services/categoryService';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from "url";
+
+// Polyfill __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Handle GET (Fetch category by ID)
 // routing: /api/categories/[id]
@@ -65,12 +73,13 @@ export const PUT = authMiddleware(async (req, context) => {
         {
           fieldName: "image",
           category: "images",
-          folder: "public/uploads/categories/images",
+          folder: path.join(process.cwd(), 'src', 'app', 'api', 'uploads', 'categories', 'images'),
           isArray: false,
         },
       ]);
       fields = result.fields;
       uploadedFiles = result.uploadedFiles;
+      // console.log('📁 Saving image to:', path.join(process.cwd(), 'src', 'app', 'api', 'uploads', 'categories', 'images'));
     } else {
       // Handle JSON case (no file upload)
       // console.log("📄 Processing JSON data (no file upload)");
@@ -93,22 +102,63 @@ export const PUT = authMiddleware(async (req, context) => {
     if (fields['name.ar']) name.ar = fields['name.ar'];
 
     // ✅ Proceed with the request
-    // Only update what was sent
+    // Find existing category
+    const existingCategory = await Category.findById(id);
+    if (!existingCategory) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    // Handle image update
+    let newImageFilename = existingCategory.image;
+    if (uploadedFiles.image) {
+        const oldImagePath = path.resolve(
+          __dirname,
+          "..",
+          "..", // Move up two directories to reach the root of the project
+          "uploads", // Root uploads folder
+          "categories", // Parent folder
+          "images", // Subfolder
+          existingCategory.image // Use the filename stored in the database
+        );
+
+        // Delete old image if it exists
+        try {
+          await fs.access(oldImagePath); // Check if file exists
+          await fs.unlink(oldImagePath); // Delete it
+          // console.log(`🗑️ Old image deleted: ${oldImagePath}`);
+        } catch (err) {
+          if (err.code === 'ENOENT') {
+            console.warn(`Old image does not exist: ${oldImagePath}`);
+          } else {
+            console.error(`❌ Error deleting old image:`, err);
+          }
+        }
+
+        newImageFilename = uploadedFiles.image; // Use new uploaded image
+    }
+
+    // Build update data
     const updateData = {
       ...(Object.keys(name).length > 0 && { name }),
       ...(fields.color && { color: fields.color }),
-      ...(uploadedFiles.image && { image: uploadedFiles.image }),
+      ...(newImageFilename && { image: newImageFilename }),
     };
 
+    // Update the category
     const updatedCategory = await Category.findByIdAndUpdate(id, updateData, {
       new: true,
-      runValidators: true,
-      upsert: true // This will create the nested object if it doesn't exist
+      runValidators: true
     });
+
     if (!updatedCategory) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 }); // ❌ Not found
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
-    return NextResponse.json({message: 'Category has been updated successfully', category: updatedCategory}, { status: 200 }); // ✅ Success
+
+    return NextResponse.json({
+      message: 'Category has been updated successfully',
+      category: updatedCategory
+    }, { status: 200 }); // ✅ Success
+
   } catch (error) {
     console.error("❌ Full server error:", error); // 👈 Full error stack
     return NextResponse.json(
@@ -143,6 +193,28 @@ export const DELETE = authMiddleware(async (req, context) => {
     if (!deletedCategory) {
       return NextResponse.json({ error: "Category Not Found" }, { status: 404 });
     } 
+
+    // Delete the image from the file system
+    const { image } = deletedCategory;
+
+    // Construct the full file path
+    const filePath = path.resolve(
+      __dirname,
+      "..",
+      "..", // Move up two directories to reach the root of the project
+      "uploads", // Root uploads folder
+      "categories", // Parent folder
+      "images", // Subfolder
+      image // Use the filename stored in the database
+    );
+
+    // Delete the associated file
+    try {
+      await deleteFile(filePath);
+    } catch (deleteError) {
+      console.error(`Error deleting file ${filePath}:`, deleteError);
+    }
+
     // 2. Delete related products
     const deletedProducts = await Product.deleteMany({ categoryId: id });
 

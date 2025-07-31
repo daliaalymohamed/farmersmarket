@@ -5,6 +5,6 @@ export async function generateMetadata() {
     };
 }
 
-export default function CustomersLayout({ children }) {
+export default function CustomerLayout({ children }) {
     return <>{children}</>;
 }

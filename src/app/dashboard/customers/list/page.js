@@ -16,13 +16,15 @@ import { Typography, Box, TextField,
     TableRow,
     TablePagination,
     InputAdornment,
-    MenuItem
+    MenuItem,
+    IconButton
  } from '@mui/material';
 import { enUS, arSA } from 'date-fns/locale';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchIcon from '@mui/icons-material/Search';
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Breadcrumb from "@/components/UI/breadcrumb"; 
@@ -187,6 +189,7 @@ const CustomersListPage = () => {
                     sideNavItem={t("customers")} 
                     href={"list"} 
                     urlText={t("customersList")}
+                    ariaLabel="/dashboard/customers/list" 
                 />
                 <Typography variant="h4" gutterBottom>
                     {t('customersManagement')}
@@ -399,9 +402,14 @@ const CustomersListPage = () => {
                                         href={`/dashboard/customers/${customer._id}`}
                                         passHref
                                     >
-                                        <Button size="small">
-                                        {t('view')}
-                                        </Button>
+                                        <IconButton
+                                            size="small"
+                                            aria-label={`${t('viewDetailsFor')} ${customer.name?.[language] || customer.name?.en || ''}`}
+                                            color="primary"
+                                            title={t('viewDetails')}
+                                        >
+                                            <VisibilityIcon fontSize="small" />
+                                        </IconButton>
                                     </Link>
                                     </TableCell>
                                 </TableRow>

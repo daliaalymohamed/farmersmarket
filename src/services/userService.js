@@ -7,11 +7,20 @@ import mongoose from 'mongoose';
 
 // Fetch a user by ID
 export const getUserById = async (id) => {
+    // 🛡️ OPTIONAL: Ignore source map requests in development
+    if (id.endsWith('.map')) {
+        return new Response(null, { status: 204 });
+    }
+
+    // 🛡️ Validate ID format before calling the service
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return new Response(JSON.stringify({ error: 'Invalid user ID format' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
     try {
-        // Validate MongoDB ObjectId format
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new Error('Invalid user ID format');
-        }
+        
         const user = await User.findById(id) // Fetch user by ID from the database
                         .select("-password") // Hide password from the response
                         .populate({

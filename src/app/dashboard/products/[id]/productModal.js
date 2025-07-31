@@ -1,0 +1,702 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
+import Image from "next/image";
+import { Box, Typography, Button, 
+    TextField, InputLabel, Stack, Dialog, DialogActions, DialogContent, 
+    DialogTitle, CircularProgress, MenuItem, FormControlLabel, 
+    Checkbox, Chip } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import { checkPermission } from '@/middlewares/frontend_helpers';
+import { addProduct, editProduct, updateProductInList } from '@/store/slices/productSlice';
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import ButtonLoader from "@/components/UI/buttonLoader";
+import { productSchema } from '@/lib/utils/validation';
+import suppliesImage from '../../../../assets/supplies.jpeg'; // default image
+import { toast } from "react-toastify";
+
+// Product modal to edit and add new product
+const ProductModal = ({ open, handleClose, product, t, loading, language, categories, vendors }) => {
+    const router = useRouter();
+    const dispatch = useDispatch();
+    // Local state for image preview
+    // This will hold the image URL for previewing before submission
+    // If category is provided, use its image; otherwise, default to an empty string
+    // Local state for image preview
+    const [imagePreview, setImagePreview] = useState(null);    
+    const [hasNewImage, setHasNewImage] = useState(false);
+    // local state for tags
+    const [currentTagInput, setCurrentTagInput] = useState('');
+    // Add state for duplicate error in your component
+    const [duplicateTagError, setDuplicateTagError] = useState('');
+
+    // Redux Selectors
+    const actions = useSelector(
+        (state) => state.auth?.actions || [],
+        shallowEqual 
+    ); // With shallowEqual - only re-renders if selected values actually changed
+    // Check permissions on mount
+    // This effect runs once when the component mounts
+    // and checks if the user has the required permissions to view this page.
+    // If not, it redirects to the home page.
+    useEffect(() => {
+    const requiredPermissions = ["edit_product", "add_product"];
+    const hasAccess = checkPermission(actions, requiredPermissions);
+    
+    if (!hasAccess) {
+        router.push("/home");
+    }
+    }, [actions, router]);
+
+    // Updated form default values - convert dates to datetime-local format
+    const formatDateForInput = (date) => {
+    if (!date) return null;
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return null;
+        return dayjs(d);
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return null;
+    }
+};
+
+    // Product form hook with edit mode detection
+    const isEditMode = !!(product && product._id);
+
+    // ✅ Proper default values with consistent date handling
+    const getDefaultValues = () => {
+        if (product) {
+            return {
+                name: {
+                    en: product.name?.en || '',
+                    ar: product.name?.ar || '',
+                },
+                description: {
+                    en: product.description?.en || '',
+                    ar: product.description?.ar || '',
+                },
+                price: product.price || 0,
+                categoryId: product.categoryId?._id || product.categoryId || '',
+                stock: product.stock || 0,
+                vendorId: product.vendorId || '',
+                isActive: product.isActive !== undefined ? product.isActive : true,
+                isFeatured: product.isFeatured || false,
+                image: product.image || null,
+                isOnSale: product.isOnSale || false,
+                salePrice: product.salePrice || 0,
+                saleStart: formatDateForInput(product.saleStart),
+                saleEnd: formatDateForInput(product.saleEnd),
+                tags: product.tags || [],
+                updatedBy: product.updatedBy || null,
+            };
+        } else {
+            return {
+                name: { en: '', ar: '' },
+                description: { en: '', ar: '' },
+                price: 0,
+                categoryId: '',
+                stock: 0,
+                vendorId: '',
+                isActive: true,
+                isFeatured: false,
+                image: null,
+                isOnSale: false,
+                salePrice: 0,
+                saleStart: null,
+                saleEnd: null,
+                tags: [],
+                updatedBy: null,
+            };
+        }
+    };
+    // Product form hook
+      const {
+        register,
+        handleSubmit: handleSubmitProduct,
+        control,
+        setValue,
+        watch,
+        reset,
+        formState: { errors },
+      } = useForm({
+        mode: 'onChange',
+        resolver: yupResolver(productSchema(t, isEditMode)),
+        defaultValues: getDefaultValues()
+      });
+    
+    // Reset form and image preview when modal opens/closes or product changes
+    // 1. Debug form reset triggers
+    useEffect(() => {
+        if (open) {
+            const defaultValues = getDefaultValues();
+            reset(defaultValues);
+            
+            // Set image preview for existing product
+            if (product?.image) {
+                setImagePreview(`/api/images/product/${product.image}`);
+            } else {
+                setImagePreview(null);
+            }
+            
+            setHasNewImage(false);
+            setCurrentTagInput('');
+            setDuplicateTagError('');
+        }
+        
+        // Cleanup blob URLs when component unmounts or modal closes
+        return () => {
+            if (imagePreview && imagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [open, product, reset]);
+
+    // Handle image file input and preview
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Clean up previous blob URL
+            if (imagePreview && imagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+            
+            setValue('image', file, { shouldValidate: true });
+            setImagePreview(URL.createObjectURL(file));
+            setHasNewImage(true);
+        }
+    };   
+
+    // Handke Category change
+    const handleCategoryChange = (e) => {
+        const categoryId = e.target.value;
+        setValue('categoryId', categoryId, { shouldValidate: true });
+    }
+
+    // Handle Vendor change
+    const handleVendorChange = (e) => {
+        const vendorId = e.target.value;
+        setValue('vendorId', vendorId, { shouldValidate: true });
+    }
+
+    // Handle tag input change
+    const handleTagInputChange = (e) => {
+        setCurrentTagInput(e.target.value)
+        // Clear duplicate error when user starts typing
+        if (duplicateTagError) {
+            setDuplicateTagError('');
+        }
+    }
+
+    // Handle tag key down event
+    const handleTagKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const newTag = currentTagInput.trim();
+            
+            if (newTag && newTag.length > 0) {
+                const currentTags = watch('tags') || [];
+                
+                // Check if tag already exists (case insensitive)
+                const tagExists = currentTags.some(
+                    tag => tag.toLowerCase() === newTag.toLowerCase()
+                );
+                
+                if (tagExists) {
+                    // Set duplicate error message
+                    setDuplicateTagError(t('tagsUniqueError'));
+                    // Clear error after 3 seconds
+                    setTimeout(() => setDuplicateTagError(''), 3000);
+                    return;
+                }
+                
+                // Clear duplicate error if tag is valid
+                setDuplicateTagError('');
+                
+                const updatedTags = [...currentTags, newTag];
+                setValue('tags', updatedTags, { shouldValidate: true });
+                setCurrentTagInput(''); // Clear input after adding
+            }
+        }
+    }
+
+    // Convert date strings back to ISO format for API
+    const formatDateForAPI = (dayjsDate) => {
+        if (!dayjsDate) return null;
+        try {
+            return dayjsDate.toISOString();
+        } catch (error) {
+            console.error('Error formatting date for API:', error);
+            return null;
+        }
+    };
+
+    // Handle form submission for adding/editing product
+    const onSubmitProduct = async (data) => {
+        try {
+            let payload;
+
+            if (isEditMode) {
+                // Edit existing category
+                if (hasNewImage && data.image instanceof File) {
+                    // Use FormData when uploading a new file
+                    payload = new FormData();
+                    payload.append('name.en', data.name.en);
+                    payload.append('name.ar', data.name.ar);
+                    payload.append('description.en', data.description.en);
+                    payload.append('description.ar', data.description.ar);
+                    payload.append('price', data.price);
+                    payload.append('categoryId', data.categoryId);
+                    payload.append('stock', data.stock);
+                    payload.append('vendorId', data.vendorId);
+                    payload.append('isActive', data.isActive);
+                    payload.append('isFeatured', data.isFeatured);
+                    payload.append('isOnSale', data.isOnSale);
+                    payload.append('salePrice', data.salePrice);
+                    if (data.isOnSale) {
+                        const saleStartFormatted = formatDateForAPI(data.saleStart);
+                        const saleEndFormatted = formatDateForAPI(data.saleEnd);
+                        if (saleStartFormatted) payload.append('saleStart', saleStartFormatted);
+                        if (saleEndFormatted) payload.append('saleEnd', saleEndFormatted);
+                    } else {
+                        // Clear dates when not on sale
+                        payload.append('saleStart', '');
+                        payload.append('saleEnd', '');
+                    }
+                    payload.append('tags', JSON.stringify(data.tags));
+                    payload.append('updatedBy', data.updatedBy);
+                    payload.append('image', data.image);
+                } else {
+                    // Use JSON when no new file upload
+                    payload = { 
+                        name: data.name,
+                        description: data.description,
+                        price: data.price,
+                        categoryId: data.categoryId,
+                        stock: data.stock,
+                        vendorId: data.vendorId,
+                        isActive: data.isActive,
+                        isFeatured: data.isFeatured,
+                        isOnSale: data.isOnSale,
+                        salePrice: data.salePrice,
+                        saleStart: data.isOnSale ? formatDateForAPI(data.saleStart) : null,
+                        saleEnd: data.isOnSale ? formatDateForAPI(data.saleEnd) : null,
+                        tags: data.tags,
+                        updatedBy: data.updatedBy,
+                        // Keep existing image if no new file
+                        ...(product.image && !hasNewImage && { image: product.image })
+                    };
+                }
+                
+                const result = await dispatch(editProduct({
+                    productId: product._id, 
+                    productData: payload
+                })).unwrap();
+
+                // Ensure UI reflects changes immediately
+                if (result?.product) {
+                    dispatch(updateProductInList(result.product));
+                }
+
+                // Set image preview if product has an image
+                // This ensures the preview updates after editing
+                if (result?.product?.image) {
+                    setImagePreview(`/api/images/product/${result.product.image}`);
+                }
+                toast.success(t('productUpdatedSuccessfully'));
+            } else {
+                // Add new category - always use FormData for new categories
+                payload = new FormData();
+                payload.append('name.en', data.name.en);
+                payload.append('name.ar', data.name.ar);
+                payload.append('description.en', data.description.en);
+                payload.append('description.ar', data.description.ar);
+                payload.append('price', data.price);
+                payload.append('categoryId', data.categoryId);
+                payload.append('stock', data.stock);
+                payload.append('vendorId', data.vendorId);
+                payload.append('isActive', data.isActive);
+                payload.append('isFeatured', data.isFeatured);
+                payload.append('isOnSale', data.isOnSale);
+                payload.append('salePrice', data.salePrice);
+                // Handle dates properly for new products
+                if (data.isOnSale) {
+                    const saleStartFormatted = formatDateForAPI(data.saleStart);
+                    const saleEndFormatted = formatDateForAPI(data.saleEnd);
+                    if (saleStartFormatted) payload.append('saleStart', saleStartFormatted);
+                    if (saleEndFormatted) payload.append('saleEnd', saleEndFormatted);
+                }
+                payload.append('tags', JSON.stringify(data.tags));
+                payload.append('updatedBy', data.updatedBy);
+                
+                // Only append image if one was selected
+                if (data.image instanceof File) {
+                    payload.append('image', data.image);
+                }
+                
+                const result = await dispatch(addProduct(payload)).unwrap();
+                if (result?.product?.image) {
+                    setImagePreview(`/api/images/product/${result.product.image}`);
+                  }
+                toast.success(t('productAddedSuccessfully'));
+            }
+            
+            // Close modal after submission
+            handleClose();
+            
+        } catch (err) {
+            toast.error(t('productSaveFailed'));
+            if (err.details) {
+                toast.error(err.details);
+            }
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+            <DialogTitle>
+                {product ? t('editProduct') : t('addProduct')}
+            </DialogTitle>
+            <form onSubmit={handleSubmitProduct(onSubmitProduct)} encType="multipart/form-data">
+                <DialogContent>
+                    <Stack spacing={3}>
+                        <Stack direction="row" spacing={2}>
+                            <>
+                                <TextField
+                                    label={t('productNameEn')}
+                                    {...register('name.en')}
+                                    error={!!errors?.name?.en}
+                                    helperText={errors?.name?.en?.message}
+                                    fullWidth
+                                    required
+                                />
+                                <TextField
+                                    label={t('productNameAr')}
+                                    {...register('name.ar')}
+                                    error={!!errors?.name?.ar}
+                                    helperText={errors?.name?.ar?.message}
+                                    fullWidth
+                                    required
+                                />
+                            </>
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <TextField
+                                label={t('productDescriptionEn')}
+                                {...register('description.en')}
+                                error={!!errors?.description?.en}
+                                helperText={errors?.description?.en?.message}
+                                fullWidth
+                                multiline
+                                rows={4}
+                                required
+                            />
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <TextField
+                                label={t('productDescriptionAr')}
+                                {...register('description.ar')}
+                                error={!!errors?.description?.ar}
+                                helperText={errors?.description?.ar?.message}
+                                fullWidth
+                                multiline
+                                rows={4}
+                                required
+                            />
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <>
+                                <TextField
+                                    label={t('productPrice')}
+                                    {...register('price')}
+                                    error={!!errors?.price}
+                                    helperText={errors?.price?.message}
+                                    fullWidth
+                                    required
+                                />
+                                <TextField
+                                    label={t('productStock')}
+                                    {...register('stock')}
+                                    error={!!errors?.stock}
+                                    helperText={errors?.stock?.message}
+                                    fullWidth
+                                    required
+                                />
+                            </>
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <>
+                                {!categories ? (
+                                    <CircularProgress size={24} />
+                                ) 
+                                : categories.length === 0 ? (
+                                    <Typography color="error">{t('noCategoriesFound')}</Typography>
+                                )
+                                : 
+                                (
+                                    <TextField
+                                        select
+                                        label={t('productCategory')}
+                                        {...register('categoryId')}
+                                        value={watch('categoryId') || ''} // Get current value from form
+                                        onChange={handleCategoryChange}
+                                        error={!!errors?.categoryId}
+                                        helperText={errors?.categoryId?.message}
+                                        fullWidth
+                                        required
+                                    >
+                                        <MenuItem value="">{t('selectCategory')}</MenuItem>
+                                        {categories?.map((category) => (
+                                            <MenuItem key={category._id} value={category._id}>
+                                                {category.name?.[language] || category.name?.en || category.name?.ar || "Category"}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            </>
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <>
+                                {!vendors ? (
+                                    <CircularProgress size={24} />
+                                ) 
+                                : vendors.length === 0 ? (
+                                    <Typography color="error">{t('noVendorsFound')}</Typography>
+                                )
+                                : 
+                                (
+                                    <TextField
+                                        select
+                                        label={t('productVendor')}
+                                        {...register('vendorId')}
+                                        value={watch('vendorId') || ''} // Get current value from form
+                                        onChange={handleVendorChange}
+                                        error={!!errors?.vendorId}
+                                        helperText={errors?.vendorId?.message}
+                                        fullWidth
+                                        // required
+                                    >
+                                        <MenuItem value="">{t('selectVendor')}</MenuItem>
+                                        {vendors?.map((vendor) => (
+                                            <MenuItem key={vendor._id} value={vendor._id}>
+                                                {vendor?.name || "Vendor"}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            </>
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            <Controller
+                                name="isActive"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={field.value || false}
+                                                onChange={(e) => field.onChange(e.target.checked)}
+                                            />
+                                        }
+                                        label={t('active')}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="isFeatured"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={field.value || false}
+                                                onChange={(e) => field.onChange(e.target.checked)}
+                                            />
+                                        }
+                                        label={t('featured')}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="isOnSale"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={field.value || false}
+                                                onChange={(e) => field.onChange(e.target.checked)}
+                                            />
+                                        }
+                                        label={t('onSale')}
+                                    />
+                                )}
+                            />
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            {watch('isOnSale') && (
+                                <TextField
+                                    label={t('productSalePrice')}
+                                    {...register('salePrice')}
+                                    error={!!errors?.salePrice}
+                                    helperText={errors?.salePrice?.message || ''}
+                                    fullWidth
+                                    required={watch('isOnSale')}
+                                    disabled={!watch('isOnSale')}
+                                    />
+                            )}
+                        </Stack>
+                        <Stack direction="row" spacing={2}>
+                            {watch('isOnSale') && (
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <>
+                                        <Controller
+                                            name="saleStart"
+                                            control={control}
+                                            render={({ field: { onChange, value, ...field } }) => (
+                                                <DateTimePicker
+                                                    label={t("productSaleStart")}
+                                                    value={value}
+                                                    onChange={onChange}
+                                                    disabled={!watch("isOnSale")}
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            error: !!errors?.saleStart,
+                                                            helperText: errors?.saleStart?.message || "",
+                                                            required: watch("isOnSale")
+                                                        }
+                                                    }}
+                                                    {...field}
+                                                />
+                                            )}
+                                        />
+                                        
+                                        <Controller
+                                            name="saleEnd"
+                                            control={control}
+                                            render={({ field: { onChange, value, ...field } }) => (
+                                                <DateTimePicker
+                                                    label={t("productSaleEnd")}
+                                                    value={value}
+                                                    onChange={onChange}
+                                                    disabled={!watch("isOnSale")}
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            error: !!errors?.saleEnd,
+                                                            helperText: errors?.saleEnd?.message || "",
+                                                            required: watch("isOnSale")
+                                                        }
+                                                    }}
+                                                    {...field}
+                                                />
+                                            )}
+                                        />
+                                    </>
+                                </LocalizationProvider> 
+                            )}
+                        </Stack>
+                        <Stack spacing={1}>
+                            <InputLabel shrink>{t('productTags')}</InputLabel>
+                            
+                            {/* Display current tags as chips */}
+                            {watch('tags') && watch('tags').length > 0 && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    flexWrap: 'wrap', 
+                                    gap: 0.5, 
+                                    mb: 1,
+                                    p: 1,
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 1,
+                                    backgroundColor: '#fafafa'
+                                }}>
+                                    {watch('tags').map((tag, index) => (
+                                        <Chip 
+                                            key={index} 
+                                            label={tag} 
+                                            size="small" 
+                                            variant="filled"
+                                            color="primary"
+                                            onDelete={() => {
+                                                const currentTags = watch('tags') || [];
+                                                const newTags = currentTags.filter((_, i) => i !== index);
+                                                setValue('tags', newTags, { shouldValidate: true });
+                                                // Clear duplicate error when removing tags
+                                                if (duplicateTagError) {
+                                                    setDuplicateTagError('');
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+
+                            {/* Tag input field */}
+                            <TextField
+                                label={t('addTags')}
+                                placeholder={t('typeAndPressEnter')}
+                                value={currentTagInput}
+                                onChange={handleTagInputChange}
+                                onKeyDown={handleTagKeyDown}
+                                error={!!duplicateTagError || !!errors?.tags}
+                                helperText={
+                                    duplicateTagError || // Show duplicate error first if exists
+                                    errors?.tags?.message || // Then show other validation errors
+                                    t('pressEnterOrCommaToAddTag') // Default helper text
+                                }
+                                fullWidth
+                                size="small"
+                            />
+                        </Stack>
+                        <Stack spacing={1}>
+                            <InputLabel shrink>{t('productImage')}</InputLabel>
+                            <Button variant="outlined" component="label">
+                                {t('uploadImage')}
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            </Button>
+                            {imagePreview && (
+                                <Box mt={1}>
+                                    <Image
+                                        src={imagePreview}
+                                        alt={product?.name?.[language] || product?.name?.en || product?.name?.ar || t('product')}
+                                        width={400}
+                                        height={400}
+                                        style={{
+                                            objectFit: 'contain',
+                                            margin: 'auto',
+                                            padding: 4,
+                                          }}
+                                    />
+                                </Box>
+                            )}
+                            {errors?.image && (
+                                <Typography color="error" variant="caption">{errors.image.message}</Typography>
+                            )}
+                        </Stack>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={handleClose} variant="outlined">{t('cancel')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={loading}>
+                        {loading ? <ButtonLoader /> : t('saveChanges')}
+                    </Button>
+                </DialogActions>
+            </form>
+        </Dialog>
+    )
+}
+
+export default ProductModal;

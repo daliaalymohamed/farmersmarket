@@ -5,18 +5,32 @@ import Category from "@/models/category";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
+import path from 'path';
 
 // Handle GET (Fetch all categories)
-// routing: /api/categories?locale=en
+// routing: /api/categories
 export const GET = async (req) => {
-  console.log("🚀 GET /api/categories route hit!"); // ✅ Log that the route was hit
+  console.log("🚀 GET /api/categories?search={} route hit!"); // ✅ Log that the route was hit
   
   try {
         // Connect to the database
         await connectToDatabase();
 
+        const { searchParams } = new URL(req.url);
+
+        // Build query dynamically
+        const query = {};
+
+        // Search by name filter
+        const search = searchParams.get("search");
+        if (search) {
+            query.$or = [
+              { "name.en": { $regex: search, $options: 'i' } },
+              { "name.ar": { $regex: search, $options: 'i' } }
+          ];
+        }
         // ✅ Proceed with the request       
-        const categories = await Category.find();  
+        const categories = await Category.find(query);  
         return NextResponse.json(categories, { status: 200 }); // ✅ Success
     } catch (error) {
         console.error('❌ Error fetching categories:', error);
@@ -53,7 +67,7 @@ export const POST = authMiddleware(async (req, context) => {
         {
           fieldName: "image",
           category: "images",
-          folder: "public/uploads/categories/images",
+          folder: path.join(process.cwd(), 'src', 'app', 'api', 'uploads', 'categories', 'images'),
           isArray: false,
         },
       ]);

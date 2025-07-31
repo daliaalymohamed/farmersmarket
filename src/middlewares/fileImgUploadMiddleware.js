@@ -1,6 +1,7 @@
 // for upload management
 import fs from 'fs/promises';
 import path from "path";
+import { lookup } from 'mime-types';
 
 // Helper to ensure directory exists
 const ensureDirectoryExists = async (dir) => {
@@ -8,8 +9,16 @@ const ensureDirectoryExists = async (dir) => {
     await fs.access(dir);
   } catch {
     await fs.mkdir(dir, { recursive: true });
+    console.log(`✅ Created folder: ${dir}`);
   }
 };
+
+// Generate Safe File Names
+function generateSafeFileName(fieldName) {
+  const timestamp = Date.now();
+  const randomStr = Math.round(Math.random() * 1e9);
+  return `${fieldName}-${timestamp}-${randomStr}`;
+}
 
 // Allowed types and size limits
 const allowedTypes = {
@@ -34,7 +43,7 @@ const allowedTypes = {
 /**
  * Usage:
  * const { uploadedFiles, fields } = await uploadMiddleware(req, [
- *   { fieldName: "image", category: "images", folder: "public/uploads/categories/images", isArray: false },
+ *   { fieldName: "image", category: "images", folder: "/uploads/categories/images", isArray: false },
  * ]);
  */
 
@@ -55,31 +64,35 @@ export async function uploadMiddleware(req, configs) {
     }
 
     // If it's a file (Blob), process upload
+    // Handle file uploads
     if (values[0] instanceof Blob) {
       const validFilenames = [];
 
       for (const file of values) {
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        // Validate file type and size
+        // Validate MIME type based on extension
+        const ext = path.extname(file.name).toLowerCase();
+        const mimeType = lookup(ext) || file.type;
+
         const { types, maxSize } = allowedTypes[category];
-        if (!types.includes(file.type)) {
-          throw new Error(`Invalid file type for ${fieldName}. Allowed: ${types.join(", ")}`);
+        if (!types.includes(mimeType)) {
+          throw new Error(`Invalid file type for ${fieldName}. Allowed: ${types.join(', ')}`);
         }
         if (file.size > maxSize) {
           throw new Error(`File too large: ${file.name}`);
         }
 
-        // Generate unique name
-        const ext = path.extname(file.name);
-        const uniqueName = `${fieldName}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-        const destPath = path.join(process.cwd(), folder, uniqueName);
+        // Generate safe name
+        const uniqueName = `${generateSafeFileName(fieldName)}${ext}`;
+        const destPath = path.join(folder, uniqueName);
 
         // Ensure folder exists
         await ensureDirectoryExists(path.dirname(destPath));
 
-        // Save file
+        // Write file
         await fs.writeFile(destPath, buffer);
+        console.log(`✅ Uploaded: ${destPath}`);
 
         validFilenames.push(uniqueName);
       }
@@ -89,6 +102,7 @@ export async function uploadMiddleware(req, configs) {
       fields[fieldName] = isArray ? values : values[0];
     }
   }
+
 
   // Extract remaining form fields
   for (const [key, value] of formData.entries()) {

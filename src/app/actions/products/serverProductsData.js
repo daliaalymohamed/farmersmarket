@@ -1,7 +1,9 @@
-import { getAuthenticatedUser } from '@/lib/services/serverSideServices/auth/serverAuth';
+'use server';
 
-// This is a server-side function to fetch customers data
-export const getCategories = async () => {
+import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
+
+// This is a server-side function to fetch products data
+export const getProducts = async (filters) => {
   try {
 
     // Get authenticated user data and headers
@@ -13,8 +15,18 @@ export const getCategories = async () => {
       throw new Error('API URL is not configured');
     }
 
+    // Create URL with search parameters
+    const url = new URL(`${baseUrl}/api/products`);
+    
+    // Add all filters as search parameters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.append(key, value.toString());
+      }
+    });
+
     // Make the API request
-    const response = await fetch(`${baseUrl}/api/categories`, {
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
       cache: 'no-store'
@@ -39,10 +51,9 @@ export const getCategories = async () => {
 
 
   } catch (error) {
-    console.error('[getCategories] Error:', {
+    console.error('[getProducts] Error:', {
       message: error.message,
-      type: error.name,
-      id
+      type: error.name
     });
 
     if (error.name === 'TypeError') {

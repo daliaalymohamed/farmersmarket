@@ -9,8 +9,8 @@ export const getAuthenticatedUser = async () => {
   const cookieStore = await cookies();
   const headersList = await headers();
 
-  const token = await cookieStore.get('token')?.value;
-  const acceptLanguage = await headersList.get('accept-language') || 'en';
+  const token = cookieStore.get('token')?.value;
+  const acceptLanguage = headersList.get('accept-language') || 'en';
 
   if (!token) {
     console.error('No authentication token found in cookies');

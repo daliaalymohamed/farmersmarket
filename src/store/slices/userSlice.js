@@ -50,12 +50,6 @@ const initialState = {
   list: [], // array of customers
   loading: false,
   error: null,
-  filters: {
-    search: "",
-    active: "",
-    startDate: null,
-    endDate: null,
-  },
   pagination: {
     total: 0,
     page: 1,

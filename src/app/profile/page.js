@@ -1,6 +1,6 @@
 // This is server-side code for a Next.js page that fetches profile data for the authenticated user.
-import { getCustomerById } from '@/lib/services/serverSideServices/users/serverUserByIdData';
-import { getAuthenticatedUser } from '@/lib/services/serverSideServices/auth/serverAuth';
+import { getCustomerById } from '@/app/actions/users/serverUserByIdData';
+import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
 import MyProfile from './profile';
 import { notFound } from 'next/navigation';
 

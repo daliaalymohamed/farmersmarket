@@ -1,3 +1,4 @@
+import { uploadMiddleware } from '@/middlewares/fileImgUploadMiddleware';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
 import Product from "@/models/product";
@@ -5,32 +6,136 @@ import Category from "@/models/category";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from "url";
+
+// Polyfill __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 // Handle GET (Fetch all products with category details)
-// routing: /api/products?locale=en
+// routing: /api/products
 export const GET = async (req) => {
-    console.log("🚀 GET /api/products?locale=en route hit!"); // ✅ Log that the route was hit
+    console.log("🚀 GET /api/products?page=1&limit=3&search={}&status=all&category=all route hit!"); // ✅ Log that the route was hit
     
-    const { searchParams } = new URL(req.url);
-    const locale = searchParams.get('locale'); // Get locale from query params
-      
     try {
           // Connect to the database
           await connectToDatabase();
   
-          // ✅ Proceed with the request       
-          if (!locale) {
-            return NextResponse.json({ error: 'Locale is required' }, { status: 400 }); // ❌ Bad request
+          const { searchParams } = new URL(req.url);
+          
+          // Pagination
+          const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
+          const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 100); // max 100 per page
+          // Build query dynamically
+          const query = {};
+          const sort = { createdAt: -1 };
+  
+          // 1. Search by name filter
+          const search = searchParams.get("search");
+          if (search) {
+              query.$or = [
+                { "name.en": { $regex: search, $options: 'i' } },
+                { "name.ar": { $regex: search, $options: 'i' } }
+            ];
           }
-          const products = await Product.find(
-            {},
-            { [`name.${locale}`]: 1, [`description.${locale}`]: 1, price: 1, categoryId: 1, stock: 1, imageUrl: 1 }
-          );  
-          return NextResponse.json(products, { status: 200 }); // ✅ Success
+
+          // 2. Category filter
+          const category = searchParams.get("category");
+          if (category && category !== "all") {
+              const categoryObj = await Category.findById(category);
+              if (categoryObj) {
+                  query.categoryId = categoryObj._id; // Use the actual ObjectId
+                } else {
+                  // If no category found, return empty result
+                  return NextResponse.json({
+                      products: [],
+                      pagination: {
+                          total: 0,
+                          page,
+                          limit,
+                          totalPages: 0,
+                          hasNextPage: false,
+                          hasPrevPage: false
+                      },
+                      stats: {
+                          total: 0,
+                          active: 0,
+                          inactive: 0,
+                          lowStock: 0,
+                          totalValue: 0
+                      }
+                  }, { status: 200, headers: {
+                      'Cache-Control': 'no-store, must-revalidate',
+                      'Pragma': 'no-cache',
+                      'Expires': '0'
+                  } });
+              }
+          }
+
+          // 3. Status filter
+          const status = searchParams.get("status");
+          if (status === "active") query.isActive = true;
+          else if (status === "inactive") query.isActive = false;
+  
+          // Other filters
+          // You can add more filters here as needed, e.g., price range, stock status, etc.
+          
+
+
+
+          // Fetch total count
+          const total = await Product.countDocuments(query);
+          const totalPages = Math.ceil(total / limit);
+          // Fetch users
+          const products = await Product.find(query)
+            .sort(sort)
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate({
+                path: "categoryId",
+                model: "Category"
+            });
+         
+          // Calculate statistics for ALL products (no filters)
+          const allProducts = await Product.find({});
+          const stats = {
+              total: allProducts.length,
+              active: allProducts.filter(p => p.isActive === true).length,
+              inactive: allProducts.filter(p => p.isActive === false).length,
+              lowStock: allProducts.filter(p => p.stock < 10 && p.stock > 0).length,
+              totalValue: allProducts.reduce((sum, p) => sum + (p.price * p.stock), 0)
+          };
+
+          // Return response
+          return NextResponse.json({
+              products,
+              pagination: {
+                  total,
+                  page,
+                  limit,
+                  totalPages,
+                  hasNextPage: page < totalPages,
+                  hasPrevPage: page > 1
+              },
+              stats
+          }, { status: 200, headers: {
+                  'Cache-Control': 'no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+              } });
+  
       } catch (error) {
           console.error('❌ Error fetching products:', error);
-          return NextResponse.json({ message: "Internal Server Error" }, { status: 500 }); // ❌ Server error
+          return NextResponse.json({ message: "Internal Server Error" }, { status: 500,
+              headers: {
+                  'Cache-Control': 'no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+              }
+            });
       }
 }
 
@@ -42,50 +147,193 @@ export const POST = authMiddleware(async (req) => {
   const requiredAction = "add_product"; // Define the required action for this route
   
   try {
-        // Connect to the database
-        await connectToDatabase();
+      // Connect to the database
+      await connectToDatabase();
 
-        // Ensure the required action exists and is assigned to the admin role
-        await ensureActionExistsAndAssignToAdmin(requiredAction);
-        // ✅ Check if the user has the required permission
-        // ✅ Check permission before executing
-        const permissionCheck = await checkPermission(requiredAction)(req);
-        if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
+      // Ensure the required action exists and is assigned to the admin role
+      await ensureActionExistsAndAssignToAdmin(requiredAction);
+      // ✅ Check if the user has the required permission
+      // ✅ Check permission before executing
+      const permissionCheck = await checkPermission(requiredAction)(req);
+      if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
+      
+      const currentUser = req.user; // Get the current user from the request
+        if (!currentUser) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); // ❌ Unauthorized
+      }
+
+      // ✅ ALWAYS set createdBy for any create operation
+      // Check different possible properties for the user ID
+      // Extract user ID safely
+      let userId = null;
+      if (currentUser.userId && currentUser.userId !== "null") {
+        userId = currentUser.userId;
+      } else if (currentUser._id && currentUser._id !== "null") {
+        userId = currentUser._id;
+      } else if (currentUser.id && currentUser.id !== "null") {
+        userId = currentUser.id;
+      }
+
+      if (!userId) {
+        console.warn("⚠️ Could not determine user ID for createdBy");
+        return NextResponse.json({ error: "User ID not found" }, { status: 400 });
+      }
+
+      // Check Content-Type to determine how to parse the request
+      const contentType = req.headers.get('content-type') || '';
+      let fields = {};
+      let uploadedFiles = {};
+  
+      if (contentType.includes('multipart/form-data')) {
+        // Handle file upload case
+        // console.log("📁 Processing multipart/form-data (file upload)");
+        const result = await uploadMiddleware(req, [
+          {
+            fieldName: "image",
+            category: "images",
+            folder: path.join(process.cwd(), 'src', 'app', 'api', 'uploads', 'products', 'images'),
+            isArray: false,
+          },
+        ]);
+        fields = result.fields;
+        uploadedFiles = result.uploadedFiles;
+        console.log('📁 Saving image to:', path.join(process.cwd(), 'src', 'app', 'api', 'uploads', 'products', 'images'));
+      } else {
+        // Handle JSON case (no file upload)
+        // console.log("📄 Processing JSON data (no file upload)");
+        const body = await req.json();
         
-        // ✅ Proceed with the request       
-        let body;
-        try {
-          body = await req.json();
-        } catch (err) {
-          return NextResponse.json({ error: "Invalid or missing JSON body" }, { status: 400 }); // ❌ Bad request
-        }
+        // Map JSON structure to fields format
+        fields = {
+          'name.en': body.name?.en,
+          'name.ar': body.name?.ar,
+          'description.en': body.description?.en,
+          'description.ar': body.description?.ar,
+          price: body.price,
+          categoryId: body.categoryId,
+          stock: body.stock,
+          vendorId: body.vendorId,
+          isActive: body.isActive,
+          isFeatured: body.isFeatured,
+          isOnSale: body.isOnSale,
+          salePrice: body.salePrice,
+          saleStart: body.saleStart ? new Date(body.saleStart) : undefined,
+          saleEnd: body.saleEnd ? new Date(body.saleEnd) : undefined,
+          tags: body.tags, // Will parse below
+          image: body.image, // Only used if not uploading file
+        };
+      }
 
-        const { name, description, price, categoryId, imageUrl, stock } = body;
-        if (!name?.en || !name?.ar || !description?.en || !description?.ar || !price || !categoryId || !imageUrl) {
-          return NextResponse.json({ error: "Missing required fields" }, { status: 400 }); // ❌ Bad request
-        }
-
-        // Check if the provided category exists
-        const categoryExists = await Category.findById(categoryId);
-        if (!categoryExists) {
-          return NextResponse.json({ error: "Invalid category ID" }, { status: 400 }); // ❌ Bad request
-        }
-        const newProduct = new Product({
-          name,
-          description,
-          price,
-          categoryId,
-          imageUrl,
-          stock
-        });
-        await newProduct.save();
-
+      // ✅ Validate required fields
+      if (!fields['name.en'] || !fields['name.ar']) {
         return NextResponse.json(
-          { message: "✅ Product Created Successfully", product: newProduct },
-          { status: 201 } // ✅ Created
+          { error: "Product name in both English and Arabic is required" },
+          { status: 400 }
+        );
+      }
+      if (!fields.price || isNaN(Number(fields.price)) || Number(fields.price) < 0) {
+        return NextResponse.json({ error: "Valid price is required" }, { status: 400 });
+      }
+      if (!fields.categoryId) {
+        return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
+      }
+
+      // Check if category exists
+      const categoryExists = await Category.findById(fields.categoryId);
+      if (!categoryExists) {
+        return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
+      }
+
+      if (!fields.vendorId) {
+        return NextResponse.json({ error: "Vendor Id is required" }, { status: 400 })
+      }
+
+      // Check if vendor exists
+      const vendorExists = await Vendor.findById(fields.vendorId);
+      if (!vendorExists) {
+        return NextResponse.json({ error: "Invalid vendor ID" }, { status: 400 });
+      }
+
+      // Parse tags if string
+      let tags = [];
+      if (fields.tags) {
+        try {
+          tags = typeof fields.tags === 'string' ? JSON.parse(fields.tags) : fields.tags;
+          if (!Array.isArray(tags)) tags = [];
+        } catch (e) {
+          tags = [];
+        }
+      }
+
+      // Build name object
+      const name = {};
+      if (fields['name.en']) name.en = fields['name.en'];
+      if (fields['name.ar']) name.ar = fields['name.ar'];
+  
+      // Build description object
+      const description = {};
+      if (fields['description.en']) description.en = fields['description.en'];
+      if (fields['description.ar']) description.ar = fields['description.ar'];
+  
+      // Validate dates
+      const saleStart = fields.saleStart ? new Date(fields.saleStart) : null;
+      const saleEnd = fields.saleEnd ? new Date(fields.saleEnd) : null;
+
+      if (fields.isOnSale && (!saleStart || isNaN(saleStart.getTime()))) {
+        return NextResponse.json({ error: "Valid sale start date is required when on sale" }, { status: 400 });
+      }
+      if (fields.isOnSale && (!saleEnd || isNaN(saleEnd.getTime()))) {
+        return NextResponse.json({ error: "Valid sale end date is required when on sale" }, { status: 400 });
+      }
+
+      // Use uploaded file if exists, otherwise fallback to provided image (if any)
+      const image = uploadedFiles.image || fields.image || null;
+
+      // ✅ Proceed with the request
+      // Build created data
+      const createdData = {
+        name,
+        description,
+        price: Number(fields.price),
+        categoryId: fields.categoryId,
+        stock: Number(fields.stock) || 0,
+        vendorId: fields.vendorId,
+        isActive: fields.isActive !== undefined ? fields.isActive : true,
+        isFeatured: fields.isFeatured || false,
+        isOnSale: fields.isOnSale || false,
+        salePrice: fields.salePrice ? Number(fields.salePrice) : undefined,
+        saleStart: fields.isOnSale && saleStart ? saleStart : undefined,
+        saleEnd: fields.isOnSale && saleEnd ? saleEnd : undefined,
+        tags,
+        image,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+
+      const newProduct = new Product(createdData);
+      await newProduct.save();
+
+      // ✅ Populate references before returning
+      const populatedProduct = await Product.populate(newProduct, [
+        { path: 'categoryId' },
+        { path: 'updatedBy' },
+        { path: 'createdBy' },
+        { path: 'vendorId' }
+      ]);
+
+      return NextResponse.json(
+        {
+          message: 'Product created successfully',
+          product: populatedProduct,
+        },
+        { status: 201 }
       );// ✅ Success
-    } catch (error) {
-        console.error('❌ Error in creating product', error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 }); // ❌ Server error
-    }
+  
+  } catch (error) {
+      console.error("❌ Full server error:", error); // 👈 Full error stack
+      return NextResponse.json(
+        { error: "Failed to update product", details: error.message },
+        { status: 500 }
+      );
+  }
 });

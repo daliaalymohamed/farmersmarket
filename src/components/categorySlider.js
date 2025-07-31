@@ -1,17 +1,16 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { Box, Card, CardContent, Typography, IconButton } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import Image from "next/image";
-// import fruitsVeg from '../../uploads/fruits&Veg.jpg';
-// import ButcheryPoltery from '../../uploads/Butchery&Poltery.jpg';
-// import BakeryCakes from '../../uploads/Bakery & Cakes.webp';
-// import spices from '../../uploads/spices.jpeg';
-// import plasticsGlass from '../../uploads/plastics&glass.jpg';
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
+import { initializeCategories } from '@/store/slices/categorySlice';
+import Loading from "@/components/UI/loading";
+import Error from "@/components/UI/error";
 
 // Custom Arrow Component
 const CustomPrevArrow = ({ onClick, ariaLabel }) => (
@@ -54,7 +53,23 @@ const CustomPrevArrow = ({ onClick, ariaLabel }) => (
 
 const CategorySlider = ({initialData}) => {
   const { t, language } = useTranslation()
-
+  const dispatch = useDispatch();
+  // Redux Selectors
+  // With shallowEqual - only re-renders if selected values actually changed
+  const { loading , error, categoriesList } = useSelector(
+      state => ({
+        loading: state.categories.loading,
+        error: state.categories.error,
+        categoriesList: state.categories.categoriesList || [], 
+      }),
+      shallowEqual
+  )
+  // Initialize Redux with server-side data
+  useEffect(() => {
+      if (initialData && initialData.length > 0) {
+          dispatch(initializeCategories(initialData));
+      }
+  }, [dispatch, initialData]);
   // slider slick settings
   const settings = {
     dots: true,
@@ -88,7 +103,16 @@ const CategorySlider = ({initialData}) => {
           {t("order")}
       </Typography>
       <Slider {...settings}>
-        {initialData.map((item) => (
+        {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                <Loading />
+            </Box>
+        ) : error ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                <Error message={error} />
+            </Box>
+        ) : (
+        categoriesList.map((item) => (
           <Card
           sx={{
             textAlign: "center",
@@ -111,7 +135,7 @@ const CategorySlider = ({initialData}) => {
             >
               {item.image ? (
                   <Image
-                    src={`/uploads/categories/images/${item.image}`}
+                    src={`/api/images/category/${item.image}`}
                     alt={language === "en" ? item.name.en : item.name.ar}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -129,7 +153,7 @@ const CategorySlider = ({initialData}) => {
             </Typography>
           </CardContent>
         </Card>
-        ))} 
+        )))}
       </Slider>
     </Box>
   );

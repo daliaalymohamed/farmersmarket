@@ -5,7 +5,7 @@ import { Typography, Breadcrumbs, Link } from '@mui/material';
 import NextLink from 'next/link';
 import HomeIcon from '@mui/icons-material/Home';
 
-const Breadcrumb = ({ sideNavItem, href, urlText }) => {
+const Breadcrumb = ({ sideNavItem, href, urlText, ariaLabel }) => {
     const { t } = useTranslation();
     return (
         <Breadcrumbs separator="›" aria-label="breadcrumb">
@@ -24,6 +24,7 @@ const Breadcrumb = ({ sideNavItem, href, urlText }) => {
                 href={href}
                 underline="hover"
                 color="inherit"
+                aria-label={ariaLabel}
             >
                 {sideNavItem}
             </Link>
