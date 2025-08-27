@@ -1,6 +1,7 @@
 // This is server-side code for a Next.js page that fetches customer data based on the provided ID.import { getCustomerById } from '@/lib/services/serverServices/users/serverUserData';
 import { getProducts } from '@/app/actions/products/serverProductsData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
+import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import ProductsList from './productsList';
 
 const ProductsPage = async ({ searchParams }) => {
@@ -25,17 +26,20 @@ const ProductsPage = async ({ searchParams }) => {
       // Get products with initial filters
       const products = await getProducts(initialFilters);
       const categories = await getCategories(initialFilters);
+      const vendors = await getVendors(initialFilters);
       
-      if (!products || !categories) {
+      if (!products || !categories || !vendors) {
         notFound();
       }
   
       return <ProductsList 
         initialData={products} 
         initialFilters={initialFilters} 
-        initialCategories={categories}/>;
+        initialCategories={categories}
+        initialVendors={vendors}
+      />;
   } catch (error) {
-      console.error('Error loading products or categories', error);
+      console.error('Error loading products or categories or vendors', error);
       throw error;
   }
 }

@@ -208,6 +208,7 @@ export const PUT = authMiddleware(async (req, context) => {
     // ✅ Populate related documents
     const populatedProduct = await Product.populate(updatedProduct, [
       { path: 'categoryId' },
+      { path: 'createdBy' },
       { path: 'updatedBy' },
       { path: 'vendorId' }
     ]);
@@ -228,35 +229,95 @@ export const PUT = authMiddleware(async (req, context) => {
 });
 
 
-// Handle DELETE (Delete product by ID)
+// Handle PATCH (activate or deactivate product by ID)
+// The PATCH method is used for partial updates, which is appropriate for activating/deactivating a product.
 // routing: /api/products/[id]
-export const DELETE = authMiddleware(async (req, context) => {
-  console.log("🚀 DELETE /api/products/:id route hit!"); // ✅ Log that the route was hit
-  const params = await context.params;
-  const id = params.id;
-  const requiredAction = "delete_product"; // Define the required action for this route
-
+export const PATCH = authMiddleware(async (req, context) => {
+  console.log("🚀 PATCH /api/products/:id route hit!"); // ✅ Log that the route was hit
+  
   try {
+    // Get params asynchronously
+    const params = await context.params;
+    
+    // Validate ID parameter
+    if (!params?.id) {
+      return NextResponse.json({ 
+        error: 'Missing product ID parameter' 
+      }, { status: 400 });
+    }
+
+    const id = params.id;
+    const requiredAction = "toggle_product_status"; // Define the required action for this route
+    
     // Connect to the database
     await connectToDatabase();
 
     // Ensure the required action exists and is assigned to the admin role
     await ensureActionExistsAndAssignToAdmin(requiredAction);
+
     // ✅ Check if the user has the required permission
-    // ✅ Check permission before executing
     const permissionCheck = await checkPermission(requiredAction)(req);
     if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
-    
+
+    const currentUser = req.user; // Get the current user from the request
+    if (!currentUser) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); // ❌ Unauthorized
+    }
+
+    // Check different possible properties for the user ID
+    // Extract user ID safely
+    let userId = null;
+    if (currentUser.userId && currentUser.userId !== "null") {
+      userId = currentUser.userId;
+    } else if (currentUser._id && currentUser._id !== "null") {
+      userId = currentUser._id;
+    } else if (currentUser.id && currentUser.id !== "null") {
+      userId = currentUser.id;
+    }
+
+    if (!userId) {
+      console.warn("⚠️ Could not determine user ID for createdBy");
+      return NextResponse.json({ error: "User ID not found" }, { status: 400 });
+    }
+
     // ✅ Proceed with the request
-    const deletedProduct = await Product.findByIdAndDelete(id);
-    if (!deletedProduct) {
-      return NextResponse.json({ error: "Product Not Found" }, { status: 404 });
-    } 
+    const { isActive } = await req.json(); // Assuming the request body contains the updated active status
+    // Validate that `isActive` is a boolean
+    if (typeof isActive !== "boolean") {
+      return NextResponse.json(
+        { error: "Invalid 'isActive' value. Must be true or false boolean values" },
+        { status: 400 }
+      ); // ❌ Bad request
+    }
+
+    // Update the product's active status
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { isActive, updatedBy: userId },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 }); // ❌ Not found
+    }
+
+    const message = isActive
+      ? "Product has been activated successfully"
+      : "Product has been deactivated successfully";
+
+    // ✅ Populate related documents
+    const populatedProduct = await Product.populate(updatedProduct, [
+      { path: 'createdBy' },
+      { path: 'updatedBy' },
+    ]);
+
+    // Now return fully populated product
     return NextResponse.json({
-      message: "✅ Product has been deleted successfully",
-    }, { status: 200 });
+      message,
+      product: populatedProduct // ✅ Now includes full objects
+    }, { status: 200 });// ✅ Success
   } catch (error) {
-    console.error("❌ Error deleting product:", error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    console.error("❌ Error toggling product status:", error);
+    return NextResponse.json({ error: "Failed to toggle product status" }, { status: 500 }); // ❌ Server error
   }
 });

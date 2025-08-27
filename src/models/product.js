@@ -14,7 +14,7 @@ const ProductSchema = new mongoose.Schema(
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     stock: { type: Number, default: 0 },
     image: { type: String, required: true },
-    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who added the product
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who updated the product
     isActive: { type: Boolean }, // Soft delete
@@ -55,7 +55,7 @@ ProductSchema.virtual("inventories", {
 //   return inventories.reduce((sum, inv) => sum + inv.quantity, 0);
 // };
 
-// Add compound index for category and active status
+// Add compound index for product and active status
 ProductSchema.index({ categoryId: 1, vendorId: 1, isActive: 1 });
 
 export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

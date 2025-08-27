@@ -51,17 +51,20 @@ import WarningIcon from '@mui/icons-material/Warning'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { checkPermission } from '@/middlewares/frontend_helpers';
-import { initializeProducts } from '@/store/slices/productSlice';
+import { bulkToggleProductStatus, initializeProducts, updateProductInList } from '@/store/slices/productSlice';
 import { initializeCategories } from '@/store/slices/categorySlice';
+import { initializeVendors } from '@/store/slices/vendorSlice';
 import { useSearchParams } from 'next/navigation';
 import Loading from "@/components/UI/loading";
 import Error from "@/components/UI/error";
+import ConfirmationDialog from '@/components/confirmDialog';
+
 import ButtonLoader from "@/components/UI/buttonLoader";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import { useDebouncedCallback } from 'use-debounce'; 
 
-const ProductsList = ({initialData, initialFilters, initialCategories}) => {
+const ProductsList = ({initialData, initialFilters, initialCategories, initialVendors}) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t, language } = useTranslation();
@@ -71,45 +74,40 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
-
-    const [anchorEl, setAnchorEl] = useState(null);
+    const [confirmDialog, setConfirmDialog] = useState({
+            open: false,
+            title: '',
+            message: '',
+            onConfirm: () => {},
+    });
     const [deleteDialog, setDeleteDialog] = useState(false);
 
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual 
-    ); // With shallowEqual - only re-renders if selected values actually changed
-    const { loading, error, productsList, pagination, stats, categoriesList } = useSelector(
-        state => ({
-          loading: state.products?.loading || false,
-          error: state.products?.error || null,
-          productsList: state.products?.productsList || [],
-          pagination: state.products?.pagination || {},
-          stats: state.products?.stats || {
-            total: 0,
-            active: 0,
-            inactive: 0,
-            lowStock: 0,
-            totalValue: 0
-          },
-          categoriesList: state.categories?.categoriesList || [],
-        }),
-        shallowEqual
-    ); // With shallowEqual - only re-renders if selected values actually changed
-    
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+    const loading = useSelector(state => state.products?.loading || false);
+    const error = useSelector(state => state.products?.error || null);
+    const productsList = useSelector(state => state.products?.productsList || [], shallowEqual);
+    const pagination = useSelector(state => state.products?.pagination || {}, shallowEqual);
+    const stats = useSelector(state => state.products?.stats || {}, shallowEqual);
+    const categoriesList = useSelector(state => state.categories?.categoriesList || [], shallowEqual);
+
     // Check permissions on mount
     // This effect runs once when the component mounts
     // and checks if the user has the required permissions to view this page.
     // If not, it redirects to the home page.
     useEffect(() => {
-        const requiredPermissions = ["view_dashboard","delete_product"];
+        if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
+        const requiredPermissions = ["view_dashboard","bulk_toggle_vendor_status"];
         const hasAccess = checkPermission(actions, requiredPermissions);
         
         if (!hasAccess) {
             router.push("/home");
         }
-    }, [actions, router]);
+    }, [actions, actionsLoaded, router]);
 
     // Initialize Redux with server-side data
     useEffect(() => {
@@ -127,7 +125,14 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
             dispatch(initializeCategories(initialCategories));
         }
     }, [dispatch, initialCategories]);
-
+    // Initialize Redux with server-side vendors
+     useEffect(() => {
+        if (initialVendors?.vendors?.length >= 0) {
+            dispatch(initializeVendors({
+                vendors: initialVendors.vendors
+            }));
+        }
+    }, [dispatch, initialVendors]);
 
     // Get current filter values from URL
     const selectedCategory = searchParams.get('category') || 'all';
@@ -196,7 +201,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
     // Use server-side filtered data directly (no client-side filtering needed)
     const displayProducts = Array.isArray(productsList) ? productsList : [];
 
-    // Table selection, menu, delete logic
+    // Table selection, menu, activate/deactivate logic
     // Handle product selection
     const handleSelectProduct = (productId) => {
         setSelectedProducts(prev =>
@@ -209,23 +214,66 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
     // Handle select all products in the current page
     const handleSelectAll = (event) => {
         if (event.target.checked) {
-            const newSelected = displayProducts.map(p => p.id);
+            const newSelected = displayProducts.map(product => product._id); 
             setSelectedProducts(newSelected);
         } else {
             setSelectedProducts([]);
         }
     };
 
-    // Handle menu open
-    const handleMenuOpen = (event, product) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedProduct(product);
+    // Get the action for bulk toggle based on selected products
+    // Bulk toggle logic
+    const getBulkToggleAction = () => {
+        if (selectedProducts.length === 0) return null;
+        const selected = productsList.filter((p) => selectedProducts.includes(p._id));
+        const allActive = selected.every((p) => p.isActive);
+        const allInactive = selected.every((p) => !p.isActive);
+        return allActive ? 'deactivate' : allInactive ? 'activate' : 'mixed';
     };
 
-    // Handle menu close
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedProduct(null);
+    const handleBulkToggle = async () => {
+        if (selectedProducts.length === 0) return;
+
+        const action = getBulkToggleAction();
+        const newStatus = action === 'activate';
+
+        const performToggle = async () => {
+            try {
+            const result = await dispatch(
+                bulkToggleProductStatus({
+                productIds: selectedProducts,
+                isActive: newStatus,
+                })
+            ).unwrap();
+
+            // Update Redux
+            result.products.forEach((product) => dispatch(updateProductInList(product)));
+
+            // Reset selection
+            setSelectedProducts([]);
+            
+            // Show success
+            toast.success(
+                newStatus
+                ? t('productsActivatedSuccessfully')
+                : t('productsDeactivatedSuccessfully')
+            );
+            } catch (error) {
+            toast.error(t('bulkToggleFailed'));
+            }
+        };
+
+        if (action === 'mixed') {
+            // Show reusable dialog
+            setConfirmDialog({
+            open: true,
+            title: t('mixedStatusWarning'),
+            message: t('someProductsHaveMixedStatus'),
+            onConfirm: performToggle,
+            });
+        } else {
+            performToggle();
+        }
     };
 
     // handle add click
@@ -240,18 +288,6 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
         setSelectedProduct(null);
     };
 
-    // Handle delete click
-    const handleDeleteClick = () => {
-        setDeleteDialog(true);
-        handleMenuClose();
-    };
-
-    // Handle delete confirmation
-    const handleDeleteConfirm = () => {
-        console.log('Deleting product:', selectedProduct);
-        setDeleteDialog(false);
-        setSelectedProduct(null);
-    };
 
     // Handle pagination change
     const handlePageChange = async (event, newPage) => {
@@ -313,9 +349,9 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
 
     // Helper function for stock status and colors
     const getStockStatus = (stock) => {
-        if (stock === 0) return { color: 'error', label: 'Out of Stock', icon: <CancelIcon aria-hidden="true" /> };
-        if (stock < 10) return { color: 'warning', label: 'Low Stock', icon: <WarningIcon aria-hidden="true" /> };
-        return { color: 'success', label: 'In Stock', icon: <CheckCircleIcon aria-hidden="true" /> };
+        if (stock === 0) return { color: 'error', label: t('outOfStock'), icon: <CancelIcon aria-hidden="true" /> };
+        if (stock < 10) return { color: 'warning', label: t('lowStock'), icon: <WarningIcon aria-hidden="true" /> };
+        return { color: 'success', label: t('inStock'), icon: <CheckCircleIcon aria-hidden="true" /> };
     };
 
     // Helper function to get colors for status
@@ -335,6 +371,17 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
 
     return (
         <Dashboard>
+            <ConfirmationDialog
+                open={confirmDialog.open}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm}
+                confirmButtonText={t('confirm')}
+                onClose={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+                confirmColor="error"
+                cancelColor="inherit"
+                cancelButtonText={t('cancel')}
+            />
             <ProductModal
                 open={modalOpen}
                 handleClose={handleCloseModal}
@@ -343,30 +390,8 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
                 t={t}
                 loading={loading}
                 categories={initialCategories}
-                vendors={[]}
+                vendors={initialVendors.vendors || []}
             />
-            {/* <DeleteConfirmDialog
-                open={deleteDialogOpen}
-                onClose={handleDeleteDialogClose}
-                dialogTitle={t('confirmDelete')}
-                dialogConfirmMsg={
-                    <>
-                        {t('deleteConfirmMessage')}{' '}
-                        <strong>
-                            {categoryToDelete?.name?.[language] ||
-                                categoryToDelete?.name?.en ||
-                                categoryToDelete?.name?.ar ||
-                                t('thisCategory')}
-                        </strong>
-                        ?
-                    </>
-                }
-                cancelButtonText={t('cancel')}
-                onConfirm={handleDeleteConfirm}
-                deleteButtonText={t('delete')} 
-                loading={loading}
-                
-            /> */}
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
                     sideNavItem={t("products")} 
@@ -416,7 +441,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
                 </Box>
 
                 {/* Stats Cards */}
-                <Grid container spacing={3} mb={3} aria-label="Product statistics overview">
+                <Grid container spacing={3} mb={3} aria-label={t('productStatisticsOverview')}>
                     {[
                         { title: t('totalProducts'), value: stats.total, icon: <LocalShippingIcon aria-hidden="true" />, color: '#1976d2', bg: '#e3f2fd' },
                         { title: t('active'), value: stats.active, icon: <CheckCircleIcon aria-hidden="true" />, color: '#4caf50', bg: '#e8f5e8' },
@@ -503,7 +528,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
             </Box>
 
             {/* Products Table */}
-            <Card sx={{ borderRadius: 2, boxShadow: 1 }} aria-label="Products table">
+            <Card sx={{ borderRadius: 2, boxShadow: 1 }} aria-label={t('productsTable')}>
                 <Box p={3} borderBottom={1} borderColor="divider">
                     <Box display="flex" alignItems="center" justifyContent="space-between">
                         <Box>
@@ -518,13 +543,25 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
                         </Box>
                         {selectedProducts.length > 0 && (
                             <Stack direction="row" spacing={1}>
-                                <Button
+                                <Button 
                                     variant="contained"
-                                    color="error"
-                                    size="small"
-                                    aria-label="Delete selected items"
-                                >
-                                    {t('deleteSelected')}
+                                    color={getBulkToggleAction() === 'activate' ? 'success' : 'error'}
+                                    onClick={handleBulkToggle}
+                                    disabled={loading}
+                                    startIcon={(loading) ? <ButtonLoader /> : null}
+                                    aria-label={loading 
+                                        ? <ButtonLoader /> 
+                                        : getBulkToggleAction() === 'activate' 
+                                        ? t('activateSelected') 
+                                        : t('deactivateSelected')
+                                    }
+                                    >
+                                    {loading 
+                                        ? <ButtonLoader /> 
+                                        : getBulkToggleAction() === 'activate' 
+                                        ? t('activateSelected') 
+                                        : t('deactivateSelected')
+                                    }
                                 </Button>
                             </Stack>
                         )}
@@ -547,13 +584,15 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
                                         }
                                         indeterminate={
                                             selectedProducts.length > 0 &&
-                                            selectedProducts.length < displayProducts.length
-                                        }                                        onChange={handleSelectAll}
-                                        inputProps={{ 'aria-label': 'Select all products' }}
+                                            selectedProducts.length < selectedProducts.length
+                                        }                                        
+                                        onChange={handleSelectAll}
+                                        inputProps={{ 'aria-label': t('selectAllVendors') }}
                                     />
                                 </TableCell>
                                 <TableCell scope="col">{t('product')}</TableCell>
                                 <TableCell scope="col">{t('category')}</TableCell>
+                                <TableCell scope="col">{t('vendor')}</TableCell>
                                 <TableCell scope="col">{t('price')}</TableCell>
                                 <TableCell scope="col">{t('stock')}</TableCell>
                                 <TableCell scope="col">{t('status')}</TableCell>
@@ -627,6 +666,13 @@ const ProductsList = ({initialData, initialFilters, initialCategories}) => {
                                                 <TableCell role="cell">
                                                     <Chip
                                                         label={product?.categoryId.name?.[language] || product?.categoryId.name?.en || ''}
+                                                        variant="outlined"
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell role="cell">
+                                                    <Chip
+                                                        label={product?.vendorId.name || ''}
                                                         variant="outlined"
                                                         size="small"
                                                     />

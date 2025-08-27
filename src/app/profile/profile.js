@@ -57,18 +57,13 @@ const MyProfile = ({ initialData }) => {
   const [editingAddress, setEditingAddress] = useState(null);
 
   // Redux Selectors
-  const actions = useSelector(
-      (state) => state.auth?.actions || [],
-      shallowEqual 
-  ); // With shallowEqual - only re-renders if selected values actually changed
-  const { loading , error, user } = useSelector(
-    state => ({
-      loading: state.users.loading,
-      error: state.users.error,
-      user: (state.users.list.find(u => u._id === initialData._id)) || initialData
-    }),
-    shallowEqual
-  );
+  // With shallowEqual - only re-renders if selected values actually changed
+  // ✅ Separate selectors to avoid object creation
+  const actions = useSelector(state => state.auth.actions, shallowEqual);
+  const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+  const loading = useSelector(state => state.users?.loading || false);
+  const error = useSelector(state => state.users?.error || null);
+  const user = useSelector(state => state.users?.list.find(u => u._id === initialData._id) || initialData, shallowEqual);
 
   // Profile form hook
   const {
@@ -112,13 +107,15 @@ const MyProfile = ({ initialData }) => {
   // and checks if the user has the required permissions to view this page.
   // If not, it redirects to the home page.
   useEffect(() => {
+    if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
     const requiredPermissions = ["view_user", "edit_user"];
     const hasAccess = checkPermission(actions, requiredPermissions);
     
     if (!hasAccess) {
       router.push("/home");
     }
-  }, [actions, router]);
+  }, [actions, actionsLoaded, router]);
     
   // Reset profile form when initialData changes
   // Sync address form when editing

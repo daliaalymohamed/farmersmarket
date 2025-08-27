@@ -42,7 +42,7 @@ const menuItems = [
   { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles' },  
   { text: 'Warehouses', icon: <WarehouseIcon />, path: '/dashboard/warehouses' },
   { text: 'Inventories', icon: <InventoryIcon />, path: '/dashboard/inventories' },
-  { text: 'Vendors', icon: <AirportShuttleIcon />, path: '/dashboard/vendors' },
+  { text: 'Vendors', icon: <AirportShuttleIcon />, path: '/dashboard/vendors/list' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings' },
 ];
 

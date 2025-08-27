@@ -2,12 +2,12 @@
 
 import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
 
-// This is a server-side function to fetch products data
-export const getProductById = async (id) => {
+// This is a server-side function to fetch vendors data
+export const getVendorById = async (id) => {
   try {
     // Validate inputs
     if (!id?.trim()) {
-      throw new Error('Product ID is required');
+      throw new Error('Vendor ID is required');
     }
 
     // Get authenticated user data and headers
@@ -20,7 +20,7 @@ export const getProductById = async (id) => {
     }
 
     // Make the API request
-    const response = await fetch(`${baseUrl}/api/products/${id}`, {
+    const response = await fetch(`${baseUrl}/api/vendors/${id}`, {
       method: 'GET',
       headers,
       cache: 'no-store'
@@ -45,7 +45,7 @@ export const getProductById = async (id) => {
 
 
   } catch (error) {
-    console.error('[getProductId] Error:', {
+    console.error('[getVendorById] Error:', {
       message: error.message,
       type: error.name,
       id

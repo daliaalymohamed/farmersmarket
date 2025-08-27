@@ -14,7 +14,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { addProduct, editProduct, updateProductInList } from '@/store/slices/productSlice';
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import ButtonLoader from "@/components/UI/buttonLoader";
 import { productSchema } from '@/lib/utils/validation';
@@ -37,42 +37,65 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
     const [duplicateTagError, setDuplicateTagError] = useState('');
 
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual 
-    ); // With shallowEqual - only re-renders if selected values actually changed
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
     // Check permissions on mount
     // This effect runs once when the component mounts
     // and checks if the user has the required permissions to view this page.
     // If not, it redirects to the home page.
     useEffect(() => {
-    const requiredPermissions = ["edit_product", "add_product"];
-    const hasAccess = checkPermission(actions, requiredPermissions);
+        if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
     
-    if (!hasAccess) {
-        router.push("/home");
-    }
-    }, [actions, router]);
+        const requiredPermissions = ["edit_product", "add_product"];
+        const hasAccess = checkPermission(actions, requiredPermissions);
+        
+        if (!hasAccess) {
+            router.push("/home");
+        }
+    }, [actions, actionsLoaded, router]);
 
-    // Updated form default values - convert dates to datetime-local format
+    // Utility function to format date for DateTimePicker
     const formatDateForInput = (date) => {
-    if (!date) return null;
-    try {
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return null;
-        return dayjs(d);
-    } catch (error) {
-        console.error('Error formatting date:', error);
-        return null;
-    }
-};
+        if (!date) return null;
+        
+        try {
+            let dayjsDate;
+            
+            // Handle different date formats
+            if (typeof date === 'string') {
+                dayjsDate = dayjs(date);
+            } else if (date instanceof Date) {
+                dayjsDate = dayjs(date);
+            } else if (dayjs.isDayjs(date)) {
+                dayjsDate = date;
+            } else {
+                return null;
+            }
+            
+            // Validate the dayjs object
+            if (!dayjsDate.isValid()) {
+                console.warn('Invalid date provided:', date);
+                return null;
+            }
+            
+            return dayjsDate;
+        } catch (error) {
+            console.error('Error formatting date for input:', error, 'Date:', date);
+            return null;
+        }
+    };
 
     // Product form hook with edit mode detection
     const isEditMode = !!(product && product._id);
 
     // ✅ Proper default values with consistent date handling
-    const getDefaultValues = () => {
+    const getDefaultValues = () => {      
         if (product) {
+            const formattedSaleStart = formatDateForInput(product.saleStart);
+            const formattedSaleEnd = formatDateForInput(product.saleEnd);
+            
             return {
                 name: {
                     en: product.name?.en || '',
@@ -85,15 +108,16 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                 price: product.price || 0,
                 categoryId: product.categoryId?._id || product.categoryId || '',
                 stock: product.stock || 0,
-                vendorId: product.vendorId || '',
+                vendorId: product.vendorId?._id || product.vendorId || '',
                 isActive: product.isActive !== undefined ? product.isActive : true,
-                isFeatured: product.isFeatured || false,
+                isFeatured: Boolean(product.isFeatured || false),
                 image: product.image || null,
-                isOnSale: product.isOnSale || false,
+                isOnSale: Boolean(product?.isOnSale ?? false),
                 salePrice: product.salePrice || 0,
-                saleStart: formatDateForInput(product.saleStart),
-                saleEnd: formatDateForInput(product.saleEnd),
-                tags: product.tags || [],
+                saleStart: formattedSaleStart, // ✅ Use formatted date
+                saleEnd: formattedSaleEnd,     // ✅ Use formatted date
+                tags: Array.isArray(product.tags) ? product.tags : [],
+                createdBy: product.createdBy || null,
                 updatedBy: product.updatedBy || null,
             };
         } else {
@@ -122,22 +146,51 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
         handleSubmit: handleSubmitProduct,
         control,
         setValue,
+        getValues,
         watch,
         reset,
-        formState: { errors },
+        formState: { errors, isValid },
+        clearErrors,
       } = useForm({
         mode: 'onChange',
         resolver: yupResolver(productSchema(t, isEditMode)),
-        defaultValues: getDefaultValues()
+        defaultValues: getDefaultValues(),
+        shouldUnregister: true,
       });
     
-    // Reset form and image preview when modal opens/closes or product changes
+    // Reset form and image preview and isOnSale when modal opens/closes or product changes
     // 1. Debug form reset triggers
     useEffect(() => {
-        if (open) {
+        if (open && product) {
             const defaultValues = getDefaultValues();
-            reset(defaultValues);
+            console.log("🎯 All Default Values:", defaultValues);
+            console.log("📅 Date values specifically:", {
+            saleStart: defaultValues.saleStart,
+            saleEnd: defaultValues.saleEnd,
+            isOnSale: defaultValues.isOnSale
+        });
             
+            // // Step 1: Reset entire form
+            reset(defaultValues);
+
+            // // Step 2: Force update complex fields
+            // // Force update fields that may not register properly
+            // ✅ Use setTimeout to ensure form is fully reset before setting individual values
+            setTimeout(() => {
+                // Force update complex fields that may not register properly
+                setValue('isOnSale', defaultValues.isOnSale, { shouldValidate: false, shouldDirty: false });
+                setValue('tags', defaultValues.tags, { shouldValidate: false, shouldDirty: false });
+                
+                // ✅ Explicitly set date values
+                if (defaultValues.saleStart) {
+                    setValue('saleStart', defaultValues.saleStart, { shouldValidate: false, shouldDirty: false });
+                }
+                if (defaultValues.saleEnd) {
+                    setValue('saleEnd', defaultValues.saleEnd, { shouldValidate: false, shouldDirty: false });
+                }
+            }, 50); // Small delay to ensure form is ready
+
+
             // Set image preview for existing product
             if (product?.image) {
                 setImagePreview(`/api/images/product/${product.image}`);
@@ -148,6 +201,9 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
             setHasNewImage(false);
             setCurrentTagInput('');
             setDuplicateTagError('');
+        } else {
+            // ✅ Clear all errors when modal closes
+            clearErrors();
         }
         
         // Cleanup blob URLs when component unmounts or modal closes
@@ -156,7 +212,29 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                 URL.revokeObjectURL(imagePreview);
             }
         };
-    }, [open, product, reset]);
+    }, [open, product, reset, clearErrors, setValue]);
+
+    const isOnSale = useWatch({ control, name: 'isOnSale'});
+
+    useEffect(() => {
+        if (!isOnSale) {
+            // Clear values
+            setValue('saleStart', null, { shouldValidate: false });
+            setValue('saleEnd', null, { shouldValidate: false });
+            
+            // Clear errors
+            clearErrors(['saleStart', 'saleEnd']);
+        } else if (isOnSale && product) {
+            // ✅ Re-populate dates when switching back to on sale in edit mode
+            const defaultValues = getDefaultValues();
+            if (defaultValues.saleStart) {
+                setValue('saleStart', defaultValues.saleStart, { shouldValidate: false });
+            }
+            if (defaultValues.saleEnd) {
+                setValue('saleEnd', defaultValues.saleEnd, { shouldValidate: false });
+            }
+        }
+    }, [isOnSale, setValue, clearErrors, product]);
 
     // Handle image file input and preview
     const handleImageChange = (e) => {
@@ -173,7 +251,7 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
         }
     };   
 
-    // Handke Category change
+    // Handle Category change
     const handleCategoryChange = (e) => {
         const categoryId = e.target.value;
         setValue('categoryId', categoryId, { shouldValidate: true });
@@ -236,11 +314,13 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
             return null;
         }
     };
-
+   
     // Handle form submission for adding/editing product
     const onSubmitProduct = async (data) => {
         try {
             let payload;
+            // Ensure isOnSale is a real boolean
+            const isOnSale = Boolean(data.isOnSale);
 
             if (isEditMode) {
                 // Edit existing category
@@ -259,7 +339,8 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                     payload.append('isFeatured', data.isFeatured);
                     payload.append('isOnSale', data.isOnSale);
                     payload.append('salePrice', data.salePrice);
-                    if (data.isOnSale) {
+                   // Only append sale dates if on sale
+                    if (isOnSale) {
                         const saleStartFormatted = formatDateForAPI(data.saleStart);
                         const saleEndFormatted = formatDateForAPI(data.saleEnd);
                         if (saleStartFormatted) payload.append('saleStart', saleStartFormatted);
@@ -283,12 +364,11 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                         vendorId: data.vendorId,
                         isActive: data.isActive,
                         isFeatured: data.isFeatured,
-                        isOnSale: data.isOnSale,
+                        isOnSale: isOnSale,
                         salePrice: data.salePrice,
                         saleStart: data.isOnSale ? formatDateForAPI(data.saleStart) : null,
                         saleEnd: data.isOnSale ? formatDateForAPI(data.saleEnd) : null,
                         tags: data.tags,
-                        updatedBy: data.updatedBy,
                         // Keep existing image if no new file
                         ...(product.image && !hasNewImage && { image: product.image })
                     };
@@ -323,17 +403,16 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                 payload.append('vendorId', data.vendorId);
                 payload.append('isActive', data.isActive);
                 payload.append('isFeatured', data.isFeatured);
-                payload.append('isOnSale', data.isOnSale);
+                payload.append('isOnSale', isOnSale);
                 payload.append('salePrice', data.salePrice);
-                // Handle dates properly for new products
-                if (data.isOnSale) {
+                // Only append dates if on sale
+                if (isOnSale) {
                     const saleStartFormatted = formatDateForAPI(data.saleStart);
                     const saleEndFormatted = formatDateForAPI(data.saleEnd);
                     if (saleStartFormatted) payload.append('saleStart', saleStartFormatted);
                     if (saleEndFormatted) payload.append('saleEnd', saleEndFormatted);
                 }
                 payload.append('tags', JSON.stringify(data.tags));
-                payload.append('updatedBy', data.updatedBy);
                 
                 // Only append image if one was selected
                 if (data.image instanceof File) {
@@ -480,7 +559,7 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                                         error={!!errors?.vendorId}
                                         helperText={errors?.vendorId?.message}
                                         fullWidth
-                                        // required
+                                        required
                                     >
                                         <MenuItem value="">{t('selectVendor')}</MenuItem>
                                         {vendors?.map((vendor) => (
@@ -540,69 +619,76 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                             />
                         </Stack>
                         <Stack direction="row" spacing={2}>
-                            {watch('isOnSale') && (
-                                <TextField
-                                    label={t('productSalePrice')}
-                                    {...register('salePrice')}
-                                    error={!!errors?.salePrice}
-                                    helperText={errors?.salePrice?.message || ''}
-                                    fullWidth
-                                    required={watch('isOnSale')}
-                                    disabled={!watch('isOnSale')}
-                                    />
-                            )}
-                        </Stack>
-                        <Stack direction="row" spacing={2}>
-                            {watch('isOnSale') && (
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <>
-                                        <Controller
-                                            name="saleStart"
-                                            control={control}
-                                            render={({ field: { onChange, value, ...field } }) => (
+                            <TextField
+                                label={t('productSalePrice')}
+                                {...register('salePrice')}
+                                error={!!errors?.salePrice}
+                                helperText={errors?.salePrice?.message || ''}
+                                fullWidth
+                                required={isOnSale}
+                                disabled={!isOnSale}
+                                />
+                           
+                        </Stack>                       
+                        {isOnSale === true && (
+                            <LocalizationProvider key={`date-picker-${isOnSale}-${product?._id || 'new'}`} dateAdapter={AdapterDayjs}>
+                                <Stack direction="row" spacing={2}>
+                                    <Controller
+                                        name="saleStart"
+                                        control={control}
+                                        render={({ field }) => {
+                                            console.log("🕐 SaleStart Controller Field:", field.value, "Type:", typeof field.value);
+                                            
+                                            return (
                                                 <DateTimePicker
                                                     label={t("productSaleStart")}
-                                                    value={value}
-                                                    onChange={onChange}
-                                                    disabled={!watch("isOnSale")}
+                                                    value={field.value || null} // ✅ Ensure null instead of undefined
+                                                    onChange={(newValue) => {
+                                                        console.log("🕐 SaleStart onChange:", newValue);
+                                                        field.onChange(newValue);
+                                                    }}
+                                                    disabled={!isOnSale}
                                                     slotProps={{
                                                         textField: {
                                                             fullWidth: true,
-                                                            error: !!errors?.saleStart,
-                                                            helperText: errors?.saleStart?.message || "",
-                                                            required: watch("isOnSale")
+                                                            error: !!errors.saleStart,
+                                                            helperText: errors.saleStart?.message
                                                         }
                                                     }}
-                                                    {...field}
                                                 />
-                                            )}
-                                        />
-                                        
-                                        <Controller
-                                            name="saleEnd"
-                                            control={control}
-                                            render={({ field: { onChange, value, ...field } }) => (
+                                            );
+                                        }}
+                                    />
+                                    
+                                    <Controller
+                                        name="saleEnd"
+                                        control={control}
+                                        render={({ field }) => {
+                                            console.log("🕑 SaleEnd Controller Field:", field.value, "Type:", typeof field.value);
+                                            
+                                            return (
                                                 <DateTimePicker
                                                     label={t("productSaleEnd")}
-                                                    value={value}
-                                                    onChange={onChange}
-                                                    disabled={!watch("isOnSale")}
+                                                    value={field.value || null} // ✅ Ensure null instead of undefined
+                                                    onChange={(newValue) => {
+                                                        console.log("🕑 SaleEnd onChange:", newValue);
+                                                        field.onChange(newValue);
+                                                    }}
+                                                    disabled={!isOnSale}
                                                     slotProps={{
                                                         textField: {
                                                             fullWidth: true,
-                                                            error: !!errors?.saleEnd,
-                                                            helperText: errors?.saleEnd?.message || "",
-                                                            required: watch("isOnSale")
+                                                            error: !!errors.saleEnd,
+                                                            helperText: errors.saleEnd?.message
                                                         }
                                                     }}
-                                                    {...field}
                                                 />
-                                            )}
-                                        />
-                                    </>
-                                </LocalizationProvider> 
-                            )}
-                        </Stack>
+                                            );
+                                        }}
+                                    />
+                                </Stack>
+                            </LocalizationProvider>
+                        )}
                         <Stack spacing={1}>
                             <InputLabel shrink>{t('productTags')}</InputLabel>
                             

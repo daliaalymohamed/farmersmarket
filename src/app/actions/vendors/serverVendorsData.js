@@ -2,13 +2,9 @@
 
 import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
 
-// This is a server-side function to fetch products data
-export const getProductById = async (id) => {
+// This is a server-side function to fetch vendors data
+export const getVendors = async (filters) => {
   try {
-    // Validate inputs
-    if (!id?.trim()) {
-      throw new Error('Product ID is required');
-    }
 
     // Get authenticated user data and headers
     const { headers } = await getAuthenticatedUser();
@@ -19,8 +15,18 @@ export const getProductById = async (id) => {
       throw new Error('API URL is not configured');
     }
 
+
+    // Create URL with search parameters
+    const url = new URL(`${baseUrl}/api/vendors`);
+    // Add all filters as search parameters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.append(key, value.toString());
+      }
+    });
+
     // Make the API request
-    const response = await fetch(`${baseUrl}/api/products/${id}`, {
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers,
       cache: 'no-store'
@@ -45,10 +51,9 @@ export const getProductById = async (id) => {
 
 
   } catch (error) {
-    console.error('[getProductId] Error:', {
+    console.error('[getVendors] Error:', {
       message: error.message,
       type: error.name,
-      id
     });
 
     if (error.name === 'TypeError') {

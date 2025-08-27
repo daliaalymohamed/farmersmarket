@@ -174,7 +174,7 @@ export const productSchema = (t, isEditMode = false) => yup.object().shape({
     .min(0, t("stockMin"))
     .required(t("productStockRequired")),
   categoryId: yup.string().required(t("productCategoryRequired")),
-  // vendorId: yup.string().required(t("productVendorRequired")),
+  vendorId: yup.string().required(t("productVendorRequired")),
   isActive: yup.boolean().default(true),
   isFeatured: yup.boolean().default(false),
   isOnSale: yup.boolean().default(false),
@@ -188,13 +188,13 @@ export const productSchema = (t, isEditMode = false) => yup.object().shape({
         .min(0, t("salePriceMin")),
       otherwise: schema => schema.notRequired()
     }),
-    saleStart: yup.date()
+  saleStart: yup.date()
     .nullable()
     .transform((value, originalValue) => (originalValue === "" ? null : value))
     .when('isOnSale', {
       is: true,
       then: schema => schema.required(t("saleStartDateRequired")),
-      otherwise: schema => schema.notRequired().nullable(),
+      otherwise: (schema) => schema.strip() // ✅ Removes field from validation entirely,
     }),
   saleEnd: yup.date()
     .nullable()
@@ -204,7 +204,7 @@ export const productSchema = (t, isEditMode = false) => yup.object().shape({
       then: schema => schema
         .required(t("saleEndDateRequired"))
         .min(yup.ref('saleStart'), t("saleEndAfterStart")),
-      otherwise: schema => schema.notRequired().nullable(),
+      otherwise: (schema) => schema.strip() // ✅ Removes field from validation entirely,
     }),
   tags: yup.array()
     .of(
@@ -253,3 +253,28 @@ export const productSchema = (t, isEditMode = false) => yup.object().shape({
         return false;
       }),
 });
+
+// Vendor validation Schema (for both create and update)
+export const vendorSchema = (t, isEditMode = false) => yup.object().shape({
+  name: yup.string().min(3, t("vendorNameLength")).max(50, t("vendorNameLength")).required(t("vendorNameRequired")),
+  countryCode: yup.string().required(t("countryCodeRequired")), 
+  contactPhone: yup.string()
+    .required(t("phoneNumberRequired"))
+    .test("valid-phone", t("phoneNumberRegex"), (value, context) => {
+      const countryCode = context.parent.countryCode;
+      const phoneRegexMap = {
+        "+20": /^01[0125][0-9]{8}$/, // Egypt
+        "+1": /^\d{10}$/, // USA
+        "+44": /^\d{10}$/, // UK
+        "+91": /^[6789]\d{9}$/, // India
+      };
+      const regex = phoneRegexMap[countryCode] || /^[0-9]+$/;
+      return regex.test(value);
+    }),
+  location: yup.string().min(3, t("vendorLocationLength")).max(100, t("vendorLocationLength")),
+  about: yup.string().min(10, t("aboutVendorLength")).max(500, t("aboutVendorLength")),
+  socialLinks: yup.object().shape({
+    facebook: yup.string().url(t("invalidFacebookUrl")),
+    instagram: yup.string().url(t("invalidInstagramUrl")),
+  })
+})

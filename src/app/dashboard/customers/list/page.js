@@ -41,21 +41,14 @@ const CustomersListPage = () => {
     const pathname = usePathname();
     const dispatch = useDispatch();
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual 
-    ); // With shallowEqual - only re-renders if selected values actually changed
-
-    const { list, loading, error, pagination } = useSelector(
-        state => ({
-            list: state.users?.list || [],
-            loading: state.users?.loading || false,
-            error: state.users?.error || null,
-            pagination: state.users?.pagination || {}
-        }),
-        shallowEqual
-    ); // With shallowEqual - only re-renders if selected values actually changed
-    
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+    const loading = useSelector(state => state.users?.loading || false);
+    const error = useSelector(state => state.users?.error || null);
+    const list = useSelector(state => state.users?.list || [], shallowEqual);
+    const pagination = useSelector(state => state.users?.pagination || {}, shallowEqual);    
     // Add local states for filtering and pagination
     const [filtersObj, setFilters] = useState({
         search: '',
@@ -73,13 +66,15 @@ const CustomersListPage = () => {
     // and checks if the user has the required permissions to view this page.
     // If not, it redirects to the home page.
     useEffect(() => {
+        if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
         const requiredPermissions = ["view_users"];
         const hasAccess = checkPermission(actions, requiredPermissions);
         
         if (!hasAccess) {
         router.push("/home");
         }
-    }, [actions, router]);
+    }, [actions, actionsLoaded, router]);
    
     useEffect(() => {
         // When pagination changes in Redux, update local filters

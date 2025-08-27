@@ -77,6 +77,7 @@ const initialState = {
   loading: false,
   error: null,
   actions: storedUser?.roleId?.actions || null,
+  actionsLoaded: false, // Tracks if permissions are ready
 };
 
 // ✅ Create a slice for authentication
@@ -97,6 +98,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isloggedIn = true;
         state.actions = action.payload.user.roleId.actions || [];
+        state.actionsLoaded = true; // ✅ Now fully loaded
 
         if (typeof window !== "undefined") {
           localStorage.setItem("token", action.payload.user.token);
@@ -146,7 +148,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.actions = user.roleId?.actions || [];
-
+        state.actionsLoaded = true; // ✅ Now fully loaded
 
         if (typeof window !== "undefined") {
           localStorage.setItem("token", action.payload.token);
@@ -159,6 +161,7 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.actions = [];
+        state.actionsLoaded = true; // ✅ Even if rejected, we know there are no actions
         localStorage.removeItem("token");
         localStorage.removeItem("user")
       });

@@ -37,31 +37,28 @@ const CategoriesList  = ({initialData, initialFilters}) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState(null);
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual 
-    ); // With shallowEqual - only re-renders if selected values actually changed
-    const { loading , error, categoriesList } = useSelector(
-        state => ({
-          loading: state.categories.loading,
-          error: state.categories.error,
-          categoriesList: state.categories.categoriesList || [], 
-        }),
-        shallowEqual
-    )
-
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+    const loading = useSelector(state => state.categories?.loading || false);
+    const error = useSelector(state => state.categories?.error || null);
+    const categoriesList = useSelector(state => state.categories?.categoriesList || [], shallowEqual);
+    
     // Check permissions on mount
     // This effect runs once when the component mounts
     // and checks if the user has the required permissions to view this page.
     // If not, it redirects to the home page.
     useEffect(() => {
+    if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
     const requiredPermissions = ["view_dashboard","delete_category"];
     const hasAccess = checkPermission(actions, requiredPermissions);
     
     if (!hasAccess) {
         router.push("/home");
     }
-    }, [actions, router]);
+    }, [actions, actionsLoaded , router]);
 
     // Initialize Redux with server-side data
     useEffect(() => {

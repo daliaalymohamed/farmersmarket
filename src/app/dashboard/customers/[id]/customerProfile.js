@@ -39,29 +39,26 @@ const CustomerProfile = ({ initialData }) => {
   const dispatch = useDispatch();
 
   // Redux Selectors
-  const actions = useSelector(
-      (state) => state.auth?.actions || [],
-      shallowEqual 
-  ); // With shallowEqual - only re-renders if selected values actually changed
-  const { loading , error } = useSelector(
-    state => ({
-      loading: state.users.loading,
-      error: state.users.error
-    }),
-    shallowEqual
-  )
+  // With shallowEqual - only re-renders if selected values actually changed
+  // ✅ Separate selectors to avoid object creation
+  const actions = useSelector(state => state.auth.actions, shallowEqual);
+  const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+  const loading = useSelector(state => state.users?.loading || false);
+  const error = useSelector(state => state.users?.error || null);
   // Check permissions on mount
   // This effect runs once when the component mounts
   // and checks if the user has the required permissions to view this page.
   // If not, it redirects to the home page.
   useEffect(() => {
+    if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
     const requiredPermissions = ["view_user", "toggle_user_status"];
     const hasAccess = checkPermission(actions, requiredPermissions);
     
     if (!hasAccess) {
       router.push("/home");
     }
-  }, [actions, router]);
+  }, [actions, actionsLoaded, router]);
 
   // Handle tab changes
   const handleTabChange = (event, newValue) => {
@@ -144,7 +141,7 @@ const CustomerProfile = ({ initialData }) => {
               {t('customerNotFound')}
             </Typography>
             <Button 
-              onClick={() => router.back()}
+              onClick={() => router.push('/dashboard/customers/list')}
               variant="contained"
               sx={{ mt: 2 }}
             >
@@ -186,12 +183,12 @@ const CustomerProfile = ({ initialData }) => {
                   >
                     {(loading || isUpdating) ? t('updating') : isActive ? t('deactivate') : t('activate')}
                   </Button>
-                      <Button 
-                      variant="outlined" 
-                      onClick={() => router.back()}
-                      >
-                      {t('goBack')}
-                      </Button>
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => router.push('/dashboard/customers/list')}
+                  >
+                  {t('goBack')}
+                  </Button>
               </Grid>
             </Grid>
           </Paper>

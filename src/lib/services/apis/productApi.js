@@ -14,9 +14,18 @@ export const productApi = {
     return response.data;
   },
 
-  // Delete an existing product
-  deleteProduct: async (productId) => {
-    const response = await api.delete(`${API_BASE_URL}/${productId}`); // Use apiInstance
-    return response.data; 
+  // toggle Product Active Status
+  toggleProductActiveStatus: async (productId, isActive) => {
+        const response = await api.patch(`${API_BASE_URL}/${productId}`, { isActive });
+        return response.data;
+  },
+  
+  // Bulk toggle Product Active Status
+  bulkToggleProductActiveStatus: async (productIds, isActive) => {
+    const response = await api.patch(API_BASE_URL, {
+      productIds,
+      isActive
+    });
+    return response.data;
   }
 }

@@ -27,22 +27,24 @@ const CategoryModal = ({ open, handleClose, category, t, loading, language }) =>
     const [hasNewImage, setHasNewImage] = useState(false);
 
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual 
-    ); // With shallowEqual - only re-renders if selected values actually changed
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
     // Check permissions on mount
     // This effect runs once when the component mounts
     // and checks if the user has the required permissions to view this page.
     // If not, it redirects to the home page.
     useEffect(() => {
-    const requiredPermissions = ["edit_category", "add_category"];
-    const hasAccess = checkPermission(actions, requiredPermissions);
-    
-    if (!hasAccess) {
-        router.push("/home");
-    }
-    }, [actions, router]);
+        if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
+        const requiredPermissions = ["edit_category", "add_category"];
+        const hasAccess = checkPermission(actions, requiredPermissions);
+        
+        if (!hasAccess) {
+            router.push("/home");
+        }
+    }, [actions, actionsLoaded, router]);
 
 
 

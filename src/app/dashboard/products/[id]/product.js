@@ -22,10 +22,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CategoryIcon from '@mui/icons-material/Category';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import Facebook from '@mui/icons-material/Facebook';
+import Instagram from '@mui/icons-material/Instagram';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { updateProductInList, selectProductById } from '@/store/slices/productSlice';
+import { updateProductInList, selectProductById, toggleProductActiveStatus } from '@/store/slices/productSlice';
 import ProductModal from './productModal';
 import Breadcrumb from "@/components/UI/breadcrumb";
 import Loading from "@/components/UI/loading";
@@ -33,39 +34,33 @@ import ButtonLoader from '@/components/UI/buttonLoader';
 import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 
-const Product = ({ initialData, initialCategories }) => {
+const Product = ({ initialData, initialCategories, initialVendors }) => {
     const router = useRouter();
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState(0);
     const [isUpdating, setIsUpdating] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    // Delete dialog state
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [productToDelete, setProductToDelete] = useState(null);
-  
+
     const dispatch = useDispatch();
 
     // Redux Selectors
-    const actions = useSelector(
-        (state) => state.auth?.actions || [],
-        shallowEqual
-    );
-    const { loading, error } = useSelector(
-        state => ({
-            loading: state.products.loading,
-            error: state.products.error
-        }),
-        shallowEqual
-    );
+    // With shallowEqual - only re-renders if selected values actually changed
+    // ✅ Separate selectors to avoid object creation
+    const actions = useSelector(state => state.auth.actions, shallowEqual);
+    const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
+    const loading = useSelector(state => state.products?.loading || false);
+    const error = useSelector(state => state.products?.error || null);
 
     useEffect(() => {
-        const requiredPermissions = ["delete_product", "edit_product"];
+        if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+        
+        const requiredPermissions = ["toggle_product_status", "edit_product"];
         const hasAccess = checkPermission(actions, requiredPermissions);
         if (!hasAccess) {
         router.push("/home");
         }
-    }, [actions, router]);
+    }, [actions, actionsLoaded, router]);
 
     // Get product from Redux store or fall back to initialData
     const productData = useSelector(state => {
@@ -100,10 +95,28 @@ const Product = ({ initialData, initialCategories }) => {
         setSelectedProduct(null);
     };
 
-    // Handle delete click
-    const handleDelete = (product) => {
-        setSelectedProduct(product);
-        setDeleteDialogOpen(true);
+    // Handle toggle active status
+    const handleToggleActive = async () => {
+        if (loading || isUpdating) return; // Prevent multiple clicks
+        setIsUpdating(true);
+
+        try {
+            // Pass current status from productData
+            await dispatch(
+                toggleProductActiveStatus({
+                    productId: productData._id,
+                    isActive: !productData.isActive // Toggle the current state
+                })
+            ).unwrap(); // Use unwrap() to handle the promise properly
+
+            // Only show success toast - errors are handled by interceptor
+            toast.success(t('productStatusUpdatedSuccessfully'));
+            
+        } catch (error) {
+            // DO NOT show toast here. Axios interceptor already did it.
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
 
@@ -121,6 +134,7 @@ const Product = ({ initialData, initialCategories }) => {
         createdAt,
         updatedAt,
         orders = [],
+        vendorId,
         categoryId,
         createdBy,
         updatedBy,
@@ -155,7 +169,7 @@ const Product = ({ initialData, initialCategories }) => {
                 t={t}
                 loading={loading}
                 categories={initialCategories}
-                vendors={[]}
+                vendors={initialVendors.vendors || []}
             />
             <Box sx={{ p: 3 }}>
                 {/* Breadcrumb */}
@@ -180,7 +194,7 @@ const Product = ({ initialData, initialCategories }) => {
                     {t('productNotFound')}
                     </Typography>
                     <Button 
-                    onClick={() => router.back()}
+                    onClick={() => router.push('/dashboard/products/list')}
                     variant="contained"
                     sx={{ mt: 2 }}
                     >
@@ -234,6 +248,9 @@ const Product = ({ initialData, initialCategories }) => {
                                     <Typography variant="body2" color="text.secondary">
                                         {t('addedOn')}: {new Date(createdAt).toLocaleDateString()}
                                     </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {t('updatedOn')}: {new Date(updatedAt).toLocaleDateString()}
+                                    </Typography>
                                 </Box>
                             </Box>
                     </Grid>
@@ -257,12 +274,13 @@ const Product = ({ initialData, initialCategories }) => {
                                 {(loading || isUpdating) ? t('updating') : t('editProduct')}
                             </Button>
                             <Button 
-                                variant="outlined" 
-                                color="error"
-                                onClick={handleDelete}
-                                startIcon={<DeleteIcon />}
-                            >
-                                {t('deleteProduct')}
+                                    variant="contained"
+                                    color={isActive ? 'error' : 'success'}
+                                    onClick={handleToggleActive}
+                                    disabled={loading || isUpdating}
+                                    startIcon={(loading || isUpdating) ? <ButtonLoader /> : null}
+                                >
+                                    {(loading || isUpdating) ? t('updating') : isActive ? t('deactivate') : t('activate')}
                             </Button>
                             <Button 
                                 variant="outlined" 
@@ -422,15 +440,160 @@ const Product = ({ initialData, initialCategories }) => {
                 {/* Vendor Info Tab */}
                 {activeTab === 2 && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                        {t('vendorInformation')}
-                        </Typography>
-                        <Typography color="text.secondary">
-                        {t('vendor')}: {productData.vendorId?.name || t('noVendor')}
-                        </Typography>
-                        {/* Add more vendor details if available */}
+                        {vendorId ? (
+                        <Grid container spacing={4}>
+                            {/* Vendor Basic Info */}
+                            <Grid xs={12} md={6}>
+                            <Typography variant="h6" gutterBottom>
+                                {t('basicInfo')}
+                            </Typography>
+                            
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <InventoryIcon color="primary" sx={{ fontSize: 20 }} />
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                    {t('vendorName')}
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                    {vendorId.name || t('unnamedVendor')}
+                                    </Typography>
+                                </Box>
+                                </Box>
+
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <CategoryIcon color="primary" sx={{ fontSize: 20 }} />
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                    {t('location')}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                    {vendorId.location || t('notSpecified')}
+                                    </Typography>
+                                </Box>
+                                </Box>
+
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <CheckCircleIcon color={vendorId.active ? "success" : "error"} sx={{ fontSize: 20 }} />
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                    {t('status')}
+                                    </Typography>
+                                    <Typography variant="body1" color={vendorId.active ? 'success.main' : 'error.main'}>
+                                    {vendorId.active ? t('active') : t('inactive')}
+                                    </Typography>
+                                </Box>
+                                </Box>
+
+                                {vendorId.about && (
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    {t('aboutVendor')}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                                    {vendorId.about}
+                                    </Typography>
+                                </Box>
+                                )}
+                            </Box>
+                            </Grid>
+
+                            {/* Contact Information */}
+                            <Grid xs={12} md={6}>
+                            <Typography variant="h6" gutterBottom>
+                                {t('contactInformation')}
+                            </Typography>
+                            
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 2 }}>
+                                <Box>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    {t('contactPhone')}
+                                </Typography>
+                                <Typography variant="body1">
+                                    <a href={`tel:${vendorId.contactPhone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                    {vendorId.contactPhone}
+                                    </a>
+                                </Typography>
+                                </Box>
+
+                                {/* Social Links */}
+                                {(vendorId.socialLinks?.facebook || vendorId.socialLinks?.instagram) && (
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    {t('socialLinks')}
+                                    </Typography>
+                                    <Stack direction="row" spacing={2}>
+                                    {vendorId.socialLinks?.facebook && (
+                                        <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<Facebook fontSize="small" />}
+                                        href={vendorId.socialLinks.facebook}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >
+                                        {t('facebook')}
+                                        </Button>
+                                    )}
+                                    {vendorId.socialLinks?.instagram && (
+                                        <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<Instagram fontSize="small" />}
+                                        href={vendorId.socialLinks.instagram}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >
+                                        {t('instagram')}
+                                        </Button>
+                                    )}
+                                    </Stack>
+                                </Box>
+                                )}
+                            </Box>
+                            </Grid>
+
+                            {/* Additional Info */}
+                            <Grid xs={12}>
+                            <Typography variant="h6" gutterBottom>
+                                {t('additionalInfo')}
+                            </Typography>
+                            
+                            <Grid container spacing={3} sx={{ mt: 1 }}>
+                        
+                                {vendorId.createdBy && (
+                                <Grid xs={12} sm={6} md={3}>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                    {t('createdBy')}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                    {vendorId.createdBy?.firstName || t('unknown')}
+                                    </Typography>
+                                </Grid>
+                                )}
+
+                                {vendorId.updatedBy && (
+                                <Grid xs={12} sm={6} md={3}>
+                                    <Typography variant="subtitle2" color="text.secondary">
+                                    {t('updatedBy')}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                    {vendorId.updatedBy?.firstName || t('unknown')}
+                                    </Typography>
+                                </Grid>
+                                )}
+                            </Grid>
+                            </Grid>
+                        </Grid>
+                        ) : (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                            {t('noVendorsFound')}
+                            </Typography>
+                        </Box>
+                        )}
                     </Paper>
-                )}
+                    )}
                 </>
                 )}
             </Box>
@@ -438,4 +601,4 @@ const Product = ({ initialData, initialCategories }) => {
     );
 };
 
-export default withAuth(Product);
+export default memo(withAuth(Product));

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
 import Product from "@/models/product";
 import Category from "@/models/category";
+import Vendor from "@/models/vendor";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
@@ -94,10 +95,24 @@ export const GET = async (req) => {
             .sort(sort)
             .skip((page - 1) * limit)
             .limit(limit)
-            .populate({
+            .populate([
+              {
                 path: "categoryId",
                 model: "Category"
-            });
+              },
+              {
+                path: "createdBy",
+                model: "User"
+              },
+              {
+                path: "updatedBy",
+                model: "User"
+              },
+              {
+                path: "vendorId",
+                model: "Vendor"
+              }
+            ]);
          
           // Calculate statistics for ALL products (no filters)
           const allProducts = await Product.find({});
@@ -254,6 +269,9 @@ export const POST = authMiddleware(async (req) => {
         return NextResponse.json({ error: "Invalid vendor ID" }, { status: 400 });
       }
 
+      // Parse isOnSale as boolean
+      const isOnSale = ['true', '1', true, 'on'].includes(String(fields.isOnSale).toLowerCase());
+
       // Parse tags if string
       let tags = [];
       if (fields.tags) {
@@ -276,15 +294,33 @@ export const POST = authMiddleware(async (req) => {
       if (fields['description.ar']) description.ar = fields['description.ar'];
   
       // Validate dates
-      const saleStart = fields.saleStart ? new Date(fields.saleStart) : null;
-      const saleEnd = fields.saleEnd ? new Date(fields.saleEnd) : null;
+      // Parse dates only if on sale
+      let saleStart = null;
+      let saleEnd = null;
 
-      if (fields.isOnSale && (!saleStart || isNaN(saleStart.getTime()))) {
-        return NextResponse.json({ error: "Valid sale start date is required when on sale" }, { status: 400 });
+      if (isOnSale) {
+        saleStart = fields.saleStart ? new Date(fields.saleStart) : null;
+        saleEnd = fields.saleEnd ? new Date(fields.saleEnd) : null;
+
+      if (!saleStart || isNaN(saleStart.getTime())) {
+        return NextResponse.json(
+          { error: "Valid sale start date is required when on sale" },
+          { status: 400 }
+        );
       }
-      if (fields.isOnSale && (!saleEnd || isNaN(saleEnd.getTime()))) {
-        return NextResponse.json({ error: "Valid sale end date is required when on sale" }, { status: 400 });
+      if (!saleEnd || isNaN(saleEnd.getTime())) {
+        return NextResponse.json(
+          { error: "Valid sale end date is required when on sale" },
+          { status: 400 }
+        );
       }
+      if (saleStart > saleEnd) {
+        return NextResponse.json(
+          { error: "Sale start date must be before end date" },
+          { status: 400 }
+        );
+      }
+    }
 
       // Use uploaded file if exists, otherwise fallback to provided image (if any)
       const image = uploadedFiles.image || fields.image || null;
@@ -300,10 +336,10 @@ export const POST = authMiddleware(async (req) => {
         vendorId: fields.vendorId,
         isActive: fields.isActive !== undefined ? fields.isActive : true,
         isFeatured: fields.isFeatured || false,
-        isOnSale: fields.isOnSale || false,
-        salePrice: fields.salePrice ? Number(fields.salePrice) : undefined,
-        saleStart: fields.isOnSale && saleStart ? saleStart : undefined,
-        saleEnd: fields.isOnSale && saleEnd ? saleEnd : undefined,
+        isOnSale: isOnSale,
+        salePrice: isOnSale && fields.salePrice ? Number(fields.salePrice) : undefined,
+        saleStart: isOnSale ? saleStart : undefined,
+        saleEnd: isOnSale ? saleEnd : undefined,
         tags,
         image,
         createdBy: userId,
@@ -335,5 +371,95 @@ export const POST = authMiddleware(async (req) => {
         { error: "Failed to update product", details: error.message },
         { status: 500 }
       );
+  }
+});
+
+// Handle PATCH (toggle product or products to together)
+// routing: /api/products
+export const PATCH = authMiddleware(async (req) => {
+  console.log("🚀 PATCH /api/products route hit!"); // ✅ Log that the route was hit
+
+  try {
+    const requiredAction = "bulk_toggle_product_status"; // Define the required action for this route
+    
+    // Connect to the database
+    await connectToDatabase();
+
+    // Ensure the required action exists and is assigned to the admin role
+    await ensureActionExistsAndAssignToAdmin(requiredAction);
+
+    // ✅ Check if the user has the required permission
+    const permissionCheck = await checkPermission(requiredAction)(req);
+    if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
+
+    const currentUser = req.user; // Get the current user from the request
+    if (!currentUser) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); // ❌ Unauthorized
+    }
+
+    // Check different possible properties for the user ID
+    // Extract user ID safely
+    let userId = null;
+    if (currentUser.userId && currentUser.userId !== "null") {
+      userId = currentUser.userId;
+    } else if (currentUser._id && currentUser._id !== "null") {
+      userId = currentUser._id;
+    } else if (currentUser.id && currentUser.id !== "null") {
+      userId = currentUser.id;
+    }
+
+    if (!userId) {
+      console.warn("⚠️ Could not determine user ID for createdBy");
+      return NextResponse.json({ error: "User ID not found" }, { status: 400 });
+    }
+    
+    const { productIds, isActive } = await req.json();
+
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return NextResponse.json(
+        { error: 'Valid productIds array is required' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof isActive !== 'boolean') {
+      return NextResponse.json(
+        { error: 'Active status must be boolean' },
+        { status: 400 }
+      );
+    }
+
+    // Update all products
+    const updatedProducts = await Product.updateMany(
+      { _id: { $in: productIds } },
+      { 
+        isActive,
+        updatedBy: userId
+      }
+    );
+
+    if (updatedProducts.matchedCount === 0) {
+      return NextResponse.json(
+        { error: 'No products found to update' },
+        { status: 404 }
+      );
+    }
+    
+    // Fetch updated products with populated createdBy/updatedBy
+    const products = await Product.find({ _id: { $in: productIds } })
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email');
+
+    return NextResponse.json({
+      message: `Updated ${products.length} products`,
+      products
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('Bulk toggle error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update products' },
+      { status: 500 }
+    );
   }
 });

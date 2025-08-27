@@ -42,7 +42,7 @@ export const GET = async (req) => {
 // routing: /api/categories
 export const POST = authMiddleware(async (req, context) => {
   console.log("🚀 POST /api/categories route hit!"); // ✅ Log that the route was hit
-  const requiredAction = "create_category"; // Define the required action for this route
+  const requiredAction = "add_category"; // Define the required action for this route
   
   try {
     // Connect to the database

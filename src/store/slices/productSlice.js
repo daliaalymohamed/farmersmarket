@@ -2,20 +2,19 @@ import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit"
 import { productApi } from "@/lib/services/apis/productApi"; // Import categoryApi
 import { getProducts } from '@/app/actions/products/serverProductsData';
 
-// Import the server-side function to fetch products
+// ✅ Async fetchProducts Thunk
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
   async (filters, { rejectWithValue }) => {
     try {
       const data = await getProducts(filters);
-      console.log("data => ", data)
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
-// add a new product
+// ✅ Async add a new product Thunk
 export const addProduct = createAsyncThunk(
   "products/addProduct",
   async (productData, { rejectWithValue }) => {
@@ -27,7 +26,7 @@ export const addProduct = createAsyncThunk(
     }
   }
 );
-// editProduct
+// ✅ Async editProduct Thunk
 export const editProduct = createAsyncThunk(
   "products/editProduct",
   async ({ productId, productData }, { rejectWithValue }) => {
@@ -45,18 +44,34 @@ export const editProduct = createAsyncThunk(
   }
 );
 
-// deleteProduct
-export const deleteProduct = createAsyncThunk(
-  "products/deleteProduct",
-  async (productId, { rejectWithValue }) => {
+// ✅ Async toggle Product Active Status Thunk
+export const toggleProductActiveStatus = createAsyncThunk(
+  "products/toggleProductActiveStatus",
+  async ({ productId, isActive }) => {
     try {
-      const data = await productApi.deleteProduct(productId); // Use productApi
-      return { ...data, productId }; // Return the productId along with response data
+      const data = await productApi.toggleProductActiveStatus(productId, isActive);
+      console.log("🚀 ~ file: productSlice.js:88 ~ data:", data);
+    return data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
+    
   }
 );
+
+// ✅ Async bulk toggle Product Status Thunk
+export const bulkToggleProductStatus = createAsyncThunk(
+  "products/bulkToggleProductStatus",
+  async ({ productIds, isActive }, { rejectWithValue }) => {
+    try {
+      const response = await productApi.bulkToggleProductActiveStatus(productIds, isActive);
+      return response; // Should return array of updated vendors
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to update products');
+    }
+  }
+);
+
 
 // ✅ Initial state for the products slice
 const initialState = {
@@ -161,21 +176,43 @@ const productsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Delete Product
-      .addCase(deleteProduct.pending, (state) => {
+      // toggleVendorActiveStatus
+      .addCase(toggleProductActiveStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteProduct.fulfilled, (state, action) => {
+      .addCase(toggleProductActiveStatus.fulfilled, (state, action) => {
         state.loading = false;
-        // Remove the deleted product from the list
-        const productId = action.payload.productId;
-        state.productsList = state.productsList.filter(prod => prod._id !== productId);
+        // Update product in the list
+        const index = state.productsList.findIndex(product => product._id === action.payload.product._id);
+        if (index !== -1) {
+          state.productsList[index] = action.payload.product;
+        }
       })
-      .addCase(deleteProduct.rejected, (state, action) => {
+      .addCase(toggleProductActiveStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      // bulkToggleVendorStatus
+      .addCase(bulkToggleProductStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(bulkToggleProductStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedProducts = action.payload.products;
+
+        updatedProducts.forEach(updatedProduct => {
+          const index = state.productsList.findIndex(v => v._id === updatedProduct._id);
+          if (index !== -1) {
+            state.productsList[index] = updatedProduct;
+          }
+        });
+      })
+      .addCase(bulkToggleProductStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 });
 
@@ -184,7 +221,8 @@ const selectProductsList = (state) => state.products?.productsList || [];
 
 // Selector to get product by ID
 export const selectProductById = createSelector(
-  [selectProductsList, (state, productId) => productId],
+  selectProductsList, 
+  (state, productId) => productId,
   (productsList, productId) => {
     if (!productId || !productsList || productsList.length === 0) {
       return null;

@@ -29,6 +29,21 @@ export const getProductById = async (id) => {
             {
                 path: "updatedBy",
                 model: "User"
+            },
+            {
+                path: "vendorId",
+                model: "Vendor",
+                populate: [
+                    {
+                        path: "createdBy",
+                        model: "User"
+                    },
+                    {
+                        path: "updatedBy",
+                        model: "User"
+                    }
+                ]
+
             }
         ]);
         return product;

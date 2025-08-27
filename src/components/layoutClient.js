@@ -1,4 +1,5 @@
 "use client";
+
 import "../styles/globals.css";
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -15,6 +16,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const LayoutClient = ({ children }) => {
+
     return (
         <ReduxProvider>
             <MuiThemeProvider theme={theme}>
