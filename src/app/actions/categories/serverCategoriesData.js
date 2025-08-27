@@ -1,20 +1,13 @@
 'use server';
 
-import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
-
 // This is a server-side function to fetch categories data
 export const getCategories = async (filters) => {
   try {
-
-    // Get authenticated user data and headers
-    const { headers } = await getAuthenticatedUser();
-    
     // Get base URL from environment
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
     if (!baseUrl) {
       throw new Error('API URL is not configured');
     }
-
 
     // Create URL with search parameters
     const url = new URL(`${baseUrl}/api/categories`);
@@ -25,17 +18,15 @@ export const getCategories = async (filters) => {
       }
     });
 
-    // Make the API request
+    // Make the API request without attaching auth headers
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers,
-      cache: 'no-store'
+      cache: 'no-store',
     });
 
     // Handle response
     const data = await response.json();
 
-    // Response handling
     switch (response.status) {
       case 200:
         return data;
@@ -48,8 +39,6 @@ export const getCategories = async (filters) => {
       default:
         throw new Error(data.error || `API error: ${response.status}`);
     }
-
-
   } catch (error) {
     console.error('[getCategories] Error:', {
       message: error.message,
