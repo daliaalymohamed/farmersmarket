@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import { customersApi } from "@/lib/services/apis/userApi";
 
 // Get token and user from localStorage if available
@@ -17,10 +17,8 @@ export const getCustomers = createAsyncThunk(
 // ✅ Async toggle User Active Status Thunk
 export const toggleUserActiveStatus = createAsyncThunk(
   "users/toggleUserActiveStatus",
-  async ({ userId, isActive }) => {
-    console.log("Toggling user active status:", userId, isActive);
-    const data = await customersApi.toggleUserActiveStatus(userId, isActive);
-    console.log("User active status toggled:", data);
+  async ({ userId, active }) => {
+    const data = await customersApi.toggleUserActiveStatus(userId, active);
     return data;
   }
 );
@@ -65,6 +63,24 @@ const userSlice = createSlice({
   name: "users",
   initialState: initialState,
   reducers: {
+    // Update a customer in the list
+    // This is useful when a customer is edited
+    updateCustomerInList: (state, action) => {
+      const updatedCustomer = action.payload;
+      if (!updatedCustomer || !updatedCustomer._id) {
+          console.warn('updateCustomerInList called without valid customer data');
+          return;
+      }
+
+      const index = state.list.findIndex(v => v._id === updatedCustomer._id);
+      if (index !== -1) {
+        // ✅ Replace entire object
+        state.list[index] = { ...updatedCustomer };
+      } else {
+        state.list.push(updatedCustomer);
+      }
+    },
+    // Clear the customers list
     clearCustomers: (state) => {
       state.list = [];
       state.pagination = initialState.pagination;
@@ -135,7 +151,22 @@ const userSlice = createSlice({
   },
 });
 
+// Selector to get the customers list
+const selectCustomersList = (state) => state.users?.list || [];
+
+// Selector to get customer by ID
+export const selectCustomerById = createSelector(
+  selectCustomersList,
+  (state, userId) => userId,
+  (list, userId) => {
+    if (!userId || !list || list.length === 0) {
+      return null;
+    }
+    return list.find(customer => customer._id === userId) || null;
+  }
+);
+
 // ✅ Export actions
-export const { clearCustomers } = userSlice.actions;
+export const { clearCustomers, updateCustomerInList } = userSlice.actions;
 
 export default userSlice.reducer;

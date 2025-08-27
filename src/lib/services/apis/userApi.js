@@ -21,8 +21,8 @@ export const customersApi = {
   },
 
   // toggleUserActiveStatus
-  toggleUserActiveStatus: async (userId, isActive) => {
-    const response = await api.patch(`${API_BASE_URL}/${userId}`, { active: isActive });
+  toggleUserActiveStatus: async (userId, active) => {
+    const response = await api.patch(`${API_BASE_URL}/${userId}`, { active });
     return response.data;
   },
 

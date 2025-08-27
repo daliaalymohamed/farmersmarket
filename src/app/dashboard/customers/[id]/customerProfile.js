@@ -23,18 +23,18 @@ import {
 } from '@mui/icons-material';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { toggleUserActiveStatus } from '@/store/slices/userSlice';
+import { toggleUserActiveStatus, selectCustomerById, updateCustomerInList } from '@/store/slices/userSlice';
 import Breadcrumb from "@/components/UI/breadcrumb";
 import Loading from "@/components/UI/loading";
 import ButtonLoader from '@/components/UI/buttonLoader';
 import Error from "@/components/UI/error";
-import withAuth  from "@/components/withAuth"; // Import withAuth HOC
+import withAuth  from "@/components/withAuth"; 
+import { toast } from "react-toastify";
 
 const CustomerProfile = ({ initialData }) => {
   const router = useRouter();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
-  const [isActive, setIsActive] = useState(initialData?.active);
   const [isUpdating, setIsUpdating] = useState(false);  
   const dispatch = useDispatch();
 
@@ -60,6 +60,20 @@ const CustomerProfile = ({ initialData }) => {
     }
   }, [actions, actionsLoaded, router]);
 
+  // Get vendor from Redux store or fall back to initialData
+  const userData = useSelector(state => {
+      const reduxVendor = selectCustomerById(state, initialData?._id);
+      // Only use initialData if Redux doesn't have the vendor yet
+      return reduxVendor || initialData;
+  }, shallowEqual);
+
+  // Initialize Redux with server-side data
+  useEffect(() => {
+      if (initialData?._id) {
+          dispatch(updateCustomerInList(initialData));
+      }
+  }, [dispatch, initialData]); // Fixed: Include full initialData object
+
   // Handle tab changes
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -74,7 +88,7 @@ const CustomerProfile = ({ initialData }) => {
     createdAt,
     addresses = [],    
     orders = []
-  } = initialData;
+  } = userData;
 
   // Get default addresses
   const defaultShippingAddress = addresses.find(addr => addr.isDefaultShipping);
@@ -101,11 +115,10 @@ const CustomerProfile = ({ initialData }) => {
     try {
       // Use unwrap() to handle the promise properly
       await dispatch(toggleUserActiveStatus({ 
-        userId: initialData._id, 
-        isActive: !isActive 
+        userId: userData._id, 
+        active: !userData.active 
       })).unwrap();
 
-      setIsActive(!isActive); // Update local state after successful toggle
       // Only show success toast - errors are handled by interceptor
       toast.success(t('userStatusUpdatedSuccessfully'));
       
@@ -176,12 +189,12 @@ const CustomerProfile = ({ initialData }) => {
                   }}>
                   <Button 
                     variant="contained"
-                    color={isActive ? 'error' : 'success'}
+                    color={active ? 'error' : 'success'}
                     onClick={handleToggleActive}
                     disabled={loading || isUpdating}
                     startIcon={(loading || isUpdating) ? <ButtonLoader /> : null}
                   >
-                    {(loading || isUpdating) ? t('updating') : isActive ? t('deactivate') : t('activate')}
+                    {(loading || isUpdating) ? t('updating') : active ? t('deactivate') : t('activate')}
                   </Button>
                   <Button 
                     variant="outlined" 

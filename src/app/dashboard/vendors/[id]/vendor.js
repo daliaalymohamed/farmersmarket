@@ -72,7 +72,7 @@ const Vendor = ({ initialData }) => {
         if (initialData?._id) {
             dispatch(updateVendorInList(initialData));
         }
-    }, [dispatch, initialData]); // Fixed: Include full initialData object
+    }, [dispatch, initialData]); 
 
     const {
         name,
