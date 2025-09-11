@@ -40,7 +40,7 @@ export const getCategories = async (filters) => {
         throw new Error(data.error || `API error: ${response.status}`);
     }
   } catch (error) {
-    console.error('[getCategories] Error:', {
+    console.info('[getCategories] Error:', {
       message: error.message,
       type: error.name,
     });

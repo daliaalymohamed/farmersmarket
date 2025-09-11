@@ -45,7 +45,7 @@ export const getCustomerById = async (id) => {
 
 
   } catch (error) {
-    console.error('[getCustomerById] Error:', {
+    console.info('[getCustomerById] Error:', {
       message: error.message,
       type: error.name,
       id

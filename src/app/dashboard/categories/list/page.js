@@ -2,6 +2,15 @@
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import CategoriesList from './categoriesList';
 
+// ✅ Add generateMetadata here
+export const generateMetadata = async ({ searchParams }) => {
+  const { search } = await searchParams || {};
+  return {
+    title: search ? `Categories: ${search}` : 'All Categories',
+    description: `Browse ${search ? `categories matching "${search}"` : 'all categories'}`
+  };
+}
+
 const CategoriesPage = async ({ searchParams }) => {
   // Get initial filters from URL search params
   // First extract and convert all searchParams safely
@@ -14,11 +23,7 @@ const CategoriesPage = async ({ searchParams }) => {
       
       // Get categories data
       const categories = await getCategories(initialFilters);
-      
-      if (!categories) {
-        notFound();
-      }
-  
+    
       return <CategoriesList initialData={categories} initialFilters={initialFilters} />;
     } catch (error) {
       console.error('Error loading categories:', error);

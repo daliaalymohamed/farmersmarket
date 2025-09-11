@@ -14,7 +14,7 @@ const ProductSchema = new mongoose.Schema(
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     stock: { type: Number, default: 0 },
     image: { type: String, required: true },
-    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true, index: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who added the product
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who updated the product
     isActive: { type: Boolean }, // Soft delete

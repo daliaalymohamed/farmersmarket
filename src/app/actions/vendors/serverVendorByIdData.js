@@ -45,7 +45,7 @@ export const getVendorById = async (id) => {
 
 
   } catch (error) {
-    console.error('[getVendorById] Error:', {
+    console.info('[getVendorById] Error:', {
       message: error.message,
       type: error.name,
       id

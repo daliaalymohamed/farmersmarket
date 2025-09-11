@@ -61,13 +61,19 @@ export async function verifyTokenServer(token) {
     const decoded = await verifyJWT(token);
     
     if (!decoded?.userId) {
-      throw new Error('Invalid token');
+      // Don't throw an error, return null instead
+      return null;
     }
 
     return decoded;
   } catch (error) {
-    console.error('Server token verification failed:', error);
-    throw error;
+    // Log quietly in development
+    if (process.env.NODE_ENV === 'development') {
+      console.info('Server token verification failed:', error.message);
+    }
+    
+    // Return null instead of throwing
+    return null;
   }
 }
 

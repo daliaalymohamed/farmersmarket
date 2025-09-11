@@ -1,7 +1,6 @@
 // This is server-side code for a Next.js page that fetches customer data based on the provided ID.import { getCustomerById } from '@/lib/services/serverServices/users/serverUserData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import Home from './home';
-import { notFound } from 'next/navigation';
 
 const HomePage = async ({searchParams}) => {
   
@@ -14,10 +13,7 @@ const HomePage = async ({searchParams}) => {
   };
   try {
     const categories = await getCategories(initialFilters);
-    
-    if (!categories) {
-      notFound();
-    }
+  
 
     return <Home categories={categories} />;
   } catch (error) {

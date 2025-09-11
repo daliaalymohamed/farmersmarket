@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import CategoryModal from './categoryModal';
+const CategoryModal = lazy(() => import('./categoryModal'));
 import DeleteConfirmDialog from '@/components/deleteConfirmDialog';
 import Image from "next/image";
 import Dashboard from '@/components/dashboard';
@@ -76,6 +76,7 @@ const CategoriesList  = ({initialData, initialFilters}) => {
     }, [searchTerm]);
 
     // Helper function to build URL with filters
+    // useCallback to prevent unnecessary re-renders
     const buildURL = useCallback((filters) => {
         const query = new URLSearchParams(); 
         if (filters.search && filters.search.trim() !== '') {
@@ -108,10 +109,11 @@ const CategoriesList  = ({initialData, initialFilters}) => {
     const displayCategories = Array.isArray(categoriesList) ? categoriesList : [];
 
     // handle edit click
-    const handleEdit = (cat) => {
+    // useCallback to prevent unnecessary re-renders
+    const handleEdit = useCallback((cat) => {
         setSelectedCategory(cat);
         setModalOpen(true);
-    };
+    }, []);
 
     // handle add click
     const handleAdd = () => {
@@ -155,14 +157,17 @@ const CategoriesList  = ({initialData, initialFilters}) => {
 
     return (
         <Dashboard>
-            <CategoryModal
-                open={modalOpen}
-                handleClose={handleCloseModal}
-                category={selectedCategory}
-                language={language}
-                t={t}
-                loading={loading}
+            {/* Suspense with loading fallback */}
+            <Suspense fallback={null}>
+                <CategoryModal
+                    open={modalOpen}
+                    handleClose={handleCloseModal}
+                    category={selectedCategory}
+                    language={language}
+                    t={t}
+                    loading={loading}
             />
+            </Suspense>
             <DeleteConfirmDialog
                 open={deleteDialogOpen}
                 onClose={handleDeleteDialogClose}

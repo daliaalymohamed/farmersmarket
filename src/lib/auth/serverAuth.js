@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { headers } from 'next/headers';
 import { verifyTokenServer } from '@/middlewares/backend_helpers';
+import { redirect } from 'next/navigation';
 
 // Server-side function to get authentication headers
 // This function retrieves the authentication token and language from cookies and headers
@@ -13,13 +14,17 @@ export const getAuthenticatedUser = async () => {
   const acceptLanguage = headersList.get('accept-language') || 'en';
 
   if (!token) {
-    console.error('No authentication token found in cookies');
+    // Don't log as error, log as info instead
+    if (process.env.NODE_ENV === 'development') {
+      console.info('No authentication token found in cookies - redirecting to login');
+    }
+    redirect('/login');
   }
 
   try {
     const userData = await verifyTokenServer(token);
     if (!userData?.userId) {
-      console.error('Invalid user data from token verification:', userData);
+      redirect('/login');
     }
 
     return {
@@ -35,6 +40,10 @@ export const getAuthenticatedUser = async () => {
       }
     };
   } catch (error) {
-    console.error('Error verifying token:', error);
+    // Log as info instead of error for auth issues
+    if (process.env.NODE_ENV === 'development') {
+      console.info('Error verifying token - redirecting to login', error);
+    }
+    redirect('/login');
   }
 }

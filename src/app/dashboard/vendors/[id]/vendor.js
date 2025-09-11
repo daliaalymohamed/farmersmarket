@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../../../contexts/translationContext';
 import Dashboard from '@/components/dashboard';
@@ -93,12 +93,13 @@ const Vendor = ({ initialData }) => {
     };
 
     // handle edit click
-    const handleEdit = (vendor) => {
+    // useCallback to prevent unnecessary re-renders
+    const handleEdit = useCallback((vendor) => {
         setModalOpen(true);
         setSelectedVendor(vendor);
         setIsUpdating(true);
         setTimeout(() => setIsUpdating(false), 2000); // Simulate API call
-    };
+    }, []);
 
     // Handle modal close
     const handleCloseModal = () => {
@@ -113,15 +114,21 @@ const Vendor = ({ initialData }) => {
 
         try {
             // Pass current status from vendorData
-            await dispatch(
+            const result = await dispatch(
                 toggleVendorActiveStatus({
                     vendorId: vendorData._id,
                     active: !vendorData.active // Toggle the current state
                 })
             ).unwrap(); // Use unwrap() to handle the promise properly
 
+             // Explicitly update the local state with the full response
+            if (result?.vendor) {
+                dispatch(updateVendorInList(result.vendor));
+            }
+
             // Only show success toast - errors are handled by interceptor
             toast.success(t('vendorStatusUpdatedSuccessfully'));
+            // toast.success(result.message); // Show message from server if needed
           
         } catch (error) {
           // DO NOT show toast here. Axios interceptor already did it.

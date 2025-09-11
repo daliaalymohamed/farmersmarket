@@ -307,6 +307,11 @@ export const PATCH = authMiddleware(async (req, context) => {
 
     // ✅ Populate related documents
     const populatedProduct = await Product.populate(updatedProduct, [
+      { 
+        path: 'vendorId',
+        populate: [{ path: 'createdBy' }, { path: 'updatedBy' }] // Nested populate for vendor's createdBy
+      },
+      { path: 'categoryId'},
       { path: 'createdBy' },
       { path: 'updatedBy' },
     ]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Image from "next/image";
@@ -12,11 +12,10 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import ButtonLoader from "@/components/UI/buttonLoader";
 import { categorySchema } from '@/lib/utils/validation';
-import suppliesImage from '../../../../assets/supplies.jpeg'; // default image
 import { toast } from "react-toastify";
 
 // Category modal to edit and add new category
-const CategoryModal = ({ open, handleClose, category, t, loading, language }) => {
+const CategoryModal = memo(({ open, handleClose, category, t, loading, language }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     // Local state for image preview
@@ -277,6 +276,6 @@ const CategoryModal = ({ open, handleClose, category, t, loading, language }) =>
             </form>
         </Dialog>
     )
-}
+})
 
 export default CategoryModal;

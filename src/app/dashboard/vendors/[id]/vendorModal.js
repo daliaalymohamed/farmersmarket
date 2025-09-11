@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import Image from "next/image";
-import { Box, Typography, Button, 
-    TextField, InputLabel, Stack, Dialog, DialogActions, DialogContent, 
-    DialogTitle, CircularProgress, MenuItem, FormControlLabel, 
-    Checkbox, Chip } from '@mui/material';
+import { Typography, Button, 
+    TextField, Stack, Dialog, DialogActions, DialogContent, 
+    DialogTitle, MenuItem } from '@mui/material';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { addVendor, editVendor, updateVendorInList } from '@/store/slices/vendorSlice';
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import ButtonLoader from "@/components/UI/buttonLoader";
 import { vendorSchema } from '@/lib/utils/validation';
@@ -23,7 +21,7 @@ const countries = [
 ];
 
 // Vendor modal to edit and add new vendor
-const VendorModal = ({ open, handleClose, vendor, t, loading, language }) => {
+const VendorModal = memo(({ open, handleClose, vendor, t, loading, language }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const [selectedCountry, setSelectedCountry] = useState(countries[0]); // Default country
@@ -174,7 +172,6 @@ const VendorModal = ({ open, handleClose, vendor, t, loading, language }) => {
                 };
                 
                 const result = await dispatch(addVendor(payload)).unwrap();
-                console.log(result)
                 // Ensure UI reflects changes immediately
                 if (result?.vendor) {
                     dispatch(updateVendorInList(result.vendor));
@@ -301,6 +298,6 @@ const VendorModal = ({ open, handleClose, vendor, t, loading, language }) => {
             </form>
         </Dialog>
     )
-}
+})
 
 export default VendorModal;

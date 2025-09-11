@@ -2,17 +2,11 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
 import Vendor from "@/models/vendor";
+import Product from '@/models/product';
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
 import { getVendorById } from '@/services/vendorService';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from "url";
-
-// Polyfill __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Handle GET (Fetch vendor by ID)
 // routing: /api/vendors/[id]
@@ -197,9 +191,15 @@ export const PATCH = authMiddleware(async (req, context) => {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 }); // ❌ Not found
     }
 
-    const message = active
-      ? "Vendor has been activated successfully"
-      : "Vendor has been deactivated successfully";
+    // Update active status of related products if any
+    const productUpdateResult = await Product.updateMany(
+      { vendorId: id },
+      { isActive: active, updatedBy: userId }
+    );
+
+    const message = active 
+        ? `Vendor has been activated successfully. ${productUpdateResult.modifiedCount} products were also activated.`
+        : `Vendor has been deactivated successfully. ${productUpdateResult.modifiedCount} products were also deactivated.`;
 
     // ✅ Populate related documents
     const populatedVendor = await Vendor.populate(updatedVendor, [
@@ -210,7 +210,10 @@ export const PATCH = authMiddleware(async (req, context) => {
     // Now return fully populated vendor
     return NextResponse.json({
       message,
-      vendor: populatedVendor // ✅ Now includes full objects
+      vendor: populatedVendor, // ✅ Now includes full objects
+      meta: {
+          productsAffected: productUpdateResult.modifiedCount,
+      }
     }, { status: 200 });// ✅ Success
   } catch (error) {
     console.error("❌ Error toggling vendor status:", error);

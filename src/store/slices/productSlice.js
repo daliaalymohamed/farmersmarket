@@ -47,10 +47,9 @@ export const editProduct = createAsyncThunk(
 // ✅ Async toggle Product Active Status Thunk
 export const toggleProductActiveStatus = createAsyncThunk(
   "products/toggleProductActiveStatus",
-  async ({ productId, isActive }) => {
+  async ({ productId, isActive }, { rejectWithValue }) => {
     try {
       const data = await productApi.toggleProductActiveStatus(productId, isActive);
-      console.log("🚀 ~ file: productSlice.js:88 ~ data:", data);
     return data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -121,13 +120,18 @@ const productsSlice = createSlice({
       const index = state.productsList.findIndex(prod => prod._id === updatedProduct._id);
       
       if (index !== -1) {
-          // Product exists, merge with existing data to preserve any fields not in update
-          state.productsList[index] = {
-              ...state.productsList[index],
-              ...updatedProduct,
-              // Ensure we preserve the ID
-              _id: updatedProduct._id
-          };
+        // ✅ Deep merge to preserve nested objects
+        state.productsList[index] = {
+          ...state.productsList[index],
+          ...updatedProduct,
+          // Preserve populated relationships if they exist
+          vendorId: updatedProduct.vendorId || state.productsList[index].vendorId,
+          categoryId: updatedProduct.categoryId || state.productsList[index].categoryId,
+          createdBy: updatedProduct.createdBy || state.productsList[index].createdBy,
+          updatedBy: updatedProduct.updatedBy || state.productsList[index].updatedBy,
+          // Ensure ID is preserved
+          _id: updatedProduct._id
+      };
       } else {
           // Product doesn't exist, add it to the list
           state.productsList.push(updatedProduct);
@@ -157,17 +161,22 @@ const productsSlice = createSlice({
       .addCase(editProduct.fulfilled, (state, action) => {
         state.loading = false;
         
-        // Handle different possible response structures
         const updatedProduct = action.payload.product || action.payload;
         const productId = action.payload.productId || updatedProduct._id;
         
         if (productId && updatedProduct) {
           const index = state.productsList.findIndex(prod => prod._id === productId);
           if (index !== -1) {
-            // Fixed: Ensure we completely replace the product data
+            // ✅ Merge with existing data to preserve populated fields
             state.productsList[index] = {
+              ...state.productsList[index], // Preserve existing data
               ...updatedProduct,
-              _id: productId // Ensure ID is preserved
+              // Explicitly preserve populated relationships
+              vendorId: updatedProduct.vendorId || state.productsList[index].vendorId,
+              categoryId: updatedProduct.categoryId || state.productsList[index].categoryId,
+              createdBy: updatedProduct.createdBy || state.productsList[index].createdBy,
+              updatedBy: updatedProduct.updatedBy || state.productsList[index].updatedBy,
+              _id: productId
             };
           }
         }
@@ -183,15 +192,28 @@ const productsSlice = createSlice({
       })
       .addCase(toggleProductActiveStatus.fulfilled, (state, action) => {
         state.loading = false;
-        // Update product in the list
-        const index = state.productsList.findIndex(product => product._id === action.payload.product._id);
-        if (index !== -1) {
-          state.productsList[index] = action.payload.product;
+        const updatedProduct = action.payload.product;
+        
+        if (updatedProduct && updatedProduct._id) {
+          const index = state.productsList.findIndex(product => product._id === updatedProduct._id);
+          if (index !== -1) {
+            // ✅ Preserve existing data and merge updates
+            state.productsList[index] = {
+              ...state.productsList[index],
+              ...updatedProduct,
+              // Ensure critical fields are preserved
+              _id: updatedProduct._id,
+              // Preserve populated vendor data if it exists in current state
+              vendorId: updatedProduct.vendorId || state.productsList[index].vendorId,
+              categoryId: updatedProduct.categoryId || state.productsList[index].categoryId
+            };
+          }
         }
       })
       .addCase(toggleProductActiveStatus.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || 'Failed to toggle product status';
+        console.error('Toggle product status failed:', action.payload);
       })
       // bulkToggleVendorStatus
       .addCase(bulkToggleProductStatus.pending, (state) => {

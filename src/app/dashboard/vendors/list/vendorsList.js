@@ -1,17 +1,16 @@
 'use client';
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Dashboard from '@/components/dashboard';
 import Breadcrumb from "@/components/UI/breadcrumb";
-import VendorModal from '../[id]/vendorModal';
+const VendorModal = lazy(() => import('../[id]/vendorModal'));
 import Link from 'next/link';
 import {
     Box,
     Typography,
     Card,
-    CardContent,
     Button,
     TextField,
     IconButton,
@@ -204,7 +203,9 @@ const VendorsList = ({initialData, initialFilters}) => {
                 newStatus
                 ? t('vendorsActivatedSuccessfully')
                 : t('vendorsDeactivatedSuccessfully')
-            );
+            )
+            // Optionally show message from server
+            // toast.success(result.message);
             } catch (error) {
             toast.error(t('bulkToggleFailed'));
             }
@@ -261,19 +262,22 @@ const VendorsList = ({initialData, initialFilters}) => {
     // Trim URL function to display social links
     // This function trims the URL to a maximum of 10 characters for display purposes
     // If the URL is invalid, it returns a shortened version of the original URL
-    const trimUrl = (url) => {
+    // useCallback to prevent unnecessary re-renders
+    const trimUrl = useCallback((url) => {
         try {
             const u = new URL(url);
             return u.hostname.replace('www.', '') + u.pathname.replace(/\/$/, '').substring(0, 15);
         } catch {
             return url.length > 20 ? url.slice(0, 20) + '...' : url;
         }
-    };
+    }, []);
 
     // Helper function to get colors for status
-    const getStatusColor = (isActive) => {
+    // Returns 'success' for active vendors and 'error' for inactive ones
+    // useCallback to prevent unnecessary re-renders
+    const getStatusColor = useCallback((isActive) => {
         return isActive === true ? 'success' : 'error';
-    };
+    }, []);
 
     return (
         <Dashboard>
@@ -288,14 +292,17 @@ const VendorsList = ({initialData, initialFilters}) => {
                 cancelColor="inherit"
                 cancelButtonText={t('cancel')}
             />
-            <VendorModal
-                open={modalOpen}
-                handleClose={handleCloseModal}
-                vendor={selectedVendor}
-                language={language}
-                t={t}
-                loading={loading}
-            />
+            {/* Suspense with loading fallback */}
+            <Suspense fallback={null}>
+                <VendorModal
+                    open={modalOpen}
+                    handleClose={handleCloseModal}
+                    vendor={selectedVendor}
+                    language={language}
+                    t={t}
+                    loading={loading}
+                />
+            </Suspense>
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
                     sideNavItem={t("vendors")} 
@@ -404,7 +411,7 @@ const VendorsList = ({initialData, initialFilters}) => {
                                         }
                                         indeterminate={
                                             selectedVendors.length > 0 &&
-                                            selectedVendors.length < selectedVendors.length
+                                            selectedVendors.length < displayVendors.length
                                         }                                        
                                         onChange={handleSelectAll}
                                         inputProps={{ 'aria-label': t('selectAllProducts') }}

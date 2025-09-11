@@ -4,6 +4,15 @@ import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import ProductsList from './productsList';
 
+// ✅ Add generateMetadata here
+export const generateMetadata = async ({ searchParams }) => {
+  const { search } = await searchParams || {};
+  return {
+    title: search ? `Products: ${search}` : 'All Products',
+    description: `Browse ${search ? `products matching "${search}"` : 'all products'}`
+  };
+}
+
 const ProductsPage = async ({ searchParams }) => {
   // Get initial filters from URL search params
   // First extract and convert all searchParams safely
@@ -28,10 +37,6 @@ const ProductsPage = async ({ searchParams }) => {
       const categories = await getCategories(initialFilters);
       const vendors = await getVendors(initialFilters);
       
-      if (!products || !categories || !vendors) {
-        notFound();
-      }
-  
       return <ProductsList 
         initialData={products} 
         initialFilters={initialFilters} 

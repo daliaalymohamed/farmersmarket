@@ -68,7 +68,7 @@ const CustomersListPage = () => {
     useEffect(() => {
         if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
 
-        const requiredPermissions = ["view_users"];
+        const requiredPermissions = ["view_dashboard", "view_users"];
         const hasAccess = checkPermission(actions, requiredPermissions);
         
         if (!hasAccess) {
@@ -107,6 +107,8 @@ const CustomersListPage = () => {
     };
     
     // Memoize formatted date function
+    // Formats date to YYYY-MM-DD or returns null if date is false
+    // useCallback to prevent unnecessary re-renders
     const formatDate = useCallback((date) => {
         return date ? dayjs(date).format("YYYY-MM-DD") : null;
     }, []);

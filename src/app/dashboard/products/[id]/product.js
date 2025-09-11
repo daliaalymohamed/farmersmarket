@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../../../contexts/translationContext';
 import Dashboard from '@/components/dashboard';
@@ -20,7 +20,6 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import MoneyIcon from '@mui/icons-material/AttachMoney';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import CategoryIcon from '@mui/icons-material/Category';
 import Facebook from '@mui/icons-material/Facebook';
 import Instagram from '@mui/icons-material/Instagram';
@@ -82,12 +81,13 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
     };
 
     // handle edit click
-    const handleEdit = (product) => {
+    // useCallback to prevent unnecessary re-renders
+    const handleEdit = useCallback((product) => {
         setModalOpen(true);
         setSelectedProduct(product);
         setIsUpdating(true);
         setTimeout(() => setIsUpdating(false), 2000); // Simulate API call
-    };
+    }, []);
 
     // Handle modal close
     const handleCloseModal = () => {
@@ -102,15 +102,21 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
 
         try {
             // Pass current status from productData
-            await dispatch(
+            const result = await dispatch(
                 toggleProductActiveStatus({
                     productId: productData._id,
                     isActive: !productData.isActive // Toggle the current state
                 })
             ).unwrap(); // Use unwrap() to handle the promise properly
 
+            // Explicitly update the local state with the full response
+            if (result?.product) {
+                dispatch(updateProductInList(result.product));
+            }
+
             // Only show success toast - errors are handled by interceptor
             toast.success(t('productStatusUpdatedSuccessfully'));
+            // toast.success(result.message); // Show message from server if needed
             
         } catch (error) {
             // DO NOT show toast here. Axios interceptor already did it.

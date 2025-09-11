@@ -346,7 +346,6 @@ export const en = {
     noContactPhone: "No contact phone",
     noLocation: "No location",
     noData: "No Data",
-    noVendorsFound: "No vendors found",
     vendorUpdatedSuccessfully: "Vendor updated successfully",
     vendorAddedSuccessfully: "Vendor added successfully",
     vendorSaveFailed: "Vendor save failed",

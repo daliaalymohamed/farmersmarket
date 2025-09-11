@@ -47,7 +47,7 @@ export const editVendor = createAsyncThunk(
 // ✅ Async toggle Vendor Active Status Thunk
 export const toggleVendorActiveStatus = createAsyncThunk(
   "vendors/toggleVendorActiveStatus",
-  async ({ vendorId, active }) => {
+  async ({ vendorId, active }, { rejectWithValue }) => {
     try {
       const data = await vendorApi.toggleVendorActiveStatus(vendorId, active);
     return data;

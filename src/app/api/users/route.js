@@ -27,7 +27,7 @@ export const GET = authMiddleware(async (req) => {
 
         // Pagination
         const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
-        const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 100); // max 100 per page
+        const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 50); // max 50 per page
 
         // Build query dynamically
         const query = {};

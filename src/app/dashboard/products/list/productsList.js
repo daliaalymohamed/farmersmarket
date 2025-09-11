@@ -1,12 +1,11 @@
 'use client';
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Dashboard from '@/components/dashboard';
 import Breadcrumb from "@/components/UI/breadcrumb";
-import ProductModal from '../[id]/productModal';
-import DeleteConfirmDialog from '@/components/deleteConfirmDialog';
+const ProductModal = lazy(() => import('../[id]/productModal'));
 import Link from 'next/link';
 import {
     Box,
@@ -17,10 +16,6 @@ import {
     TextField,
     IconButton,
     Stack,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     Chip,
     Table,
     TableBody,
@@ -30,19 +25,14 @@ import {
     TableRow,
     TablePagination,
     Checkbox,
-    Menu,
     MenuItem,
     Avatar,
-    Fab,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import SearchIcon from '@mui/icons-material/Search'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import AddIcon from '@mui/icons-material/Add'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
 import UploadIcon from '@mui/icons-material/Upload'
 import DownloadIcon from '@mui/icons-material/Download'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
@@ -80,8 +70,6 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
             message: '',
             onConfirm: () => {},
     });
-    const [deleteDialog, setDeleteDialog] = useState(false);
-
     // Redux Selectors
     // With shallowEqual - only re-renders if selected values actually changed
     // ✅ Separate selectors to avoid object creation
@@ -257,7 +245,9 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                 newStatus
                 ? t('productsActivatedSuccessfully')
                 : t('productsDeactivatedSuccessfully')
-            );
+            )
+            // Optionally show message from server
+            // toast.success(result.message);
             } catch (error) {
             toast.error(t('bulkToggleFailed'));
             }
@@ -355,19 +345,25 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
     };
 
     // Helper function to get colors for status
-    const getStatusColor = (isActive) => {
+    // Returns 'success' for active products and 'error' for inactive ones
+    // useCallback to prevent unnecessary re-renders
+    const getStatusColor = useCallback((isActive) => {
         return isActive === true ? 'success' : 'error';
-    };
+    }, []);
 
     // Helper function for featured
-    const getFeaturedColor = (isFeatured) => {
+    // Returns 'success' for featured products and 'error' for non-featured ones
+    // useCallback to prevent unnecessary re-renders
+    const getFeaturedColor = useCallback((isFeatured) => {
         return isFeatured === true ? 'success': 'error'
-    }
+    }, []);
     
     // Helper function for on sale
-    const getIsOnSaleColor = (isOnSale) => {
+    // Returns 'success' for on-sale products and 'error' for non-on-sale ones
+    // useCallback to prevent unnecessary re-renders
+    const getIsOnSaleColor = useCallback((isOnSale) => {
         return isOnSale === true ? 'success': 'error'
-    }
+    }, []);
 
     return (
         <Dashboard>
@@ -382,16 +378,19 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                 cancelColor="inherit"
                 cancelButtonText={t('cancel')}
             />
-            <ProductModal
-                open={modalOpen}
-                handleClose={handleCloseModal}
-                product={selectedProduct}
-                language={language}
-                t={t}
-                loading={loading}
-                categories={initialCategories}
-                vendors={initialVendors.vendors || []}
-            />
+            {/* Suspense with loading fallback */}
+            <Suspense fallback={null}>
+                <ProductModal
+                    open={modalOpen}
+                    handleClose={handleCloseModal}
+                    product={selectedProduct}
+                    language={language}
+                    t={t}
+                    loading={loading}
+                    categories={initialCategories}
+                    vendors={initialVendors.vendors || []}
+                />
+            </Suspense>
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
                     sideNavItem={t("products")} 
@@ -580,11 +579,11 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                                     <Checkbox
                                         checked={
                                             displayProducts.length > 0 &&
-                                            displayProducts.every(p => selectedProducts.includes(p.id))
+                                            displayProducts.every(p => selectedProducts.includes(p._id))
                                         }
                                         indeterminate={
                                             selectedProducts.length > 0 &&
-                                            selectedProducts.length < selectedProducts.length
+                                            selectedProducts.length < displayProducts.length
                                         }                                        
                                         onChange={handleSelectAll}
                                         inputProps={{ 'aria-label': t('selectAllVendors') }}
@@ -623,11 +622,11 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                                 :
                                 (
                                     displayProducts.map((product) => {
-                                        const isSelected = selectedProducts.includes(product?.id);
+                                        const isSelected = selectedProducts.includes(product?._id);
                                         const stockStatus = getStockStatus(product?.stock);
                                         return (
                                             <TableRow
-                                                key={product?.id}
+                                                key={product?._id}
                                                 hover
                                                 selected={isSelected}
                                                 tabIndex={0}
@@ -664,18 +663,25 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                                                     </Box>
                                                 </TableCell>
                                                 <TableCell role="cell">
-                                                    <Chip
-                                                        label={product?.categoryId.name?.[language] || product?.categoryId.name?.en || ''}
-                                                        variant="outlined"
-                                                        size="small"
-                                                    />
+                                                    {
+                                                        product?.categoryId ? (
+                                                        <Chip
+                                                            label={product.categoryId.name?.[language] || product?.categoryId.name?.en || ''}
+                                                            variant="outlined"
+                                                            size="small"
+                                                        />
+                                                    ): <Typography variant="body2" color="text.secondary">{t('noCategoriesFound')}</Typography>}
                                                 </TableCell>
                                                 <TableCell role="cell">
-                                                    <Chip
-                                                        label={product?.vendorId.name || ''}
-                                                        variant="outlined"
-                                                        size="small"
-                                                    />
+                                                    {
+                                                        product?.vendorId ? (
+                                                    
+                                                        <Chip
+                                                            label={product?.vendorId.name || ''}
+                                                            variant="outlined"
+                                                            size="small"
+                                                        />
+                                                    ): <Typography variant="body2" color="text.secondary">{t('noVendorsFound')}</Typography>}
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Typography variant="body2" fontWeight="bold">

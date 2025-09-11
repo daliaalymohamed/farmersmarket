@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Image from "next/image";
@@ -18,11 +18,10 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import ButtonLoader from "@/components/UI/buttonLoader";
 import { productSchema } from '@/lib/utils/validation';
-import suppliesImage from '../../../../assets/supplies.jpeg'; // default image
 import { toast } from "react-toastify";
 
 // Product modal to edit and add new product
-const ProductModal = ({ open, handleClose, product, t, loading, language, categories, vendors }) => {
+const ProductModal = memo(({ open, handleClose, product, t, loading, language, categories, vendors }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     // Local state for image preview
@@ -117,8 +116,6 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                 saleStart: formattedSaleStart, // ✅ Use formatted date
                 saleEnd: formattedSaleEnd,     // ✅ Use formatted date
                 tags: Array.isArray(product.tags) ? product.tags : [],
-                createdBy: product.createdBy || null,
-                updatedBy: product.updatedBy || null,
             };
         } else {
             return {
@@ -136,7 +133,6 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                 saleStart: null,
                 saleEnd: null,
                 tags: [],
-                updatedBy: null,
             };
         }
     };
@@ -163,18 +159,12 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
     useEffect(() => {
         if (open && product) {
             const defaultValues = getDefaultValues();
-            console.log("🎯 All Default Values:", defaultValues);
-            console.log("📅 Date values specifically:", {
-            saleStart: defaultValues.saleStart,
-            saleEnd: defaultValues.saleEnd,
-            isOnSale: defaultValues.isOnSale
-        });
             
-            // // Step 1: Reset entire form
+            // Step 1: Reset entire form
             reset(defaultValues);
 
-            // // Step 2: Force update complex fields
-            // // Force update fields that may not register properly
+            // Step 2: Force update complex fields
+            // Force update fields that may not register properly
             // ✅ Use setTimeout to ensure form is fully reset before setting individual values
             setTimeout(() => {
                 // Force update complex fields that may not register properly
@@ -351,7 +341,6 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                         payload.append('saleEnd', '');
                     }
                     payload.append('tags', JSON.stringify(data.tags));
-                    payload.append('updatedBy', data.updatedBy);
                     payload.append('image', data.image);
                 } else {
                     // Use JSON when no new file upload
@@ -436,7 +425,6 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
             }
         }
     };
-
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
             <DialogTitle>
@@ -636,15 +624,12 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                                     <Controller
                                         name="saleStart"
                                         control={control}
-                                        render={({ field }) => {
-                                            console.log("🕐 SaleStart Controller Field:", field.value, "Type:", typeof field.value);
-                                            
+                                        render={({ field }) => {                                            
                                             return (
                                                 <DateTimePicker
                                                     label={t("productSaleStart")}
                                                     value={field.value || null} // ✅ Ensure null instead of undefined
                                                     onChange={(newValue) => {
-                                                        console.log("🕐 SaleStart onChange:", newValue);
                                                         field.onChange(newValue);
                                                     }}
                                                     disabled={!isOnSale}
@@ -664,14 +649,11 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
                                         name="saleEnd"
                                         control={control}
                                         render={({ field }) => {
-                                            console.log("🕑 SaleEnd Controller Field:", field.value, "Type:", typeof field.value);
-                                            
                                             return (
                                                 <DateTimePicker
                                                     label={t("productSaleEnd")}
                                                     value={field.value || null} // ✅ Ensure null instead of undefined
                                                     onChange={(newValue) => {
-                                                        console.log("🕑 SaleEnd onChange:", newValue);
                                                         field.onChange(newValue);
                                                     }}
                                                     disabled={!isOnSale}
@@ -783,6 +765,6 @@ const ProductModal = ({ open, handleClose, product, t, loading, language, catego
             </form>
         </Dialog>
     )
-}
+})
 
 export default ProductModal;

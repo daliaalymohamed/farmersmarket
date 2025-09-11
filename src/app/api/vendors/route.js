@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
 import Vendor from "@/models/vendor";
+import Product from '@/models/product';
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
@@ -8,8 +9,8 @@ import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helper
 // Handle GET (Fetch all vendors)
 // routing: /api/vendors
 export const GET = authMiddleware(async (req) => {
-  console.log("🚀 GET /api/vendors?page=1&limit=3&search={} route hit!"); // ✅ Log that the route was hit
-  
+  console.log("🚀 GET /api/vendors?page=1&limit=3&search={} route hit!"); // ✅ Log that the route was hit to use it in vendorsList
+  console.log("🚀 GET /api/vendors?noLimit=true&active=true") // to use it in productModal
   try {
         const requiredAction = "view_vendors"; // Define the required action for this route
         // Connect to the database
@@ -24,67 +25,111 @@ export const GET = authMiddleware(async (req) => {
 
         const { searchParams } = new URL(req.url);
         
-        // Pagination
+        // 🔹 1. Pagination & Limits
         const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
-        const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 100); // max 100 per page
+        const limitParam = searchParams.get("limit");
+        const limit = limitParam ? Math.min(parseInt(limitParam), 50) : 3; // default 3
+        const noLimit = ['true', '1', 'yes'].includes(searchParams.get("noLimit")?.toLowerCase());
         
-        // Build query dynamically
+        // If noLimit=true, override limit to fetch all
+        const shouldPaginate = !noLimit && limit > 0;
+
+        // 🔹 2. Filters
         const query = {};
-        const sort = { createdAt: -1 };
         
-        // Search filter
+        // Search by name
         const search = searchParams.get("search");
         if (search) {
-            query.name = { $regex: search, $options: 'i' };
+          query.name = { $regex: search, $options: 'i' };
         }
-        
-        // Fetch total count
-        const total = await Vendor.countDocuments(query);
-        const totalPages = Math.ceil(total / limit);
-        
-        // Fetch vendors
-        const vendors = await Vendor.find(query)
-            .sort(sort)
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .populate({
-                path: "createdBy",
-                model: "User",
-                select: "firstName lastName email"
-            })
-            .populate({
-                path: "updatedBy",
-                model: "User",
-                select: "firstName lastName email"
-            });
-        
-        // Return response
-        return NextResponse.json({
-            vendors,
+
+        // Filter by active status: 'true', 'false', or ignore for "all"
+        const activeParam = searchParams.get("active");
+        if (activeParam !== null && activeParam !== undefined && activeParam !== '') {
+          const isActive = ['true', '1', 'yes'].includes(activeParam.toLowerCase());
+          query.active = isActive;
+        }
+        // If no `active` param → return all (no filter)
+
+      // 🔹 3. Sorting
+      const sort = { createdAt: -1, _id: -1 }; // Newest first
+
+      // 🔹 4. Count total (needed for pagination)
+      const total = await Vendor.countDocuments(query);
+      const totalPages = shouldPaginate ? Math.ceil(total / limit) : 0;
+
+      // 🔹 5. Fetch vendors
+      let vendors;
+      if (shouldPaginate) {
+        vendors = await Vendor.find(query)
+          .sort(sort)
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .populate({
+            path: "createdBy",
+            model: "User",
+            select: "firstName lastName email"
+          })
+          .populate({
+            path: "updatedBy",
+            model: "User",
+            select: "firstName lastName email"
+          });
+      } else {
+        // Return all vendors (no pagination)
+        vendors = await Vendor.find(query)
+          .sort(sort)
+          .populate({
+            path: "createdBy",
+            model: "User",
+            select: "firstName lastName email"
+          })
+          .populate({
+            path: "updatedBy",
+            model: "User",
+            select: "firstName lastName email"
+          });
+      }
+
+      // 🔹 6. Response
+      return NextResponse.json(
+        {
+          vendors,
+          ...(shouldPaginate && {
             pagination: {
-                total,
-                page,
-                limit,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPrevPage: page > 1
-            }
-        }, { status: 200, headers: {
-                'Cache-Control': 'no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            } });
-        
+              total,
+              page,
+              limit,
+              totalPages,
+              hasNextPage: page < totalPages,
+              hasPrevPage: page > 1,
+            },
+          }),
+          // If no pagination, no pagination object returned
+        },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        }
+      );
     } catch (error) {
-        console.error('❌ Error fetching vendors:', error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500,
-            headers: {
-                'Cache-Control': 'no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        });
-    }  
+      console.error('❌ Error fetching vendors:', error);
+      return NextResponse.json(
+        { message: "Internal Server Error" },
+        {
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        }
+      );
+    }
 });
         
 // Handle POST (Create a new vendor)
@@ -248,6 +293,12 @@ export const PATCH = authMiddleware(async (req) => {
         { status: 404 }
       );
     }
+
+    // Update active status of related products if any
+    const productUpdateResult = await Product.updateMany(
+      { vendorId: { $in: vendorIds } },
+      { isActive: active, updatedBy: userId }
+    );
     
     // Fetch updated vendors with populated createdBy/updatedBy
     const vendors = await Vendor.find({ _id: { $in: vendorIds } })
@@ -255,8 +306,11 @@ export const PATCH = authMiddleware(async (req) => {
       .populate('updatedBy', 'firstName lastName email');
 
     return NextResponse.json({
-      message: `Updated ${vendors.length} vendors`,
-      vendors
+      message: `Updated ${vendors.length} vendors successfully. ${productUpdateResult.modifiedCount} related products were also updated.`,
+      vendors,
+      meta: {
+          productsAffected: productUpdateResult.modifiedCount,
+        }
     }, { status: 200 });
 
   } catch (error) {

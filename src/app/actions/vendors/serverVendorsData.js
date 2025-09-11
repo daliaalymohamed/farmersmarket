@@ -51,7 +51,7 @@ export const getVendors = async (filters) => {
 
 
   } catch (error) {
-    console.error('[getVendors] Error:', {
+    console.info('[getVendors] Error:', {
       message: error.message,
       type: error.name,
     });

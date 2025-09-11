@@ -29,10 +29,10 @@ export const GET = async (req) => {
           
           // Pagination
           const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
-          const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 100); // max 100 per page
+          const limit = Math.min(parseInt(searchParams.get("limit")) || 3, 50); // max 50 per page
           // Build query dynamically
           const query = {};
-          const sort = { createdAt: -1 };
+          const sort = { createdAt: -1,  _id: -1 }; // Newest first
   
           // 1. Search by name filter
           const search = searchParams.get("search");
@@ -85,8 +85,6 @@ export const GET = async (req) => {
           // You can add more filters here as needed, e.g., price range, stock status, etc.
           
 
-
-
           // Fetch total count
           const total = await Product.countDocuments(query);
           const totalPages = Math.ceil(total / limit);
@@ -114,14 +112,28 @@ export const GET = async (req) => {
               }
             ]);
          
-          // Calculate statistics for ALL products (no filters)
-          const allProducts = await Product.find({});
+          // Get stats using filtered aggregation
+          const [statsResult] = await Product.aggregate([
+            {
+              $facet: {
+                totalCount: [{ $count: "count" }],
+                active: [{ $match: { isActive: true } }, { $count: "count" }],
+                inactive: [{ $match: { isActive: false } }, { $count: "count" }],
+                lowStock: [{ $match: { stock: { $gt: 0, $lt: 10 } } }, { $count: "count" }],
+                totalValue: [
+                  { $addFields: { value: { $multiply: ["$price", "$stock"] } } },
+                  { $group: { _id: null, total: { $sum: "$value" } } }
+                ]
+              }
+            }
+          ]);
+
           const stats = {
-              total: allProducts.length,
-              active: allProducts.filter(p => p.isActive === true).length,
-              inactive: allProducts.filter(p => p.isActive === false).length,
-              lowStock: allProducts.filter(p => p.stock < 10 && p.stock > 0).length,
-              totalValue: allProducts.reduce((sum, p) => sum + (p.price * p.stock), 0)
+            total: statsResult.totalCount[0]?.count || 0,
+            active: statsResult.active[0]?.count || 0,
+            inactive: statsResult.inactive[0]?.count || 0,
+            lowStock: statsResult.lowStock[0]?.count || 0,
+            totalValue: statsResult.totalValue[0]?.total || 0
           };
 
           // Return response

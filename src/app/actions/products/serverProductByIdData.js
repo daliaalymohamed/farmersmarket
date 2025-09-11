@@ -35,7 +35,7 @@ export const getProductById = async (id) => {
         throw new Error(data.error || `API error: ${response.status}`);
     }
   } catch (error) {
-    console.error('[getProductId] Error:', {
+    console.info('[getProductId] Error:', {
       message: error.message,
       type: error.name,
       id

@@ -2,7 +2,6 @@
 import { getCustomerById } from '@/app/actions/users/serverUserByIdData';
 import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
 import MyProfile from './profile';
-import { notFound } from 'next/navigation';
 
 const ProfilePage = async () => {
   try {
@@ -10,10 +9,6 @@ const ProfilePage = async () => {
     const { user } = await getAuthenticatedUser();
     // Get full profile data
     const userProfile = await getCustomerById(user.userId);
-    
-    if (!userProfile) {
-      notFound();
-    }
 
     return <MyProfile initialData={userProfile} />;
   } catch (error) {

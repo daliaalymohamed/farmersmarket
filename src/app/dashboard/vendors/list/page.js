@@ -2,11 +2,20 @@
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import VendorsList from './vendorsList';
 
+// ✅ Add generateMetadata here
+export const generateMetadata = async ({ searchParams }) => {
+  const { search } = await searchParams || {};
+  return {
+    title: search ? `Vendors: ${search}` : 'All Vendors',
+    description: `Browse ${search ? `vendors matching "${search}"` : 'all vendors'}`
+  };
+}
+
 const VendorsPage = async ({ searchParams }) => {
   // Get initial filters from URL search params
   // First extract and convert all searchParams safely
   // Safely extract and convert searchParams with defaults
-  const { page, limit, search, status } = await searchParams || {};
+  const { page, limit, search } = await searchParams || {};
 
   const initialFilters = {
     page: page ? parseInt(page, 10) : 1,
@@ -21,10 +30,6 @@ const VendorsPage = async ({ searchParams }) => {
       
       // Get vendors data
       const vendors = await getVendors(initialFilters);
-      if (!vendors) {
-        notFound();
-      }
-  
       return <VendorsList initialData={vendors} initialFilters={initialFilters} />;
     } catch (error) {
       console.error('Error loading vendors:', error);
