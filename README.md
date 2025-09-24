@@ -8,6 +8,7 @@ Farmers Market is a [Next.js](https://nextjs.org) e-commerce application built u
 - **[Material-UI](https://mui.com):** A popular React UI framework for building responsive and accessible user interfaces.
 - **[MongoDB](https://www.mongodb.com):** A NoSQL database for storing application data.
 - **[Redux](https://redux.js.org):** A state management library for managing global application state.
+- **[Redis](https://redis.io):** A key-value store for caching data
 
 
 ## Prerequisites
@@ -53,10 +54,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Folder Structure
 
-- `src/app`: Contains the application pages and components.
+- `src/app`: Contains the application pages, components, actions and api.
 - `src/store`: Redux store and slices for state management.
-- `src/lib`: Utility functions and API service files.
+- `src/lib`: Utility functions, API service files and localization.
 - `src/services`: Backend service logic for user authentication and database interactions.
+- `src/middlewares`: Contains custom middleware functions used across the application for authentication, authorization, input validation, and request handling.
+- `src/models`: Defines Mongoose schemas and models for MongoDB collections. Each file corresponds to a database collection and enforces data structure, validation, and relationships.
 
 ## Environment Variables
 
@@ -76,6 +79,9 @@ To learn more about the technologies used in this project, take a look at the fo
 - [Material-UI Documentation](https://mui.com) - Learn how to use Material-UI components.
 - [MongoDB Documentation](https://www.mongodb.com/docs) - Learn how to use MongoDB as a database.
 - [Redux Toolkit Documentation](https://redux-toolkit.js.org) - Learn how to manage state with Redux Toolkit.
+- [Redis Documentation](https://redis.io) - Learn how to use Redis as a key-value store.
+
+
 
 ## Deploy on Vercel
 
