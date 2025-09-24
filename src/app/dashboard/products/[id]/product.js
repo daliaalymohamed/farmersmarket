@@ -23,6 +23,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
 import Facebook from '@mui/icons-material/Facebook';
 import Instagram from '@mui/icons-material/Instagram';
+import WarningIcon from '@mui/icons-material/Warning';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { updateProductInList, selectProductById, toggleProductActiveStatus } from '@/store/slices/productSlice';
@@ -270,15 +271,30 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
                                 gap: 2,
                             }}
                             >
-                            <Button 
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleEdit(productData)}
-                                disabled={loading || isUpdating}
-                                startIcon={(loading || isUpdating) ? <ButtonLoader /> : <EditIcon />}
-                            >
-                                {(loading || isUpdating) ? t('updating') : t('editProduct')}
-                            </Button>
+                            {
+                                ( !isActive || stock === 0 ) && (
+                                    <Chip 
+                                        label={t('outOfStockInactiveWarningProduct')}
+                                        color="error"
+                                        size="medium"
+                                        sx={{ fontWeight: 'bold' }}
+                                        icon={<WarningIcon />}
+                                    />
+                                )
+                            }  
+                            {
+                                isActive && stock > 0 && (
+                                    <Button 
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => handleEdit(productData)}
+                                        disabled={loading || isUpdating}
+                                        startIcon={(loading || isUpdating) ? <ButtonLoader /> : <EditIcon />}
+                                    >
+                                        {(loading || isUpdating) ? t('updating') : t('editProduct')}
+                                    </Button>
+                                )
+                            }  
                             <Button 
                                     variant="contained"
                                     color={isActive ? 'error' : 'success'}
@@ -321,9 +337,9 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
                         </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <MoneyIcon color="primary" />
+                            <MoneyIcon color="primary"/>
                             <Typography color="text.secondary">
-                                {t('price')}: {price}
+                                {t('EGP')} {t('price')}: {price}
                             </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

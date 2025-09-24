@@ -14,7 +14,7 @@ const ProductSchema = new mongoose.Schema(
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     stock: { type: Number, default: 0 },
     image: { type: String, required: true },
-    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true, index: true },
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who added the product
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin who updated the product
     isActive: { type: Boolean }, // Soft delete
@@ -39,23 +39,12 @@ ProductSchema.virtual("inventories", {
   foreignField: "productId",
 });
 
-// /// ✅ Virtual: Get additional vendors via inventory
-// ProductSchema.virtual("additionalVendors", {
-//   ref: "Inventory",
-//   localField: "_id",
-//   foreignField: "productId",
-//   match: { vendorId: { $exists: true, $ne: null } },
-//   justOne: false,
-// });
 
-// // calculate totalStock
-// ProductSchema.methods.getTotalStock = async function () {
-//   const Inventory = mongoose.model("Inventory");
-//   const inventories = await Inventory.find({ productId: this._id }).select("quantity");
-//   return inventories.reduce((sum, inv) => sum + inv.quantity, 0);
-// };
 
 // Add compound index for product and active status
 ProductSchema.index({ categoryId: 1, vendorId: 1, isActive: 1 });
+ProductSchema.index({ isOnSale: 1, isActive: 1 });           // For "On Sale"
+ProductSchema.index({ createdAt: -1, isActive: 1 });         // For "New Arrivals"
+ProductSchema.index({ isFeatured: 1, isActive: 1 });         // For "Featured"
 
 export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

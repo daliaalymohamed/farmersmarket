@@ -15,7 +15,7 @@ export const GET = authMiddleware(async (req, context) => {
   const params = await context.params;
   const id = params.id;
   const requiredAction = "view_vendor"; // Define the required action for this route
-    console.log("id => ", id)
+
   try {
     // Connect to the database
     await connectToDatabase();
@@ -29,14 +29,14 @@ export const GET = authMiddleware(async (req, context) => {
 
     // ✅ Proceed with the request
     // Fetch the category by ID
-    const product = await getVendorById(id);
-    if (!product) {
+    const vendor = await getVendorById(id);
+    if (!vendor) {
       return NextResponse.json('Vendor not found', { status: 404 }); // ❌ Not found
     }
-    return NextResponse.json(product, { status: 200 }); // ✅ Success
+    return NextResponse.json({vendor, vendorSuccess: true}, { status: 200 }); // ✅ Success
   } catch (error) {
     console.error('❌ Error fetching vendor:', error);
-    return NextResponse.json({message: 'Internal Server Error'}, { status: 500 }); // ❌ Server error
+    return NextResponse.json({message: 'Internal Server Error', vendorSuccess: false}, { status: 500 }); // ❌ Server error
   }
 });
 

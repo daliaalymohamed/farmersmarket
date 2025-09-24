@@ -1,6 +1,7 @@
 // This is server-side code for a Next.js page that fetches vendors data { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import VendorsList from './vendorsList';
+import Error from '@/components/UI/error';
 
 // ✅ Add generateMetadata here
 export const generateMetadata = async ({ searchParams }) => {
@@ -30,6 +31,9 @@ const VendorsPage = async ({ searchParams }) => {
       
       // Get vendors data
       const vendors = await getVendors(initialFilters);
+      if (!vendors.vendorSuccess) {
+            return <Error error={'Failed to load vendors data.'} />;
+      }
       return <VendorsList initialData={vendors} initialFilters={initialFilters} />;
     } catch (error) {
       console.error('Error loading vendors:', error);

@@ -1,6 +1,7 @@
 // This is server-side code for a Next.js page that fetches customer data based on the provided ID.import { getCustomerById } from '@/lib/services/serverServices/users/serverUserData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import CategoriesList from './categoriesList';
+import Error from '@/components/UI/error';
 
 // ✅ Add generateMetadata here
 export const generateMetadata = async ({ searchParams }) => {
@@ -22,8 +23,12 @@ const CategoriesPage = async ({ searchParams }) => {
   try {
       
       // Get categories data
-      const categories = await getCategories(initialFilters);
-    
+      const { categories, success } = await getCategories(initialFilters);
+
+      if (!success) {
+            return <Error error={result.error || 'Failed to load categories data.'} />;
+      }
+      
       return <CategoriesList initialData={categories} initialFilters={initialFilters} />;
     } catch (error) {
       console.error('Error loading categories:', error);

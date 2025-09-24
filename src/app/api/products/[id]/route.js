@@ -31,10 +31,10 @@ export const GET = async (req, context) => {
     if (!product) {
       return NextResponse.json('Product not found', { status: 404 }); // ❌ Not found
     }
-    return NextResponse.json(product, { status: 200 }); // ✅ Success
+    return NextResponse.json({product, prodSuccess: true}, { status: 200 }); // ✅ Success
   } catch (error) {
     console.error('❌ Error fetching product:', error);
-    return NextResponse.json({message: 'Internal Server Error'}, { status: 500 }); // ❌ Server error
+    return NextResponse.json({message: 'Internal Server Error', prodSuccess: false}, { status: 500 }); // ❌ Server error
   }
 };
 

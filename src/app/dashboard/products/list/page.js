@@ -3,6 +3,7 @@ import { getProducts } from '@/app/actions/products/serverProductsData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import ProductsList from './productsList';
+import Error from '@/components/UI/error';
 
 // ✅ Add generateMetadata here
 export const generateMetadata = async ({ searchParams }) => {
@@ -34,9 +35,21 @@ const ProductsPage = async ({ searchParams }) => {
   try {
       // Get products with initial filters
       const products = await getProducts(initialFilters);
-      const categories = await getCategories(initialFilters);
-      const vendors = await getVendors(initialFilters);
+      const {categories, success} = await getCategories({});
+      const {vendors, vendorSuccess} = await getVendors({
+        noLimit: true,
+        active: true
+      });
       
+      if (!products.prodSuccess) {
+            return <Error error={'Failed to load products data.'} />;
+      }
+      if (!success) {
+            return <Error error={'Failed to load categories data.'} />;
+      }
+      if (!vendorSuccess) {
+            return <Error error={'Failed to load vendors data.'} />;
+      }
       return <ProductsList 
         initialData={products} 
         initialFilters={initialFilters} 

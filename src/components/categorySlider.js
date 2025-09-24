@@ -1,16 +1,13 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { Box, Card, CardContent, Typography, IconButton } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import Image from "next/image";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
-import { initializeCategories } from '@/store/slices/categorySlice';
-import Loading from "@/components/UI/loading";
-import Error from "@/components/UI/error";
+
 
 // Custom Arrow Component
 const CustomPrevArrow = ({ onClick, ariaLabel }) => (
@@ -53,23 +50,9 @@ const CustomPrevArrow = ({ onClick, ariaLabel }) => (
 
 const CategorySlider = ({initialData}) => {
   const { t, language } = useTranslation()
-  const dispatch = useDispatch();
-  // Redux Selectors
-  // With shallowEqual - only re-renders if selected values actually changed
-  const { loading , error, categoriesList } = useSelector(
-      state => ({
-        loading: state.categories.loading,
-        error: state.categories.error,
-        categoriesList: state.categories.categoriesList || [], 
-      }),
-      shallowEqual
-  )
-  // Initialize Redux with server-side data
-  useEffect(() => {
-      if (initialData && initialData.length > 0) {
-          dispatch(initializeCategories(initialData));
-      }
-  }, [dispatch, initialData]);
+
+  if (!initialData || initialData.length === 0) return null;
+
   // slider slick settings
   const settings = {
     dots: true,
@@ -103,57 +86,66 @@ const CategorySlider = ({initialData}) => {
           {t("order")}
       </Typography>
       <Slider {...settings}>
-        {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-                <Loading />
-            </Box>
-        ) : error ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-                <Error message={error} />
-            </Box>
-        ) : (
-        categoriesList.map((item) => (
+       {
+        initialData.map((item) => (
           <Card
           sx={{
             textAlign: "center",
             cursor: "pointer",
             transition: "transform 0.3s",
             "&:hover": { transform: "scale(1.05)" }, // Zoom effect on hover
-          }} key={item.id}
+          }} key={item._id}
         > 
-          <CardContent>
-            {/* Circular Image Container */}
-            <Box
-              sx={{
-                position: "relative",
-                width: "150px", // Adjust the size of the circle
-                height: "150px", // Adjust the size of the circle
-                borderRadius: "50%", // Makes the container circular
-                overflow: "hidden", // Ensures the image stays within the circle
-                margin: "auto", // Centers the container
-              }}
-            >
-              {item.image ? (
-                  <Image
-                    src={`/api/images/category/${item.image}`}
-                    alt={language === "en" ? item.name.en : item.name.ar}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    style={{ objectFit: "cover" }} 
-                    priority
-                  />
-                ) : (
-                  <Typography variant="caption" sx={{ mt: 2 }}>No Image Available</Typography>
-                )}
-            </Box>
-    
-            {/* Title */}
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              {language === "en" ? item.name.en : item.name.ar}
-            </Typography>
-          </CardContent>
+                        <CardContent sx={{ pt: 2, pb: 1, flexGrow: 1 }}>
+                {/* Circular Image Container - Fixed Size */}
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: { xs: 100, sm: 120, md: 140 },
+                    height: { xs: 100, sm: 120, md: 140 },
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    margin: "auto",
+                    bgcolor: "#f5f5f5",
+                    border: "4px solid #fff",
+                    boxShadow: 1,
+                  }}
+                >
+                  {item.image ? (
+                    <Image
+                      src={`/api/images/category/${item.image}`}
+                      alt={item?.name?.[language] || item?.name?.en || 'Category'}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      style={{ objectFit: "cover" }}
+                      priority={false}
+                    />
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      {t('noImage')}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Title - Fixed Spacing */}
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{
+                    mt: 2,
+                    minHeight: 48, // Ensures consistent height for 1-2 lines
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    wordWrap: "break-word",
+                  }}
+                >
+                  {item?.name?.[language] || item?.name?.en || t('category')}
+                </Typography>
+              </CardContent>
         </Card>
-        )))}
+        ))}
       </Slider>
     </Box>
   );

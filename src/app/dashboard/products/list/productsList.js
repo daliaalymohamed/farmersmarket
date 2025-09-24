@@ -113,11 +113,12 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
             dispatch(initializeCategories(initialCategories));
         }
     }, [dispatch, initialCategories]);
+
     // Initialize Redux with server-side vendors
      useEffect(() => {
-        if (initialVendors?.vendors?.length >= 0) {
+        if (initialVendors?.length >= 0) {
             dispatch(initializeVendors({
-                vendors: initialVendors.vendors
+                vendors: initialVendors
             }));
         }
     }, [dispatch, initialVendors]);
@@ -388,7 +389,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                     t={t}
                     loading={loading}
                     categories={initialCategories}
-                    vendors={initialVendors.vendors || []}
+                    vendors={initialVendors || []}
                 />
             </Suspense>
             <Box sx={{ p: 3 }}>
@@ -685,7 +686,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Typography variant="body2" fontWeight="bold">
-                                                        ${product.price}
+                                                        {t('EGP')}{product.price}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell role="cell">

@@ -31,10 +31,11 @@ export const GET = async (req) => {
         }
         // ✅ Proceed with the request       
         const categories = await Category.find(query);  
-        return NextResponse.json(categories, { status: 200 }); // ✅ Success
+
+        return NextResponse.json({ categories, success: true }, { status: 200 }); // ✅ Success
     } catch (error) {
         console.error('❌ Error fetching categories:', error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 }); // ❌ Server error
+        return NextResponse.json({ message: "Internal Server Error", success: false }, { status: 500 }); // ❌ Server error
     }
 };
 

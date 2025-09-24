@@ -13,7 +13,7 @@ import {
   Button,
   Tab,
   Tabs,
-  Stack
+  Stack,
 } from '@mui/material';
 import Grid from "@mui/material/Grid2";
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -21,6 +21,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Facebook from '@mui/icons-material/Facebook';
 import Instagram from '@mui/icons-material/Instagram';
+import WarningIcon from '@mui/icons-material/Warning';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { updateVendorInList, selectVendorById, toggleVendorActiveStatus } from '@/store/slices/vendorSlice';
@@ -234,15 +235,30 @@ const Vendor = ({ initialData }) => {
                                     gap: 2,
                                 }}
                                 >
-                                <Button 
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={() => handleEdit(vendorData)}
-                                    disabled={loading || isUpdating}
-                                    startIcon={(loading || isUpdating) ? <ButtonLoader /> : <EditIcon />}
-                                >
-                                    {(loading || isUpdating) ? t('updating') : t('editVendor')}
-                                </Button>
+                                {
+                                    !active  && (
+                                        <Chip 
+                                            label={t('inactiveWarningVendor')}
+                                            color="error"
+                                            size="medium"
+                                            sx={{ fontWeight: 'bold' }}
+                                            icon={<WarningIcon />}
+                                        />
+                                )
+                            }  
+                            {
+                                active && (
+                                    <Button 
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => handleEdit(vendorData)}
+                                        disabled={loading || isUpdating}
+                                        startIcon={(loading || isUpdating) ? <ButtonLoader /> : <EditIcon />}
+                                    >
+                                        {(loading || isUpdating) ? t('updating') : t('editVendor')}
+                                    </Button>
+                                )
+                            }
                                 <Button 
                                     variant="contained"
                                     color={active ? 'error' : 'success'}

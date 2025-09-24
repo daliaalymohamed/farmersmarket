@@ -56,6 +56,11 @@ export const getVendors = async (filters) => {
       type: error.name,
     });
 
+    // Handle redirect errors (these are expected)
+    if (error.message === 'NEXT_REDIRECT') {
+      throw error; // Let Next.js handle the redirect
+    }
+    
     if (error.name === 'TypeError') {
       throw new Error('Network or fetch configuration error');
     }

@@ -35,10 +35,10 @@ export const GET = async (req, context) => {
       return NextResponse.json('Category not found', { status: 404 }); // ❌ Not found
     }
 
-    return NextResponse.json(category, { status: 200 }); // ✅ Success
+    return NextResponse.json({category, success: true}, { status: 200 }); // ✅ Success
   } catch (error) {
     console.error('❌ Error fetching category:', error);
-    return NextResponse.json({message: 'Internal Server Error'}, { status: 500 }); // ❌ Server error
+    return NextResponse.json({message: 'Internal Server Error', success: false}, { status: 500 }); // ❌ Server error
   }
 };
 

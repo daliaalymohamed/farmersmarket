@@ -64,7 +64,7 @@ export const GET = authMiddleware(async (req, context) => {
       });
     }
 
-    return NextResponse.json(user, { 
+    return NextResponse.json({user, success: true}, { 
       status: 200,
       headers: {
         'Cache-Control': 'no-store, must-revalidate',
@@ -85,7 +85,8 @@ export const GET = authMiddleware(async (req, context) => {
       // Handle generic errors
       return NextResponse.json({
         error: 'Internal Server Error',
-        details: error.message
+        details: error.message,
+        success: false
       }, { status: 500 });
     } // ❌ Server error
 });

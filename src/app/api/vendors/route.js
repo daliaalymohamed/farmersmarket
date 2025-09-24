@@ -106,6 +106,7 @@ export const GET = authMiddleware(async (req) => {
             },
           }),
           // If no pagination, no pagination object returned
+        vendorSuccess: true
         },
         {
           status: 200,
@@ -119,7 +120,7 @@ export const GET = authMiddleware(async (req) => {
     } catch (error) {
       console.error('❌ Error fetching vendors:', error);
       return NextResponse.json(
-        { message: "Internal Server Error" },
+        { message: "Internal Server Error", vendorSuccess: false },
         {
           status: 500,
           headers: {

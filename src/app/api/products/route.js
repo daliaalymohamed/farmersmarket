@@ -147,7 +147,8 @@ export const GET = async (req) => {
                   hasNextPage: page < totalPages,
                   hasPrevPage: page > 1
               },
-              stats
+              stats,
+              prodSuccess: true
           }, { status: 200, headers: {
                   'Cache-Control': 'no-store, must-revalidate',
                   'Pragma': 'no-cache',
@@ -156,7 +157,7 @@ export const GET = async (req) => {
   
       } catch (error) {
           console.error('❌ Error fetching products:', error);
-          return NextResponse.json({ message: "Internal Server Error" }, { status: 500,
+          return NextResponse.json({ message: "Internal Server Error", prodSuccess: false }, { status: 500,
               headers: {
                   'Cache-Control': 'no-store, must-revalidate',
                   'Pragma': 'no-cache',

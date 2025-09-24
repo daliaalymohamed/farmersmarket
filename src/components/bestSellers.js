@@ -3,27 +3,15 @@ import React, { useRef } from "react";
 import { useDispatch } from "react-redux";
 // import { addToCart } from "@/store/slices/cartSlice";
 import { toast } from "react-toastify";
-import { Box, Typography, Card, CardContent, CardActionArea, Button } from "@mui/material";
-import Image from "next/image";
+import Image from "next/image"; // Import Next.js Image
+import { Box, Card, CardContent, CardActionArea, Typography, Chip, Rating, Stack, Button } from "@mui/material";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 import AddToCart from "./UI/addToCart";
 
-const DealsSlider = ({ initialData }) => {
+const BestSellers = ({ initialData }) => {
   const { t, language } = useTranslation()
   const dispatch = useDispatch();
-
-  // Ref for scroll container
-  const scrollRef = useRef(null);
-
-   // Scroll function
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
+  
   // Handle Add to Cart
   const handleAddToCart = (product) => {
     const cartItem = {
@@ -39,6 +27,20 @@ const DealsSlider = ({ initialData }) => {
     toast.success(`${cartItem.name[language] || cartItem.name} added to cart!`);
   };
 
+  // Ref for scroll container
+  const scrollRef = useRef(null);
+  
+  // Scroll function
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   if (!initialData || initialData.length === 0) return null;
 
   return (
@@ -46,12 +48,13 @@ const DealsSlider = ({ initialData }) => {
       {/* Section Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" sx={{ mt: 2, mb: 2 }}>
-          {t("topDeals")}
+          {t("bestSellers")}
         </Typography>
-        
+
         {/* Navigation Buttons */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <button
+            type="button"
             aria-label={t('previous')}
             onClick={() => scroll('left')}
             style={{
@@ -63,13 +66,17 @@ const DealsSlider = ({ initialData }) => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              opacity: 0.8,
+              transition: 'opacity 0.2s'
             }}
-            type="button"
+            onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = 0.8}
           >
             ←
           </button>
           <button
+            type="button"
             aria-label={t('next')}
             onClick={() => scroll('right')}
             style={{
@@ -81,9 +88,12 @@ const DealsSlider = ({ initialData }) => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              opacity: 0.8,
+              transition: 'opacity 0.2s'
             }}
-            type="button"
+            onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = 0.8}
           >
             →
           </button>
@@ -104,7 +114,7 @@ const DealsSlider = ({ initialData }) => {
             height: 8
           },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#bdbdbd',
+            backgroundColor: '#ff6b6b',
             borderRadius: 4
           },
           scrollbarWidth: 'thin',
@@ -119,15 +129,32 @@ const DealsSlider = ({ initialData }) => {
               maxWidth: '320px',
               flexShrink: 0,
               height: '100%',
-              transition: 'transform 0.2s',
+              position: 'relative',
+              transition: 'transform 0.2s, box-shadow 0.2s',
               '&:hover': {
-                transform: 'scale(1.02)',
-                boxShadow: 4
+                transform: 'translateY(-4px)',
+                boxShadow: 6
               }
             }}
           >
+            {/* Best Seller Badge */}
+            <Chip
+              label={t('bestSeller')}
+              color="error"
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                zIndex: 2,
+                fontWeight: 'bold',
+                fontSize: '0.75rem',
+                px: 1
+              }}
+            />
+
             <CardActionArea component="a" href={`/products/${product.slug || product._id}`}>
-              {/* Image */}
+              {/* Product Image */}
               <Box sx={{ position: 'relative', height: 200, bgcolor: '#f9f9f9' }}>
                 <Image
                   src={product.image ? `/api/images/product/${product.image}` : '/placeholder.webp'}
@@ -137,43 +164,57 @@ const DealsSlider = ({ initialData }) => {
                   style={{ objectFit: 'cover' }}
                   loading="lazy"
                 />
-                {/* Discount Badge */}
-                {product.discountPercentage > 0 && (
-                  <Box sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    bgcolor: 'error.main',
-                    color: 'white',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    fontWeight: 'bold',
-                    fontSize: '0.75rem'
-                  }}>
-                    {product.discountPercentage}% OFF
-                  </Box>
-                )}
               </Box>
 
               <CardContent>
-                <Typography variant="subtitle1" fontWeight="medium" noWrap>
+                {/* Product Name */}
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  noWrap
+                  title={product.name[language] || product.name.en}
+                  sx={{ mb: 1 }}
+                >
                   {product.name[language] || product.name.en}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                  <Typography variant="h6" color="error.main" fontWeight="bold">
-                    {t('EGP')} {product.salePrice?.toFixed(2)}
+
+                {/* Price */}
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  {product.salePrice ? (
+                    <>
+                      <Typography variant="h6" color="error.main" fontWeight="bold">
+                        {t('EGP')} {product.salePrice.toFixed(2)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
+                        {t('EGP')} {product.price.toFixed(2)}
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography variant="h6" fontWeight="bold">
+                      {t('EGP')} {product.price.toFixed(2)}
+                    </Typography>
+                  )}
+                </Stack>
+
+                {/* Rating */}
+                {typeof product.rating === 'number' && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Rating value={product.rating} precision={0.5} readOnly size="small" />
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                      ({product.reviewCount || 0} reviews)
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Vendor */}
+                {product.vendor?.name && (
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {t('by')} {product.vendor.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
-                    {t('EGP')} {product.price.toFixed(2)}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" noWrap>
-                  {product.vendor?.name?.[language] || product.vendor?.name?.en}
-                </Typography>
+                )}
               </CardContent>
             </CardActionArea>
-
+            
             {/* Add to Cart Button */}
             <AddToCart product={product} onAddToCart={handleAddToCart} />
           </Card>
@@ -181,18 +222,23 @@ const DealsSlider = ({ initialData }) => {
       </Box>
 
       {/* View All Link */}
-      <Box sx={{ textAlign: 'center', mt: 3 }}>
+      <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Typography
           component="a"
-          href="/deals"
+          href="/products?sort=popular"
           color="text.primary"
-          sx={{ fontWeight: 'bold', textDecoration: 'underline' }}
+          sx={{
+            fontWeight: 'bold',
+            textDecoration: 'underline',
+            '&:hover': { cursor: 'pointer' }
+          }}
         >
-          {t('viewAllDeals')}
+          {t('viewAllBestSellers')}
         </Typography>
       </Box>
     </Box>
   );
-};
 
-export default DealsSlider;
+}
+
+export default BestSellers
