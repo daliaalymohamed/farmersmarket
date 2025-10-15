@@ -153,7 +153,7 @@ const NewArrivals = ({ initialData }) => {
               }}
             />
 
-            <CardActionArea component="a" href={`/products/${product.slug || product._id}`}>
+            <CardActionArea component="a" href={`/product/${product.slug || product._id}`}>
               {/* Product Image */}
               <Box sx={{ position: 'relative', height: 200, bgcolor: '#fafafa' }}>
                 <Image
@@ -213,7 +213,7 @@ const NewArrivals = ({ initialData }) => {
             </CardActionArea>
             
             {/* Add to Cart Button */}
-            <AddToCart product={product} onAddToCart={handleAddToCart} />
+            <AddToCart product={product} onAddToCart={handleAddToCart} disabled={product.stock === 0}/>
           </Card>
         ))}
       </Box>

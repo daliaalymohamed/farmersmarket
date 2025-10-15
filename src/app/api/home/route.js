@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/utils/dbConnection';
 import { RedisUtils, TTL } from '@/lib/utils/redis';
-import mongoose from 'mongoose';
+import { syncData as syncToMeili} from '@/lib/utils/syncToMeili';
 import Product from '@/models/product';
 import Category from '@/models/category';
 import Order from '@/models/order';
@@ -69,59 +69,70 @@ export function getProductProjectionStages() {
   ];
 }
 
+// At top of file
+let hasSynced = false;
+
+
 export const GET = async (req) => {
+  console.log("🚀 GET /api/home?search=&category=&limit= route hit!");
+  // In development, sync Meilisearch on first request
+  if (process.env.NODE_ENV === 'development' && !hasSynced) {
+    await syncToMeili(); 
+    hasSynced = true;
+  }
+
   try {
-    console.log("🚀 GET /api/home route hit!");
+    // Connect to the database
+    await connectToDatabase();
 
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || '';
-    const limit = Math.min(parseInt(searchParams.get('limit')) || 10, 20);
-
-    const mainCacheKey = `home:${search}:${category}:${limit}`;
+    const limit = 10;
+    const mainCacheKey = `home:main:${limit}`;
     const bestSellersKey = 'bestSellers:ids';
     const categoriesKey = 'categories:all';
 
-    // Try cache first
+    // Try full response cache first (fastest)
+    let fullCached = null;
     try {
-      const cachedData = await RedisUtils.getJSON(mainCacheKey);
-      if (cachedData) {
-        console.log('🎯 Cache hit');
+      fullCached = await RedisUtils.getJSON(mainCacheKey);
+      if (fullCached) {
+        // console.log('🎯 Full homepage cache hit');
         return NextResponse.json({
           success: true,
           data: {
-            ...cachedData,
-            metadata: { ...cachedData.metadata, cached: true }
+            ...fullCached,
+            metadata: { ...fullCached.metadata, cached: true }
           }
         });
       }
     } catch (err) {
-      console.warn('Redis read failed:', err.message);
+      console.warn('❌ Redis full cache read failed:', err.message);
     }
 
-    await connectToDatabase();
+    // If full cache missed, try partials (categories + best sellers)
+    let categories, bestSellerIds;
 
-    // Base match
-    const baseMatch = {
-      isActive: true,
-      stock: { $gt: 0 },
-      ...(search && {
-        $or: [
-          { 'name.en': { $regex: search, $options: 'i' } },
-          { 'name.ar': { $regex: search, $options: 'i' } },
-          { 'description.en': { $regex: search, $options: 'i' } },
-          { 'description.ar': { $regex: search, $options: 'i' } }
-        ]
-      }),
-      ...(category && { categoryId: new mongoose.Types.ObjectId(category) })
-    };
-
-    // Best sellers
-    let bestSellerIds = [];
+    // ✅ Load categories (cached 6h)
     try {
-      const cached = await RedisUtils.getJSON(bestSellersKey);
-      if (cached) {
-        bestSellerIds = cached;
+      const cachedCats = await RedisUtils.getJSON(categoriesKey);
+      if (cachedCats) {
+        categories = cachedCats;
+        // console.log('✅ Categories loaded from Redis');
+      } else {
+        categories = await Category.find({}).select('name image color slug').lean();
+        await RedisUtils.setJSON(categoriesKey, categories, TTL.HOURS(6));
+        // console.log('💾 Categories saved to Redis');
+      }
+    } catch (err) {
+      console.error('Categories fetch failed:', err);
+      categories = [];
+    }
+
+    // ✅ Load best seller IDs (cached 30m)
+    try {
+      const cachedBs = await RedisUtils.getJSON(bestSellersKey);
+      if (cachedBs) {
+        bestSellerIds = cachedBs;
+        // console.log('✅ Best seller IDs loaded from Redis');
       } else {
         const result = await Order.aggregate([
           { $unwind: '$items' },
@@ -130,143 +141,83 @@ export const GET = async (req) => {
           { $limit: 50 }
         ]);
         bestSellerIds = result.map(r => r._id);
-        await RedisUtils.setJSON(bestSellersKey, bestSellerIds, TTL.MINUTES(30)); // overide to 30 minutes instead of 1 hour "The default is 3600 seconds (1 hour)"
+        await RedisUtils.setJSON(bestSellersKey, bestSellerIds, TTL.MINUTES(30));
+        // console.log('💾 Best seller IDs saved to Redis');
       }
     } catch (err) {
       console.warn('Best sellers failed:', err.message);
+      bestSellerIds = [];
     }
 
-    // Categories
-    let categories = [];
+
+    // Run product aggregation only if needed
+    let productsResult;
+    const productCacheKey = `home:products:result:${limit}`;
+
     try {
-      const cached = await RedisUtils.getJSON(categoriesKey);
-      if (cached) {
-        categories = cached;
+      const cachedProducts = await RedisUtils.getJSON(productCacheKey);
+      if (cachedProducts) {
+        productsResult = cachedProducts;
+        // console.log('✅ Products loaded from partial cache');
       } else {
-        categories = await Category.find({})
-          .select('name image color')
-          .lean();
-        await RedisUtils.setJSON(categoriesKey, categories, TTL.HOURS(6)); // overide to 6 hours instead of 1 hour "The default is 3600 seconds (1 hour)"
+        const productPipeline = [
+          { $match: { isActive: true, stock: { $gt: 0 } } },
+          {
+            $facet: {
+              topDeals: [{ $match: { isOnSale: true } }, { $sort: { saleEnd: -1 } }, { $limit: limit }, ...getProductProjectionStages() ], 
+              newArrivals: [{ $sort: { createdAt: -1 } }, { $limit: limit }, ...getProductProjectionStages()],
+              bestSellers: [
+                { $match: bestSellerIds.length ? { _id: { $in: bestSellerIds } } : { isFeatured: true } },
+                { $sort: { createdAt: -1 } },
+                { $limit: limit },
+                ...getProductProjectionStages()
+              ],
+              featured: [
+                { $match: { isFeatured: true } },
+                { $sort: { createdAt: -1 } },
+                { $limit: limit },
+                ...getProductProjectionStages()
+              ]
+            }
+          }
+        ];
+
+        const result = await Product.aggregate(productPipeline).exec();
+        productsResult = result[0] || {};
+
+        // Cache just the product facet result
+        await RedisUtils.setJSON(productCacheKey, productsResult, TTL.MINUTES(30));
+        // console.log('💾 Products saved to Redis');
       }
     } catch (err) {
-      console.error('Categories fetch failed:', err);
+      console.error('Product aggregation failed:', err);
+      productsResult = {};
     }
 
-    // ✅ Use the external helper
-    const productPipeline = [
-      { $match: baseMatch },
-      {
-        $facet: {
-          topDeals: [
-            {
-              $match: {
-                isOnSale: true,
-                salePrice: { $gt: 0 },
-                $expr: { $gt: ["$price", "$salePrice"] }
-              }
-            },
-            { $sort: { isFeatured: -1, createdAt: -1 } },
-            { $limit: limit },
-            ...getProductProjectionStages() // ✅ Now safe
-          ],
-          newArrivals: [
-            { $sort: { createdAt: -1 } },
-            { $limit: limit },
-            ...getProductProjectionStages()
-          ],
-          bestSellers: [
-            {
-              $match: bestSellerIds.length > 0
-                ? { _id: { $in: bestSellerIds } }
-                : { isFeatured: true }
-            },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit },
-            ...getProductProjectionStages()
-          ],
-          featured: [
-            { $match: { isFeatured: true } },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit },
-            ...getProductProjectionStages()
-          ]
-        }
-      }
-    ];
-
-    /*************** DEBUG LOGS ***************** */
-    // const debugTopDeals = await Product.aggregate([
-    //   {
-    //     $match: {
-    //       isOnSale: true,
-    //       salePrice: { $gt: 0 },
-    //       $expr: { $gt: ["$price", "$salePrice"] }
-    //     }
-    //   },
-    //   { $count: "total" }
-    // ]).then(res => res[0]?.total || 0);
-
-    // console.log('✅ Total valid topDeals:', debugTopDeals);
-
-    // const allOnSale = await Product.find({
-    //   isOnSale: true,
-    //   salePrice: { $gt: 0 }
-    // }).select('_id name price salePrice saleStart saleEnd').lean();
-
-    // console.log('🛒 All on-sale products:', allOnSale.map(p => ({
-    //   id: p._id,
-    //   name: p.name?.en || 'Unnamed',
-    //   price: p.price,
-    //   salePrice: p.salePrice,
-    //   saleStart: p.saleStart,
-    //   saleEnd: p.saleEnd,
-    //   validDiscount: p.price > p.salePrice
-    // })));
-    /****************************************************** */
-
-    let aggregationResult;
-    try {
-      // console.log('🔍 Executing aggregation pipeline...');
-      aggregationResult = await Product.aggregate(productPipeline).exec();
-      // console.log('📦 Raw Aggregation Result:', JSON.stringify(aggregationResult, null, 2));
-    } catch (aggError) {
-      console.error('❌ Aggregation failed:', aggError);
-      aggregationResult = [];
-    }
-
-    const facetResult = Array.isArray(aggregationResult) && aggregationResult.length > 0 ? aggregationResult[0] : {};
-
+    // Build final response
     const safeResult = {
-      topDeals: Array.isArray(facetResult.topDeals) ? facetResult.topDeals : [],
-      newArrivals: Array.isArray(facetResult.newArrivals) ? facetResult.newArrivals : [],
-      bestSellers: Array.isArray(facetResult.bestSellers) ? facetResult.bestSellers : [],
-      featured: Array.isArray(facetResult.featured) ? facetResult.featured : []
+      topDeals: Array.isArray(productsResult.topDeals) ? productsResult.topDeals : [],
+      newArrivals: Array.isArray(productsResult.newArrivals) ? productsResult.newArrivals : [],
+      bestSellers: Array.isArray(productsResult.bestSellers) ? productsResult.bestSellers : [],
+      featured: Array.isArray(productsResult.featured) ? productsResult.featured : []
     };
-
-    console.log('📈 Section counts:', {
-      topDeals: safeResult.topDeals.length,
-      newArrivals: safeResult.newArrivals.length,
-      bestSellers: safeResult.bestSellers.length,
-      featured: safeResult.featured.length
-    });
 
     const responseData = {
       products: safeResult,
       categories,
       metadata: {
-        search,
-        category,
-        limit,
+        title: 'Farmer\'s Market | Fresh Products Delivered',
+        description: 'Buy fresh dairy, bread, fruits & more online with fast delivery.',
         timestamp: new Date().toISOString(),
-        cached: false,
-        bestSellersCount: bestSellerIds.length
+        cached: false
       }
     };
 
+    // Save full response back to cache (30 min)
     try {
-      await RedisUtils.setJSON(mainCacheKey, responseData, TTL.MINUTES(30)); // overide to 30 minutes instead of 1 hour "The default is 3600 seconds (1 hour)"
+      await RedisUtils.setJSON(mainCacheKey, responseData, TTL.MINUTES(30));
     } catch (err) {
-      console.warn('Failed to cache home data:', err.message);
+      console.warn('Failed to cache full homepage:', err.message);
     }
 
     return NextResponse.json({ success: true, data: responseData });

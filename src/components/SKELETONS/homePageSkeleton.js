@@ -1,4 +1,4 @@
-// components/SKELETONS/HomePageSkeleton.js
+// components/SKELETONS/homePageSkeleton.js
 import { memo } from 'react';
 import { Box, Skeleton, Card, CardContent } from '@mui/material';
 

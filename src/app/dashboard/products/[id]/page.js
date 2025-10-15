@@ -3,34 +3,37 @@ import { getProductById } from '@/app/actions/products/serverProductByIdData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import Product from './product';
-import Error from '@/components/UI/error';
+import { redirect } from 'next/navigation';
 
 const ProductPage = async ({ params }) => {
   const { id } = await params;
 
-  try {
-    const {product, prodSuccess} = await getProductById(id);
-    const { categories, success } = await getCategories({});
-    const vendors = await getVendors({
-      noLimit: true,
-      active: true
-    });
-    
-    if (!prodSuccess) {
-      return <Error error={'Failed to load product data.'} />;
-    }
-    if (!success) {
-      return <Error error={'Failed to load categories data.'} />;
-    }
-    if (!vendors.vendorSuccess) {
-      return <Error error={'Failed to load vendors data.'} />;
-    }
+  const productResult = await getProductById(id);
 
-    return <Product initialData={product} initialCategories={categories} initialVendors={vendors} />;
-  } catch (error) {
-    console.error('Error loading product:', error);
-    throw error; // This will be caught by the error.js boundary
+  // ✅ Check if result exists and has data
+  if (!productResult || !productResult.prodSuccess || !productResult.product) {
+    // If no product found, redirect to /home
+    redirect('/home');
   }
+
+  const categoryResult = await getCategories({});
+  if (!categoryResult || !categoryResult.categories || !categoryResult?.success) {
+    // If no categories found, redirect to /home
+    redirect('/home');
+  }
+
+  const vendorResult = await getVendors({ noLimit: true, active: true });
+  if (!vendorResult || !vendorResult.vendors || !vendorResult?.vendorSuccess) {
+    // If no vendors found, redirect to /home
+    redirect('/home');
+  }
+
+  const product = productResult.product;
+  const categories = categoryResult.categories;
+  const vendors = vendorResult.vendors;
+
+  return <Product initialData={product} initialCategories={categories} initialVendors={vendors} />;
+  
 }
 
 export default ProductPage

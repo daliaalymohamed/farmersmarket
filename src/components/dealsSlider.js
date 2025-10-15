@@ -126,7 +126,7 @@ const DealsSlider = ({ initialData }) => {
               }
             }}
           >
-            <CardActionArea component="a" href={`/products/${product.slug || product._id}`}>
+            <CardActionArea component="a" href={`/product/${product.slug || product._id}`}>
               {/* Image */}
               <Box sx={{ position: 'relative', height: 200, bgcolor: '#f9f9f9' }}>
                 <Image
@@ -151,7 +151,7 @@ const DealsSlider = ({ initialData }) => {
                     fontWeight: 'bold',
                     fontSize: '0.75rem'
                   }}>
-                    {product.discountPercentage}% OFF
+                    {product.discountPercentage}% {t('off')}
                   </Box>
                 )}
               </Box>
@@ -175,7 +175,7 @@ const DealsSlider = ({ initialData }) => {
             </CardActionArea>
 
             {/* Add to Cart Button */}
-            <AddToCart product={product} onAddToCart={handleAddToCart} />
+            <AddToCart product={product} onAddToCart={handleAddToCart} disabled={product.stock === 0}/>
           </Card>
         ))}
       </Box>

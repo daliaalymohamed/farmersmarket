@@ -63,7 +63,7 @@ const FeaturedProducts = ({ initialData }) => {
               }
             }}
           >
-            <CardActionArea component="a" href={`/products/${product.slug || product._id}`}>
+            <CardActionArea component="a" href={`/product/${product.slug || product._id}`}>
               {/* Image Container */}
               <Box sx={{ position: 'relative', height: 200, bgcolor: '#f9f9f9' }}>
                 <Image
@@ -78,7 +78,7 @@ const FeaturedProducts = ({ initialData }) => {
                 {/* Discount Badge */}
                 {product.discountPercentage > 0 && (
                   <Chip
-                    label={`${product.discountPercentage}% off`}
+                    label={`${product.discountPercentage}% ${t('off')}`}
                     color="error"
                     size="small"
                     sx={{
@@ -156,7 +156,7 @@ const FeaturedProducts = ({ initialData }) => {
             </CardActionArea>
 
             {/* Add to Cart Button */}
-            <AddToCart product={product} onAddToCart={handleAddToCart} />
+            <AddToCart product={product} onAddToCart={handleAddToCart}  disabled={product.stock === 0}/>
           </Card>
         ))}
       </Box>

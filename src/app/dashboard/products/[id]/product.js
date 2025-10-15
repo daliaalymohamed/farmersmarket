@@ -176,7 +176,7 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
                 t={t}
                 loading={loading}
                 categories={initialCategories}
-                vendors={initialVendors.vendors || []}
+                vendors={initialVendors || []}
             />
             <Box sx={{ p: 3 }}>
                 {/* Breadcrumb */}

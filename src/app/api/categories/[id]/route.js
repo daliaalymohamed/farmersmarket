@@ -11,6 +11,7 @@ import { getCategoryById } from '@/services/categoryService';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from "url";
+import { generateUniqueSlug } from '@/lib/utils/slugify';
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -137,12 +138,23 @@ export const PUT = authMiddleware(async (req, context) => {
         newImageFilename = uploadedFiles.image; // Use new uploaded image
     }
 
+    // If name.en is being updated, generate a new unique slug
+    let newSlug = existingCategory.slug; // Keep existing by default
+    
+    if (name.en) {
+      // Name is being updated, generate new slug
+      newSlug = await generateUniqueSlug(Category, name.en, id);
+    }
+
     // Build update data
     const updateData = {
       ...(Object.keys(name).length > 0 && { name }),
       ...(fields.color && { color: fields.color }),
       ...(newImageFilename && { image: newImageFilename }),
+      // Always include slug (it will be the old one if name didn't change)
+      slug: newSlug,  
     };
+    console.log('Update Data:', updateData); // Debug log
 
     // Update the category
     const updatedCategory = await Category.findByIdAndUpdate(id, updateData, {

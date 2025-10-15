@@ -3,7 +3,7 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import { Box, Card, CardContent, Typography, IconButton } from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, Typography, IconButton } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import Image from "next/image";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
@@ -96,7 +96,8 @@ const CategorySlider = ({initialData}) => {
             "&:hover": { transform: "scale(1.05)" }, // Zoom effect on hover
           }} key={item._id}
         > 
-                        <CardContent sx={{ pt: 2, pb: 1, flexGrow: 1 }}>
+            <CardActionArea component="a" href={`/category/${item.slug || item._id}`}>
+              <CardContent sx={{ pt: 2, pb: 1, flexGrow: 1 }}>
                 {/* Circular Image Container - Fixed Size */}
                 <Box
                   sx={{
@@ -144,6 +145,7 @@ const CategorySlider = ({initialData}) => {
                   {item?.name?.[language] || item?.name?.en || t('category')}
                 </Typography>
               </CardContent>
+            </CardActionArea>
         </Card>
         ))}
       </Slider>

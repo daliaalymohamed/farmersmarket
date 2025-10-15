@@ -10,6 +10,8 @@ import { getProductById } from '@/services/productService';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from "url";
+import { generateUniqueSlug } from '@/lib/utils/slugify';
+
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -175,6 +177,14 @@ export const PUT = authMiddleware(async (req, context) => {
         newImageFilename = uploadedFiles.image; // Use new uploaded image
     }
 
+    // If name.en is being updated, generate a new unique slug
+    let newSlug = existingProduct.slug; // Keep existing by default
+
+    if (name.en) {
+      // Name is being updated, generate new slug
+      newSlug = await generateUniqueSlug(Product, name.en, id);
+    }
+
     // Build update data
     const updateData = {
       ...(Object.keys(name).length > 0 && { name }),
@@ -193,6 +203,9 @@ export const PUT = authMiddleware(async (req, context) => {
       ...(newImageFilename && { image: newImageFilename }),
       // ✅ Only include updatedBy if we have a valid user ID
       ...(fields.updatedBy && { updatedBy: fields.updatedBy }),
+     // Always include slug (it will be the old one if name didn't change)
+      slug: newSlug,  
+
     };
 
     // Update the category

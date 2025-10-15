@@ -1,6 +1,5 @@
 'use client';
-import { lazy, useEffect } from 'react';
-import { useDispatch, useSelector, shallowEqual } from "react-redux";
+import { lazy } from 'react';
 import { Box, Divider } from '@mui/material';
 const HeaderBox = lazy(() => import('@/components/headerBox'));
 const CategorySlider = lazy(() => import('@/components/categorySlider'));
@@ -8,13 +7,12 @@ const FeaturedProducts = lazy(() => import('@/components/featuredProducts'));
 const DealsSlider = lazy(() => import('@/components/dealsSlider'));
 const BestSellers = lazy(() => import('@/components/bestSellers'));
 const NewArrivals = lazy(() => import('@/components/newArrivals'));
-import { initializeProducts } from '@/store/slices/productSlice';
 import Loading from "@/components/UI/loading";
 import Error from "@/components/UI/error";
 
-const Home  = ({homeData, searchTerm, selectedCategory }) => {
-
-    // Step 1: If homeData is not yet available → show loading
+const Home  = ({homeData }) => {
+  
+  // Step 1: If homeData is not yet available → show loading
   if (!homeData) {
     return <Loading/>;
   }
