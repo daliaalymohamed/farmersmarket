@@ -23,12 +23,6 @@ import { toast } from "react-toastify";
 import Image from 'next/image';
 import Link from 'next/link';
 
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-
 const StockIndicator = ({ stock }) => {
   const { t } = useTranslation();
   if (stock === 0)
@@ -212,19 +206,19 @@ const ProductPage = ({ productData, relatedProducts, categories }) => {
               {productData.isOnSale && productData.salePrice > 0 ? (
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Typography variant="h5" color="error" fontWeight="bold">
-                    {formatCurrency(productData.salePrice)}
+                    {t('EGP')} {productData.salePrice.toFixed(2)}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ textDecoration: 'line-through' }}
                   >
-                    {formatCurrency(productData.price)}
+                    {t('EGP')} {productData.price.toFixed(2)}
                   </Typography>
                 </Stack>
               ) : (
                 <Typography variant="h5" fontWeight="bold">
-                  {formatCurrency(productData.price)}
+                  {t('EGP')} {productData.price.toFixed(2)}
                 </Typography>
               )}
             </Box>
@@ -318,7 +312,7 @@ const ProductPage = ({ productData, relatedProducts, categories }) => {
                       {p.categoryId?.name?.en}
                     </Typography>
                     <Typography variant="body2" fontWeight="bold" mt={0.5}>
-                      {formatCurrency(p.isOnSale ? p.salePrice : p.price)}
+                      {t('EGP')} {p.isOnSale ? p.salePrice.toFixed(2) : p.price.toFixed(2)}
                     </Typography>
                   </CardContent>
                 </Card>

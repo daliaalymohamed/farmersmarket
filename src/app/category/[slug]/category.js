@@ -22,12 +22,6 @@ import AddToCart from '@/components/UI/addToCart';
 import { toast } from "react-toastify";
 import Image from 'next/image';
 
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount);
-
 const Category = ({ category, categories = [], relatedProducts = [], pagination }) => {
   const { t, language } = useTranslation();
 
@@ -238,19 +232,19 @@ const Category = ({ category, categories = [], relatedProducts = [], pagination 
                       {product.isOnSale && product.salePrice > 0 ? (
                         <Box display="flex" alignItems="center" gap={1}>
                           <Typography variant="body2" color="error" fontWeight="bold">
-                            {formatCurrency(product.salePrice)}
+                            {t('EGP')} {product.salePrice.toFixed(2)}
                           </Typography>
                           <Typography
                             variant="body2"
                             color="text.secondary"
                             sx={{ textDecoration: 'line-through', fontSize: '0.8rem' }}
                           >
-                            {formatCurrency(product.price)}
+                            {t('EGP')} {product.price.toFixed(2)}
                           </Typography>
                         </Box>
                       ) : (
                         <Typography variant="body2" fontWeight="bold">
-                          {formatCurrency(product.price)}
+                          {t('EGP')} {product.price.toFixed(2)}
                         </Typography>
                       )}
                     </Box>
