@@ -1,11 +1,10 @@
 'use client';
-import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Dashboard from '@/components/dashboard';
 import Breadcrumb from "@/components/UI/breadcrumb";
-const VendorModal = lazy(() => import('../[id]/vendorModal'));
 import Link from 'next/link';
 import {
     Box,
@@ -25,6 +24,7 @@ import {
     TablePagination,
     Checkbox,
     Avatar,
+    Skeleton
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
@@ -38,10 +38,19 @@ import { useSearchParams } from 'next/navigation';
 import ButtonLoader from '@/components/UI/buttonLoader';
 import Loading from "@/components/UI/loading";
 import Error from "@/components/UI/error";
-import ConfirmationDialog from '@/components/confirmDialog';
 import withAuth from "@/components/withAuth";
 import { useDebouncedCallback } from 'use-debounce'; 
 import { toast } from "react-toastify";
+import dynamic from 'next/dynamic';
+const VendorModal = dynamic(() => import('../[id]/vendorModal'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
+const ConfirmationDialog = dynamic(() => import('@/components/confirmDialog'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
+
 
 const VendorsList = ({initialData, initialFilters}) => {
     const router = useRouter();
@@ -292,17 +301,14 @@ const VendorsList = ({initialData, initialFilters}) => {
                 cancelColor="inherit"
                 cancelButtonText={t('cancel')}
             />
-            {/* Suspense with loading fallback */}
-            <Suspense fallback={null}>
-                <VendorModal
-                    open={modalOpen}
-                    handleClose={handleCloseModal}
-                    vendor={selectedVendor}
-                    language={language}
-                    t={t}
-                    loading={loading}
-                />
-            </Suspense>
+            <VendorModal
+                open={modalOpen}
+                handleClose={handleCloseModal}
+                vendor={selectedVendor}
+                language={language}
+                t={t}
+                loading={loading}
+            />
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
                     sideNavItem={t("vendors")} 

@@ -11,6 +11,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from "url";
 import { generateUniqueSlug } from '@/lib/utils/slugify';
+// for syncing with MeiliSearch to push new/updated products to the search index
+import client from '@/lib/utils/meiliSearchClient'; 
+import { searchIndex } from '@/lib/utils/meiliSearchClient';
 
 
 // Polyfill __dirname for ES modules
@@ -225,6 +228,15 @@ export const PUT = authMiddleware(async (req, context) => {
       { path: 'updatedBy' },
       { path: 'vendorId' }
     ]);
+
+    // 🔁 REAL-TIME SEARCH INDEXING
+    try {
+      const searchableProduct = populatedProduct.toSearchable();
+      await client.index(searchIndex.ALL).updateDocuments([searchableProduct]);
+      console.log(`✅ Updated product "${populatedProduct.name.en}" in Meilisearch`);
+    } catch (searchError) {
+      console.warn('⚠️ Failed to update product in search:', searchError.message);
+    }
 
     // Now return fully populated product
     return NextResponse.json({

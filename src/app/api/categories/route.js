@@ -6,6 +6,9 @@ import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
 import path from 'path';
+// for syncing with MeiliSearch to push new/updated categories to the search index
+import client from '@/lib/utils/meiliSearchClient'; 
+import { searchIndex } from '@/lib/utils/meiliSearchClient';
 
 // Handle GET (Fetch all categories)
 // routing: /api/categories
@@ -122,6 +125,16 @@ export const POST = authMiddleware(async (req, context) => {
       color
     });
     await newCategory.save();
+    
+
+    // 🔁 REAL-TIME SEARCH INDEXING
+    try {
+      const searchableCategory = newCategory.toSearchable();
+      await client.index(searchIndex.ALL).addDocuments([searchableCategory]);
+      console.log(`✅ Added category "${newCategory.name.en}" to Meilisearch`);
+    } catch (searchError) {
+      console.warn('⚠️ Failed to add category to search:', searchError.message);
+    }
     
     return NextResponse.json({
       message: 'Category has been created successfully', 

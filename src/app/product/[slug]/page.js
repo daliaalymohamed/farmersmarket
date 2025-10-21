@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import { getProductBySlug } from '@/app/actions/product/serverProductBySlugData';
 import { getRelatedProducts} from '@/app/actions/product/serverRelatedCategoryProductsData';
-// import ProductPageSkeleton from '@/components/SKELETONS/productPageSkeleton';
+import ProductPageSkeleton from '@/components/SKELETONS/productPageSkeleton';
 import Product from './product';
 import Error from '@/components/UI/error';
 
@@ -70,9 +70,9 @@ const ProductPage = async ({ params }) => {
       : [];
 
     return (
-    //   <Suspense fallback={<ProductPageSkeleton />}>
+      <Suspense fallback={<ProductPageSkeleton />}>
         <Product productData={result.data} relatedProducts={relatedProducts} categories={categories}/>
-    //   </Suspense>
+      </Suspense>
     );
   } catch (error) {
     console.error('🚨 Critical error in Product Page:', error);

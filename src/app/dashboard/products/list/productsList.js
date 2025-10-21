@@ -1,11 +1,10 @@
 'use client';
-import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import Dashboard from '@/components/dashboard';
 import Breadcrumb from "@/components/UI/breadcrumb";
-const ProductModal = lazy(() => import('../[id]/productModal'));
 import Link from 'next/link';
 import {
     Box,
@@ -27,6 +26,7 @@ import {
     Checkbox,
     MenuItem,
     Avatar,
+    Skeleton
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import SearchIcon from '@mui/icons-material/Search'
@@ -47,12 +47,19 @@ import { initializeVendors } from '@/store/slices/vendorSlice';
 import { useSearchParams } from 'next/navigation';
 import Loading from "@/components/UI/loading";
 import Error from "@/components/UI/error";
-import ConfirmationDialog from '@/components/confirmDialog';
-
 import ButtonLoader from "@/components/UI/buttonLoader";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import { useDebouncedCallback } from 'use-debounce'; 
+import dynamic from 'next/dynamic';
+const ProductModal = dynamic(() => import('../[id]/productModal'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
+const ConfirmationDialog = dynamic(() => import('@/components/confirmDialog'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
 
 const ProductsList = ({initialData, initialFilters, initialCategories, initialVendors}) => {
     const router = useRouter();
@@ -379,19 +386,16 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                 cancelColor="inherit"
                 cancelButtonText={t('cancel')}
             />
-            {/* Suspense with loading fallback */}
-            <Suspense fallback={null}>
-                <ProductModal
-                    open={modalOpen}
-                    handleClose={handleCloseModal}
-                    product={selectedProduct}
-                    language={language}
-                    t={t}
-                    loading={loading}
-                    categories={initialCategories}
-                    vendors={initialVendors || []}
-                />
-            </Suspense>
+            <ProductModal
+                open={modalOpen}
+                handleClose={handleCloseModal}
+                product={selectedProduct}
+                language={language}
+                t={t}
+                loading={loading}
+                categories={initialCategories}
+                vendors={initialVendors || []}
+            />
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
                     sideNavItem={t("products")} 

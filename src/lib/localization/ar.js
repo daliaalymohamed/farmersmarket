@@ -36,6 +36,7 @@ export const ar = {
     new: "جديد",
     addToCart: "أضف إلى العربة",
     off: "% خصم",
+    noResultsFound: "لا توجد نتائج",
     // product/slug page
     uncategorized: "غير مصنف",
     quantity: "الكمية",

@@ -12,6 +12,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from "url";
 import { generateUniqueSlug } from '@/lib/utils/slugify';
+// for syncing with MeiliSearch to push new/updated categories to the search index
+import client from '@/lib/utils/meiliSearchClient'; 
+import { searchIndex } from '@/lib/utils/meiliSearchClient';
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -164,6 +167,15 @@ export const PUT = authMiddleware(async (req, context) => {
 
     if (!updatedCategory) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    // 🔁 REAL-TIME SEARCH INDEXING
+    try {
+      const searchableCategory = updatedCategory.toSearchable();
+      await client.index(searchIndex.ALL).updateDocuments([searchableCategory]);
+      console.log(`✅ Updated category "${updatedCategory.name.en}" in Meilisearch`);
+    } catch (searchError) {
+      console.warn('⚠️ Failed to update category in search:', searchError.message);
     }
 
     return NextResponse.json({

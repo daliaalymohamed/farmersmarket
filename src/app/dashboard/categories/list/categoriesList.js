@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-const CategoryModal = lazy(() => import('./categoryModal'));
-import DeleteConfirmDialog from '@/components/deleteConfirmDialog';
 import Image from "next/image";
 import Dashboard from '@/components/dashboard';
 import Breadcrumb from "@/components/UI/breadcrumb";
 import { Box, Typography, Tooltip, Card, CardActionArea, CardContent, Button, 
-    TextField, IconButton } from '@mui/material';
+    TextField, IconButton, Skeleton } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -22,6 +20,15 @@ import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import { useDebouncedCallback } from 'use-debounce'; 
+import dynamic from 'next/dynamic';
+const CategoryModal = dynamic(() => import('./categoryModal'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
+const DeleteConfirmDialog = dynamic(() => import('@/components/deleteConfirmDialog'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
 
 // CategoryList
 const CategoriesList  = ({initialData, initialFilters}) => {
@@ -157,17 +164,14 @@ const CategoriesList  = ({initialData, initialFilters}) => {
 
     return (
         <Dashboard>
-            {/* Suspense with loading fallback */}
-            <Suspense fallback={null}>
-                <CategoryModal
-                    open={modalOpen}
-                    handleClose={handleCloseModal}
-                    category={selectedCategory}
-                    language={language}
-                    t={t}
-                    loading={loading}
+            <CategoryModal
+                open={modalOpen}
+                handleClose={handleCloseModal}
+                category={selectedCategory}
+                language={language}
+                t={t}
+                loading={loading}
             />
-            </Suspense>
             <DeleteConfirmDialog
                 open={deleteDialogOpen}
                 onClose={handleDeleteDialogClose}

@@ -76,24 +76,23 @@ CategorySchema.index({ 'name.en': 1 });
 CategorySchema.index({ 'name.ar': 1 });
 
 // Convert category to Meilisearch-friendly format
-CategorySchema.methods.toSearchable = function () {
-  return {
-    id: this._id.toString(),
-    type: 'category',
-    name_en: this.name.en,
-    name_ar: this.name.ar,
-    color: this.color,
-    
-    // Unified searchable string
-    searchable: [this.name.en, this.name.ar]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase(),
-
-    image: this.image ? `/api/images/category/${this.image}` : null,
-    createdAt: this.createdAt,
-    updatedAt: this.updatedAt
-  };
+// Add toSearchable method
+CategorySchema.methods.toSearchable = function() {
+    return {
+        id: this._id.toString(),
+        type: 'category',
+        name_en: this.name?.en || '',
+        name_ar: this.name?.ar || '',
+        image: this.image ? `/api/images/category/${this.image}` : null,
+        slug: this.slug,
+        searchable: [this.name?.en, this.name?.ar]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase(),
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt
+    };
 };
+
 
 export default mongoose.models.Category || mongoose.model("Category", CategorySchema);

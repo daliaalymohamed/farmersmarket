@@ -10,6 +10,9 @@ import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helper
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from "url";
+// for syncing with MeiliSearch to push new/updated products to the search index
+import client from '@/lib/utils/meiliSearchClient'; 
+import { searchIndex } from '@/lib/utils/meiliSearchClient';
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -369,6 +372,16 @@ export const POST = authMiddleware(async (req) => {
         { path: 'createdBy' },
         { path: 'vendorId' }
       ]);
+
+      // 🔁 REAL-TIME SEARCH INDEXING
+      try {
+        const searchable = populatedProduct.toSearchable();
+        await client.index(searchIndex.ALL).addDocuments([searchable]);
+        console.log(`✅ Indexed product: ${searchable.name_en}`);
+      } catch (err) {
+        console.warn('❌ Search sync failed:', err.message);
+        // Continue — don't block success
+      }
 
       return NextResponse.json(
         {

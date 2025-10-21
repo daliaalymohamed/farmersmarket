@@ -13,7 +13,8 @@ import {
   Button,
   Tab,
   Tabs,
-  Stack
+  Stack,
+  Skeleton
 } from '@mui/material';
 import Grid from "@mui/material/Grid2";
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -27,12 +28,16 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { updateProductInList, selectProductById, toggleProductActiveStatus } from '@/store/slices/productSlice';
-import ProductModal from './productModal';
 import Breadcrumb from "@/components/UI/breadcrumb";
 import Loading from "@/components/UI/loading";
 import ButtonLoader from '@/components/UI/buttonLoader';
 import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
+import dynamic from 'next/dynamic';
+const ProductModal = dynamic(() => import('./productModal'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
 
 const Product = ({ initialData, initialCategories, initialVendors }) => {
     const router = useRouter();

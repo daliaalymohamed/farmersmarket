@@ -6,14 +6,15 @@ import { useTranslation } from '../../../../contexts/translationContext';
 import Dashboard from '@/components/dashboard';
 import Link from 'next/link';
 import {
-  Box,
-  Paper,
-  Typography,
-  Chip,
-  Button,
-  Tab,
-  Tabs,
-  Stack,
+    Box,
+    Paper,
+    Typography,
+    Chip,
+    Button,
+    Tab,
+    Tabs,
+    Stack,
+    Skeleton
 } from '@mui/material';
 import Grid from "@mui/material/Grid2";
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -25,13 +26,17 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { updateVendorInList, selectVendorById, toggleVendorActiveStatus } from '@/store/slices/vendorSlice';
-import VendorModal from './vendorModal';
 import Breadcrumb from "@/components/UI/breadcrumb";
 import Loading from "@/components/UI/loading";
 import ButtonLoader from '@/components/UI/buttonLoader';
 import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
+import dynamic from 'next/dynamic';
+const VendorModal = dynamic(() => import('./vendorModal'), {
+  loading: () => <Skeleton height={400} />,
+  ssr: false // Safe if modal uses window/document
+});
 
 const Vendor = ({ initialData }) => {
     const router = useRouter();

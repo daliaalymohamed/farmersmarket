@@ -36,6 +36,7 @@ export const en = {
     new: "New",
     addToCart: "Add to Cart",
     off: "% OFF",
+    noResultsFound: "No results found",
     // product/slug page
     uncategorized: "Uncategorized",
     quantity: "Quantity",

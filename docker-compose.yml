@@ -7,10 +7,8 @@ services:
     image: getmeili/meilisearch:v1.9
     ports:
       - "${MEILI_HTTP_PORT:-7700}:7700"
-    environment:
-      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
-      - MEILI_ENV=${MEILI_ENV:-development}
-      - MEILI_HTTP_PORT=7700
+    env_file:
+      - .env  # 👈 Load MEILI_MASTER_KEY from .env
     volumes:
       - ./meili-data:/meili_data
     restart: unless-stopped
