@@ -74,7 +74,15 @@ let hasSynced = false;
 
 
 export const GET = async (req) => {
-  console.log("🚀 GET /api/home?search=&category=&limit= route hit!");
+  console.log("🚀 GET /api/home route hit!");
+
+  // Parse URL
+  const { searchParams } = new URL(req.url);
+
+  // ✅ Detect if this request is for revalidation
+  const isRevalidating = searchParams.get('revalidate') === 'true' || 
+            req.headers.get('x-next-revalidate') !== null;
+                        
   // In development, sync Meilisearch on first request
   if (process.env.NODE_ENV === 'development' && !hasSynced) {
     await syncToMeili(); 
@@ -92,20 +100,26 @@ export const GET = async (req) => {
 
     // Try full response cache first (fastest)
     let fullCached = null;
-    try {
-      fullCached = await RedisUtils.getJSON(mainCacheKey);
-      if (fullCached) {
+    if (!isRevalidating) {
+      console.log('🔍 Checking full homepage cache');
+      try {
+        fullCached = await RedisUtils.getJSON(mainCacheKey);
+        if (fullCached) {
         // console.log('🎯 Full homepage cache hit');
-        return NextResponse.json({
-          success: true,
-          data: {
-            ...fullCached,
-            metadata: { ...fullCached.metadata, cached: true }
-          }
-        });
+          return NextResponse.json({
+            success: true,
+            data: {
+              ...fullCached,
+              metadata: { ...fullCached.metadata, cached: true }
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('❌ Redis full cache read failed:', err.message);
       }
-    } catch (err) {
-      console.warn('❌ Redis full cache read failed:', err.message);
+
+    } else {
+      console.log('🔄 Skipping cache: revalidation in progress');
     }
 
     // If full cache missed, try partials (categories + best sellers)
@@ -220,7 +234,23 @@ export const GET = async (req) => {
       console.warn('Failed to cache full homepage:', err.message);
     }
 
-    return NextResponse.json({ success: true, data: responseData });
+    // Return response with CDN caching headers
+    // CDNs should cache it for 60 seconds.
+    // After that, they can keep showing the old version for up to 5 more minutes
+    // while silently updating it in the background." 
+    return NextResponse.json(
+      { 
+        success: true, 
+        data: responseData 
+      },
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' // ✅ CDN caching
+        }
+      }
+    );
 
   } catch (error) {
     console.error('❌ Error in /api/home:', error);

@@ -6,6 +6,19 @@ import CategoryPageSkeleton from '@/components/SKELETONS/categoryPageSkeleton';
 import Category from './category';
 import Error from '@/components/UI/error';
 
+// ✅ Enable ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
+// ✅ Generate static params for SSG/ISR
+export async function generateStaticParams() {
+  try {
+    // Optional: Pre-generate top category slugs at build time
+    // Or return empty array for pure on-demand generation
+    return [];
+  } catch {
+    return [];
+  }
+}
 
 // ✅ Dynamic Metadata
 export async function generateMetadata({ params }) {

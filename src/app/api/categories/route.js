@@ -9,6 +9,7 @@ import path from 'path';
 // for syncing with MeiliSearch to push new/updated categories to the search index
 import client from '@/lib/utils/meiliSearchClient'; 
 import { searchIndex } from '@/lib/utils/meiliSearchClient';
+import { CacheInvalidation } from '@/lib/utils/invalidation';
 
 // Handle GET (Fetch all categories)
 // routing: /api/categories
@@ -35,7 +36,15 @@ export const GET = async (req) => {
         // ✅ Proceed with the request       
         const categories = await Category.find(query);  
 
-        return NextResponse.json({ categories, success: true }, { status: 200 }); // ✅ Success
+        return NextResponse.json({ categories, success: true }, 
+          { 
+            status: 200, 
+            headers: {
+                  'Cache-Control': 'no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+            }
+         }); // ✅ Success
     } catch (error) {
         console.error('❌ Error fetching categories:', error);
         return NextResponse.json({ message: "Internal Server Error", success: false }, { status: 500 }); // ❌ Server error
@@ -135,6 +144,14 @@ export const POST = authMiddleware(async (req, context) => {
     } catch (searchError) {
       console.warn('⚠️ Failed to add category to search:', searchError.message);
     }
+
+    // Invalidate category cache to reflect the created category
+    await CacheInvalidation.invalidateCategoryCache(newCategory._id?.toString());
+    // ✅ Force homepage to regenerate 
+    console.log(`🎯 DEBUG: Category Created - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+    // ✅ Force regeneration
+    await CacheInvalidation.triggerHttpRevalidation([`/category/${newCategory.slug}`]);
     
     return NextResponse.json({
       message: 'Category has been created successfully', 

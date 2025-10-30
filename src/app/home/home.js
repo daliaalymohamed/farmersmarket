@@ -1,6 +1,12 @@
 'use client';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { Box, Divider } from '@mui/material';
+import HeaderBoxSkeleton from '@/components/SKELETONS/headerBoxSkeleton';
+import CategorySliderSkeleton from '@/components/SKELETONS/categorySliderSkeleton';
+import FeaturedProductsSkeleton from '@/components/SKELETONS/featuredProductsSkeleton';
+import DealsSliderSkeleton from '@/components/SKELETONS/dealsSliderSkeleton';
+import BestSellersSkeleton from '@/components/SKELETONS/bestSellersSkeleton';
+import NewArrivalsSkeleton from '@/components/SKELETONS/newArrivalsSkeleton';
 const HeaderBox = lazy(() => import('@/components/headerBox'));
 const CategorySlider = lazy(() => import('@/components/categorySlider'));
 const FeaturedProducts = lazy(() => import('@/components/featuredProducts'));
@@ -46,33 +52,45 @@ const Home  = ({homeData }) => {
   return (
     <Box sx={{ width: "100%", display: "flex", flexWrap: "wrap", gap: 2 }}>
       {/**HeaderBox section  */}
-      <HeaderBox />
+      <Suspense fallback={<HeaderBoxSkeleton />}>
+        <HeaderBox />
+      </Suspense>
 
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
 
       {/** Category slider section  */}
-      <CategorySlider initialData={categories}/>
+      <Suspense fallback={<CategorySliderSkeleton />}>
+        <CategorySlider initialData={categories}/>
+      </Suspense>
 
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
 
       {/** Featured section  */}
-      <FeaturedProducts initialData={products.featured} />
+      <Suspense fallback={<FeaturedProductsSkeleton />}>
+        <FeaturedProducts initialData={products.featured} />
+      </Suspense>
 
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
 
       {/** Deals slider section  */}
-      <DealsSlider initialData={products.topDeals} />
+      <Suspense fallback={<DealsSliderSkeleton />}>
+        <DealsSlider initialData={products.topDeals} />
+      </Suspense>
 
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
 
       {/** Best Sellers section */}
-      <BestSellers initialData={products.bestSellers}/>
+      <Suspense fallback={<BestSellersSkeleton />}>
+        <BestSellers initialData={products.bestSellers}/>
+      </Suspense>
 
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
       
       {/** New Arrivals section */}
-      <NewArrivals initialData={products.newArrivals}/>
-
+      <Suspense fallback={<NewArrivalsSkeleton />}>
+        <NewArrivals initialData={products.newArrivals}/>
+      </Suspense>
+      
       <Divider sx={{ my: 4, borderColor: "text.primary", width: "100%" }} />
 
       {/** Why choose us */}

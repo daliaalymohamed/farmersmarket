@@ -156,7 +156,14 @@ export const GET = async (req, { params }) => {
           hasPrevPage: page > 1
         },
         metadata
-    }, { status: 200 });
+    }, 
+    { 
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
+    });
   } catch (error) {
     console.error('Error fetching category by slug:', error);
     return NextResponse.json(

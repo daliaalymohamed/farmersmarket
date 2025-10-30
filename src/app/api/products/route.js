@@ -7,17 +7,11 @@ import Vendor from "@/models/vendor";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
-import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from "url";
 // for syncing with MeiliSearch to push new/updated products to the search index
 import client from '@/lib/utils/meiliSearchClient'; 
 import { searchIndex } from '@/lib/utils/meiliSearchClient';
-
-// Polyfill __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+import { CacheInvalidation } from '@/lib/utils/invalidation';
 
 // Handle GET (Fetch all products with category details)
 // routing: /api/products
@@ -383,6 +377,17 @@ export const POST = authMiddleware(async (req) => {
         // Continue — don't block success
       }
 
+      // Invalidate cache to reflect new product
+      await CacheInvalidation.invalidateProductCache(
+        newProduct._id?.toString(),
+        newProduct.slug,
+        newProduct.categoryId?._id?.toString(),
+        'create'
+      );
+      // ✅ Force homepage to regenerate 
+      console.log(`🎯 DEBUG: Product Created - triggering revalidation for / and /home`);
+      await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+
       return NextResponse.json(
         {
           message: 'Product created successfully',
@@ -475,6 +480,12 @@ export const PATCH = authMiddleware(async (req) => {
     const products = await Product.find({ _id: { $in: productIds } })
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email');
+
+    // Invalidate cache to reflect the toggled products status
+    await CacheInvalidation.invalidateBulkProductCache(productIds, 'bulk_toggle');
+    // ✅ Force homepage to regenerate 
+    console.log(`🎯 DEBUG: Product status updated - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
 
     return NextResponse.json({
       message: `Updated ${products.length} products`,

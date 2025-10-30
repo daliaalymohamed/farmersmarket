@@ -1,4 +1,4 @@
-// lib/utils/redis.js - CORRECTED VERSION
+// lib/utils/redis.js
 import { createClient } from 'redis';
 
 let client = null;
@@ -10,10 +10,13 @@ const createRedisClient = async () => {
     client = createClient({
       url: redisUrl,
       socket: {
-        connectTimeout: 10000,     // 10 seconds (not too long)
-        reconnectStrategy: (retries) => Math.min(retries * 1000, 5000),
-        commandTimeout: 3000,
-      }
+        connectTimeout: 5000,     // 5 seconds (Fastest possible)
+        reconnectStrategy: (retries) => Math.min(retries * 500, 3000), // ✅ Faster reconnect
+        commandTimeout: 2000,      // ✅ Faster command timeout
+        keepAlive: 30000           // ✅ Keep connection alive
+      },
+      // ✅ Enable pipelining for multiple commands
+      enableAutoPipelining: true
     });
 
     client.on('error', (err) => {
@@ -65,6 +68,7 @@ export const ensureRedisConnected = async () => {
 
 // Utility functions for common Redis operations
 export const RedisUtils = {
+  // Get a value by key
   async get(key) {
     try {
       const client = await ensureRedisConnected();
@@ -90,6 +94,7 @@ export const RedisUtils = {
     }
   },
 
+  // Get and parse JSON value
   async getJSON(key) {
     try {
       const data = await this.get(key);
@@ -100,6 +105,7 @@ export const RedisUtils = {
     }
   },
 
+  // Set JSON value with optional TTL
   async setJSON(key, value, ttl = 3600) {
     try {
       return await this.set(key, JSON.stringify(value), ttl);
@@ -109,16 +115,56 @@ export const RedisUtils = {
     }
   },
 
+  // Delete a key
   async del(key) {
     try {
       const client = await ensureRedisConnected();
-      return await client.del(key);
+      return await client.unlink(key);
     } catch (error) {
       console.error('Redis DEL error:', error);
       return false;
     }
   },
 
+  // Delete keys matching a pattern
+  async delByPattern(pattern) {
+    try {
+      const client = await ensureRedisConnected();
+
+      // Use scan to find keys matching the pattern
+      const stream = client.scanIterator({
+        MATCH: pattern,
+        COUNT: 100
+      });
+
+      const keys = [];
+      for await (const key of stream) {
+        keys.push(key);
+      }
+
+      // ✅ Only delete if we found keys
+      if (keys.length === 0) {
+        console.log(`🔍 No keys found for pattern: ${pattern}`);
+        return 0;
+      }
+
+      // ✅ For redis@v4+: pass keys as array
+      const result = await client.unlink(...keys); // ← Not spread, but array
+      console.log(`🗑️ Deleted ${result} keys matching pattern: ${pattern}`);
+      return result;
+
+    } catch (error) {
+      // 🛑 Handle specific case
+      if (error.message.includes('wrong number of arguments')) {
+        console.warn(`🔍 No keys found for pattern: ${pattern} (cache was already empty)`);
+      } else {
+        console.error('Redis delByPattern error:', error);
+      }
+      return 0;
+    }
+  },
+
+  // Check if a key exists
   async exists(key) {
     try {
       const client = await ensureRedisConnected();

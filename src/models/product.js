@@ -51,9 +51,9 @@ ProductSchema.virtual("inventories", {
 
 // Add compound index for product and active status
 ProductSchema.index({ categoryId: 1, vendorId: 1, isActive: 1 });
-ProductSchema.index({ isOnSale: 1, isActive: 1 });           // For "On Sale"
-ProductSchema.index({ createdAt: -1, isActive: 1 });         // For "New Arrivals"
-ProductSchema.index({ isFeatured: 1, isActive: 1 });         // For "Featured"
+ProductSchema.index({ isOnSale: 1, stock: 1, isActive: 1 });           // For "On Sale/Top Deals"
+ProductSchema.index({ createdAt: -1, stock: 1, isActive: 1 });         // For "New Arrivals"
+ProductSchema.index({ isFeatured: 1, stock: 1, isActive: 1 });         // For "Featured"
 ProductSchema.index({ 'name.en': 1 });
 ProductSchema.index({ 'name.ar': 1 });
 ProductSchema.index({ tags: 1 });

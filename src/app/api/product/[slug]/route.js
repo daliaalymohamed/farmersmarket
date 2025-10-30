@@ -88,11 +88,20 @@ export const GET = async (req, { params }) => {
             console.warn('⚠️ Failed to cache product:', cacheError.message);
         }
 
-        return NextResponse.json({ 
-            success: true, 
-            product: productWithDiscountIfExisted,
-            metadata // Include metadata in response
-        }, { status: 200 });
+        return NextResponse.json(
+            { 
+                success: true, 
+                product: productWithDiscountIfExisted,
+                metadata // Include metadata in response
+            }, 
+            {
+                status: 200,
+                headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+                }
+            }
+        );
 
     } catch (error) {
         console.error('❌ Error fetching product:', error);

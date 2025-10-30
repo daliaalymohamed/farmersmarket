@@ -15,6 +15,7 @@ import { generateUniqueSlug } from '@/lib/utils/slugify';
 // for syncing with MeiliSearch to push new/updated categories to the search index
 import client from '@/lib/utils/meiliSearchClient'; 
 import { searchIndex } from '@/lib/utils/meiliSearchClient';
+import { CacheInvalidation } from '@/lib/utils/invalidation';
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -178,6 +179,14 @@ export const PUT = authMiddleware(async (req, context) => {
       console.warn('⚠️ Failed to update category in search:', searchError.message);
     }
 
+    // Invalidate category cache to reflect the updated category
+    await CacheInvalidation.invalidateCategoryCache(updatedCategory._id?.toString());
+    // ✅ Force homepage to regenerate 
+    console.log(`🎯 DEBUG: Category updated - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+    // ✅ Force regeneration
+    await CacheInvalidation.triggerHttpRevalidation([`/category/${updatedCategory.slug}`]);
+
     return NextResponse.json({
       message: 'Category has been updated successfully',
       category: updatedCategory
@@ -212,6 +221,16 @@ export const DELETE = authMiddleware(async (req, context) => {
     if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
     
     // ✅ Proceed with the request
+
+
+    // ✅ Get slug before deleting
+    const category = await Category.findById(id).select('slug').lean();
+    if (!category) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    const oldSlug = category.slug;
+
     // 1. Delete the category
     const deletedCategory = await Category.findByIdAndDelete(id);
     if (!deletedCategory) {
@@ -241,6 +260,14 @@ export const DELETE = authMiddleware(async (req, context) => {
 
     // 2. Delete related products
     const deletedProducts = await Product.deleteMany({ categoryId: id });
+
+    // Invalidate category cache to reflect the deleted category
+    await CacheInvalidation.invalidateCategoryCache(id, oldSlug);
+    // ✅ Force homepage to regenerate 
+    console.log(`🎯 DEBUG: Category Deleted - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+    // ✅ Force regeneration
+    await CacheInvalidation.triggerHttpRevalidation([`/category/${deletedCategory.slug}`]);
 
     return NextResponse.json({
       message: "✅ Category and related products deleted successfully",

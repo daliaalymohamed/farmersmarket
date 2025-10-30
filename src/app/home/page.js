@@ -5,6 +5,18 @@ import HomePageSkeleton from '@/components/SKELETONS/homePageSkeleton';
 import Home from './home';
 import Error from '@/components/UI/error';
 
+
+// ✅ Enable ISR: Revalidate every 60 seconds
+// This allows the page to be statically regenerated in the background
+// at most once every 60 seconds when a request comes in.
+// "Rebuild this page at most once every 60 seconds when someone requests it"
+export const revalidate = 60;
+
+// ✅ Optional: For dynamic routes or preview
+export async function generateStaticParams() {
+  return [{},]; // Required if using layout groups or incremental generation
+}
+
 // ✅ Dynamic Metadata
 export async function generateMetadata() {
   // Fetch home page data to get metadata

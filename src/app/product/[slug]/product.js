@@ -301,7 +301,7 @@ const ProductPage = ({ productData, relatedProducts, categories }) => {
                       alt={p.name.en}
                       fill
                       style={{ objectFit: 'cover' }}
-                      unoptimized
+                      priority
                     />
                   </Box>
                   <CardContent>

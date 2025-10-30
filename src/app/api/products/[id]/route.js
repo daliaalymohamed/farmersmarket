@@ -14,7 +14,7 @@ import { generateUniqueSlug } from '@/lib/utils/slugify';
 // for syncing with MeiliSearch to push new/updated products to the search index
 import client from '@/lib/utils/meiliSearchClient'; 
 import { searchIndex } from '@/lib/utils/meiliSearchClient';
-
+import { CacheInvalidation } from '@/lib/utils/invalidation';
 
 // Polyfill __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -238,6 +238,18 @@ export const PUT = authMiddleware(async (req, context) => {
       console.warn('⚠️ Failed to update product in search:', searchError.message);
     }
 
+    // Invalidate product cache to reflect the updated product
+    await CacheInvalidation.invalidateProductCache(
+      updatedProduct._id?.toString(),
+      updatedProduct.slug,
+      updatedProduct.categoryId?._id?.toString(),
+      'update'
+    );
+    console.log(`🎯 DEBUG: Product updated - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+    // ✅ Force regeneration
+    await CacheInvalidation.triggerHttpRevalidation([`/product/${updatedProduct.slug}`]);
+
     // Now return fully populated product
     return NextResponse.json({
       message: 'Product has been updated successfully',
@@ -340,6 +352,18 @@ export const PATCH = authMiddleware(async (req, context) => {
       { path: 'createdBy' },
       { path: 'updatedBy' },
     ]);
+
+    // Invalidate cache to reflect the toggled product status
+    await CacheInvalidation.invalidateProductCache(
+      updatedProduct._id?.toString(),
+      updatedProduct.slug,
+      updatedProduct.categoryId?._id?.toString(),
+      'toggle'
+    );
+    console.log(`🎯 DEBUG: Product status updated - triggering revalidation for / and /home`);
+    await CacheInvalidation.triggerHttpRevalidation(['/', '/home'])
+    // ✅ Force regeneration
+    await CacheInvalidation.triggerHttpRevalidation([`/product/${updatedProduct.slug}`]);
 
     // Now return fully populated product
     return NextResponse.json({

@@ -7,6 +7,51 @@ import ProductPageSkeleton from '@/components/SKELETONS/productPageSkeleton';
 import Product from './product';
 import Error from '@/components/UI/error';
 
+
+/** We’ll change it to use ISR with generateStaticParams so pages are:
+
+✅ Pre-rendered at build time (or on-demand)
+✅ Served from CDN
+✅ Revalidated in background
+✅ Fast & scalable
+✅ First visitor after 60s → triggers background update
+✅ Everyone else gets cached version
+*/
+/**
+ * 
+ Here’s what happens when a user visits /product/milk-bottle:
+
+              STEP                                                      WHAT HAPPENS
+1️⃣ Next.js checks if HTML is stale (revalidate=60)             If yes → starts regenerating page
+
+2️⃣ During regeneration, it calls
+getProductBySlug()                                             This hits your API or server action
+
+3️⃣ Your API checks Redis first                                 If data is cached → return instantly
+
+4️⃣ If not in Redis → fetch from MongoDB                        Then store in Redis for next time
+5️⃣ Next.js builds new HTML and caches it                       Ready for next visitors
+ */
+
+/**  
+ * ISR handles the "shell" (HTML)
+*  Redis handles the "content" (data)
+*/
+
+// ✅ Enable ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
+// ✅ Generate static params for SSG/ISR
+export async function generateStaticParams() {
+  try {
+    // Optional: Pre-generate top product slugs at build time
+    // Or return empty array for pure on-demand generation
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 // ✅ Dynamic Metadata
 export async function generateMetadata({ params }) {
     const { slug } = await params;

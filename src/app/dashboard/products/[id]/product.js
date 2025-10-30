@@ -237,7 +237,6 @@ const Product = ({ initialData, initialCategories, initialVendors }) => {
                                         background: '#f5f5f5', 
                                     }}
                                     onError={() => console.error(`Failed to load image: ${image}`)}
-                                    loading="lazy"
                                     />
                             </Box>
                             {/* Product Info */}
