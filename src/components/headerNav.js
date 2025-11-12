@@ -158,6 +158,15 @@ export default function HeaderNav() {
                   </ListItem>
                 </Link>
 
+                <Link href="/cart" passHref legacyBehavior>
+                  <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
+                    <ListItemButton component="a">
+                      <ListItemIcon><HomeIcon /></ListItemIcon>
+                      <ListItemText primary={t("cart")} />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+
                 {loggedIn ? (
                   <>
                     <Link href="/orders" passHref legacyBehavior>
@@ -168,14 +177,7 @@ export default function HeaderNav() {
                         </ListItemButton>
                       </ListItem>
                     </Link>
-                    <Link href="/cart" passHref legacyBehavior>
-                      <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
-                        <ListItemButton component="a">
-                          <ListItemIcon><HomeIcon /></ListItemIcon>
-                          <ListItemText primary={t("cart")} />
-                        </ListItemButton>
-                      </ListItem>
-                    </Link>
+                    
                     <Divider />
                     <Link href="/dashboard" passHref legacyBehavior>
                       <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
@@ -265,14 +267,14 @@ export default function HeaderNav() {
               <Link href="/about" passHref>
                 <StyledTypography>{t("about")}</StyledTypography>
               </Link>
+              <Link href="/cart" passHref>
+                <StyledTypography>{t("cart")}</StyledTypography>
+              </Link>
             {
               loggedIn ? (
                 <>
                   <Link href="/orders" passHref>
                     <StyledTypography>{t("orders")}</StyledTypography>
-                  </Link>
-                  <Link href="/cart" passHref>
-                    <StyledTypography>{t("cart")}</StyledTypography>
                   </Link>
                   <Link href="/dashboard" passHref>
                     <StyledTypography>{t("dashboard")}</StyledTypography>

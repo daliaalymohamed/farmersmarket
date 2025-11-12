@@ -400,6 +400,17 @@ export const en = {
     aboutVendorLength: "Vendor description must be between 10 and 500 characters",
     invalidFacebookUrl: "Invalid Facebook URL",
     invalidInstagramUrl: "Invalid Instagram URL",
-     
-    
+    // cart page
+    failedToUpdateCart: "Failed to update cart",
+    itemRemovedFromCart: "Item removed from cart",
+    failedToRemoveItem: "Failed to remove item",
+    pleaseLoginToCheckout: "Please login to checkout",
+    yourCartIsEmpty: "Your cart is empty",
+    continueShopping: "Continue Shopping",
+    shoppingCart: "Shopping Cart",
+    total: "Total",
+    itemsInCart: "items in cart",
+    proceedToCheckout: "Proceed to Checkout",
+    isAddedToCart: "is added to cart",
+    errorAddingToCart: "Error adding item to cart",
 };

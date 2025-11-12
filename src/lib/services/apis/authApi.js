@@ -29,4 +29,10 @@ export const authApi = {
       throw error;
     }
   },
+  // Logout
+  logout: async () => {
+    const response = await api.post(`${API_BASE_URL}/logout`, {});
+    // console.log("Logout Response:", response);
+    return response.data;
+  },
 };

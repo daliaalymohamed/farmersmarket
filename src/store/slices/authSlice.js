@@ -26,8 +26,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      // Optional: if you add an API later, use this spot
-      // await authApi.logout();
+      await authApi.logout();
     } catch (error) {
       console.warn("Logout API failed — ignoring because we're doing local cleanup anyway.");
       // Still proceed with local cleanup

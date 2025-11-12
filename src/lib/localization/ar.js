@@ -401,8 +401,20 @@ export const ar = {
     vendorLocationLength: "يجب أن يكون موقع المورد بين 3 و100 حرف",
     aboutVendorLength: "يجب أن يكون وصف المورد بين 10 و500 حرف",
     invalidFacebookUrl: "رابط فيسبوك غير صالح",
-    invalidInstagramUrl: "رابط إنستغرام غير صالح"      
-
+    invalidInstagramUrl: "رابط إنستغرام غير صالح",    
+    // cart page
+    failedToUpdateCart: "فشل تحديث العربة",
+    itemRemovedFromCart: "تمت إزالة العنصر من العربة",
+    failedToRemoveItem: "فشل إزالة العنصر",
+    pleaseLoginToCheckout: "يرجى تسجيل الدخول لإتمام الشراء",
+    yourCartIsEmpty: "عربتك فارغة",
+    continueShopping: "استمر في التسوق",
+    shoppingCart: "عربة التسوق",
+    total: "الإجمالي",
+    itemsInCart: "عنصر(عناصر) في العربة",
+    proceedToCheckout: "المتابعة إلى الدفع",
+    isAddedToCart: "تمت إضافته إلى العربة",
+    errorAddingToCart: "خطأ في إضافة إلى العربة",
 }
 
   

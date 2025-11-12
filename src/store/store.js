@@ -5,6 +5,7 @@ import categoriesReducer from "./slices/categorySlice";
 import productsReducer from './slices/productSlice';
 import vendorsReducer from "./slices/vendorSlice";
 import usersReducer from "./slices/userSlice";
+import cartReducer from './slices/cartSlice'
 
 // Create a function to initialize the store
 export const makeStore = () =>
@@ -15,6 +16,7 @@ export const makeStore = () =>
       vendors: vendorsReducer,
       auth: authReducer,
       users: usersReducer,
+      cart: cartReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
