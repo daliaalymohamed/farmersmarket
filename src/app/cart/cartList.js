@@ -241,36 +241,6 @@ const CartList = ({ initialData }) => {
             </Paper>
 
             {/* Summary & Checkout */}
-            {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-                <Box>
-                    <Typography variant="h6">
-                        {t('total')}: <strong>{t('EGP')} {total.toFixed(2)}</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {count} {t('itemsInCart')}
-                    </Typography>
-                </Box>
-                <Button
-                    sx={{
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        py: 1,
-                        backgroundColor: 'text.primary',
-                        color: '#fff',
-                        '&:hover': {
-                            backgroundColor: 'background.default',
-                            color: 'background.paper'
-                        }
-                    }}
-                    variant="contained"
-                    size="large"
-                    startIcon={<ShoppingCart />}
-                    onClick={handleCheckout}
-                    disabled={loading}
-                >
-                    {t('proceedToCheckout')}
-                </Button>
-            </Box> */}
             <CartSummary />
 
             <Divider sx={{ my: 4 }} />
