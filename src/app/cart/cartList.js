@@ -25,6 +25,7 @@ import { Add, Remove, Delete as DeleteIcon, ShoppingCart } from '@mui/icons-mate
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { initializeCartItems, addItemToCart, removeItemFromCart, updateItemQuantity } from '@/store/slices/cartSlice';
 import { selectCartItems, selectCartTotal, selectCartCount } from '@/store/slices/cartSlice';
+import CartSummary from '@/components/cartSummary';
 
 const CartList = ({ initialData }) => {
     const { t, language } = useTranslation();
@@ -240,7 +241,7 @@ const CartList = ({ initialData }) => {
             </Paper>
 
             {/* Summary & Checkout */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+            {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <Box>
                     <Typography variant="h6">
                         {t('total')}: <strong>{t('EGP')} {total.toFixed(2)}</strong>
@@ -269,7 +270,8 @@ const CartList = ({ initialData }) => {
                 >
                     {t('proceedToCheckout')}
                 </Button>
-            </Box>
+            </Box> */}
+            <CartSummary />
 
             <Divider sx={{ my: 4 }} />
 
