@@ -9,6 +9,7 @@ Farmers Market is a [Next.js](https://nextjs.org) e-commerce application built u
 - **[MongoDB](https://www.mongodb.com):** A NoSQL database for storing application data.
 - **[Redux](https://redux.js.org):** A state management library for managing global application state.
 - **[Redis](https://redis.io):** A key-value store for caching data
+- **[MeliSearch](https://www.meilisearch.com/):** A platform to build, scale, and unify search and AI retrieval
 
 
 ## Prerequisites

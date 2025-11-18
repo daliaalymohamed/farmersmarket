@@ -64,7 +64,13 @@ export const GET = authMiddleware(async (req, context) => {
       });
     }
 
-    return NextResponse.json({user, success: true}, { 
+    return NextResponse.json({
+      user, 
+      success: true, 
+      metadata: {
+        title: `Profile of ${user.firstName} ${user.lastName} - E-Commerce App`,
+        description: `View and edit the profile of ${user.firstName} ${user.lastName}.`
+      }}, { 
       status: 200,
       headers: {
         'Cache-Control': 'no-store, must-revalidate',
@@ -137,9 +143,27 @@ export const PUT = authMiddleware(async (req, context) => {
 
     // 2. Add a new address
     if (userData.newAddress) {
+      const newAddr = userData.newAddress;
+      
+      // If setting as default, first unset all other defaults of the same type
+      const updateQuery = {};
+      
+      if (newAddr.isDefaultShipping) {
+        updateQuery['addresses.$[].isDefaultShipping'] = false;
+      }
+      if (newAddr.isDefaultBilling) {
+        updateQuery['addresses.$[].isDefaultBilling'] = false;
+      }
+      
+      // Unset existing defaults if needed
+      if (Object.keys(updateQuery).length > 0) {
+        await User.findByIdAndUpdate(id, { $set: updateQuery });
+      }
+      
+      // Add the new address
       updatedUser = await User.findByIdAndUpdate(
         id,
-        { $push: { addresses: userData.newAddress } },
+        { $push: { addresses: newAddr } },
         { new: true, runValidators: true }
       );
     }
@@ -147,6 +171,30 @@ export const PUT = authMiddleware(async (req, context) => {
     // 3. Edit an existing address
     if (userData.editAddress && userData.editAddress._id) {
       const addr = userData.editAddress;
+      
+      // If setting as default, first unset all other defaults of the same type
+      const updateQuery = {};
+      
+      if (addr.isDefaultShipping) {
+        updateQuery['addresses.$[other].isDefaultShipping'] = false;
+      }
+      if (addr.isDefaultBilling) {
+        updateQuery['addresses.$[other].isDefaultBilling'] = false;
+      }
+      
+      // Unset other defaults (excluding the current address being edited)
+      if (Object.keys(updateQuery).length > 0) {
+        await User.findByIdAndUpdate(
+          id,
+          { $set: updateQuery },
+          { 
+            arrayFilters: [{ 'other._id': { $ne: addr._id } }],
+            multi: true 
+          }
+        );
+      }
+      
+      // Now update the specific address
       updatedUser = await User.findOneAndUpdate(
         { _id: id, "addresses._id": addr._id },
         {
@@ -172,13 +220,23 @@ export const PUT = authMiddleware(async (req, context) => {
         { new: true, runValidators: true }
       );
     }
-
+    
     if (!updatedUser) {
-      return NextResponse.json({ error: "User not found or nothing updated" }, { status: 404 });
+      return NextResponse.json({ 
+        error: "User not found or nothing updated" 
+      }, { status: 404 });
     }
-    return NextResponse.json({ message: 'User has been updated successfully', user: updatedUser }, { status: 200 });
+    
+    return NextResponse.json({ 
+      message: 'User has been updated successfully', 
+      user: updatedUser 
+    }, { status: 200 });
+    
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+    console.error("Error updating user:", error);
+    return NextResponse.json({ 
+      error: "Failed to update user" 
+    }, { status: 500 });
   }
 });
 

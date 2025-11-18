@@ -102,17 +102,6 @@ const CartList = ({ initialData }) => {
         }
     };
 
-    // Proceed to Checkout
-    const handleCheckout = () => {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-        toast.info(t('pleaseLoginToCheckout'));
-        router.push(`/login?redirect=/cart`);
-        return;
-        }
-        router.push('/checkout');
-    };
-
     // Empty Cart
     if (items.length === 0) {
         return (
@@ -209,13 +198,13 @@ const CartList = ({ initialData }) => {
                             {/* Quantity */}
                             <TableCell align="center">
                                 <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
-                                    <IconButton size="small" onClick={() => handleUpdateQuantity(item, -1)}>
+                                    <IconButton size="small" onClick={() => handleUpdateQuantity(item, -1)} aria-label={t('decreaseQuantity')}>
                                     <Remove fontSize="small" />
                                     </IconButton>
                                     <Typography variant="body1" sx={{ minWidth: 32, textAlign: 'center' }}>
                                     {item.quantity}
                                     </Typography>
-                                    <IconButton size="small" onClick={() => handleUpdateQuantity(item, 1)}>
+                                    <IconButton size="small" onClick={() => handleUpdateQuantity(item, 1)} aria-label={t('increaseQuantity')} >
                                     <Add fontSize="small" />
                                     </IconButton>
                                 </Stack>
@@ -230,7 +219,7 @@ const CartList = ({ initialData }) => {
 
                             {/* Actions */}
                             <TableCell align="center">
-                                <IconButton color="error" onClick={() => handleRemoveItem(item.productId)}>
+                                <IconButton color="error" onClick={() => handleRemoveItem(item.productId)} aria-label={t('delete')}>
                                     <DeleteIcon />
                                 </IconButton>
                             </TableCell>

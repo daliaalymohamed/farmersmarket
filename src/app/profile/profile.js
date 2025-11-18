@@ -22,7 +22,6 @@ import {
   Stack,
   FormControlLabel,
   Checkbox,
-  IconButton
 } from '@mui/material';
 import Grid from '@mui/material/Grid2'; // Using Grid2
 import {
@@ -35,12 +34,10 @@ import {
 } from '@mui/icons-material';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { editProfile } from '@/store/slices/userSlice';
+import { editProfile, fetchUserProfile } from '@/store/slices/userSlice';
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import Loading from "@/components/UI/loading";
 import ButtonLoader from '@/components/UI/buttonLoader';
-import Error from "@/components/UI/error";
 import withAuth  from "@/components/withAuth"; // Import withAuth HOC
 import { toast } from "react-toastify";
 import { profileUpdateSchema, addressSchema } from '@/lib/utils/validation';
@@ -63,21 +60,48 @@ const MyProfile = ({ initialData }) => {
   const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
   const loading = useSelector(state => state.users?.loading || false);
   const error = useSelector(state => state.users?.error || null);
-  const user = useSelector(state => state.users?.list.find(u => u._id === initialData._id) || initialData, shallowEqual);
+  const user = useSelector(state => {
+    const reduxUser = state.users.list.find(u => u._id === initialData._id);
+    return reduxUser || initialData;
+  }, [initialData._id], shallowEqual);
 
+  // Check permissions on mount
+  // This effect runs once when the component mounts
+  // and checks if the user has the required permissions to view this page.
+  // If not, it redirects to the home page.
+  useEffect(() => {
+    if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+
+    const requiredPermissions = ["view_user", "edit_user"];
+    const hasAccess = checkPermission(actions, requiredPermissions);
+    
+    if (!hasAccess) {
+      router.push("/home");
+    }
+  }, [actions, actionsLoaded, router]);
+
+  // Initialize Redux with server-side data
+  useEffect(() => {
+    if (initialData?._id) {
+      dispatch(fetchUserProfile(initialData._id));
+    }
+  }, [dispatch, initialData._id]);
+  
+  
   // Profile form hook
   const {
     register: registerProfile,
     handleSubmit: handleSubmitProfile,
     formState: { errors: profileErrors },
+    reset
   } = useForm({
     mode: 'all',
     resolver: yupResolver(profileUpdateSchema(t)),
     defaultValues: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
     }
   });
 
@@ -102,21 +126,20 @@ const MyProfile = ({ initialData }) => {
     }
   });
 
-  // Check permissions on mount
-  // This effect runs once when the component mounts
-  // and checks if the user has the required permissions to view this page.
-  // If not, it redirects to the home page.
+    
+  // ✅ Reset form when user data arrives
   useEffect(() => {
-    if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
+  if (user) { 
+    // Populate form with user data
+    reset({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || ''
+    });
+  }
+}, [user, reset]);
 
-    const requiredPermissions = ["view_user", "edit_user"];
-    const hasAccess = checkPermission(actions, requiredPermissions);
-    
-    if (!hasAccess) {
-      router.push("/home");
-    }
-  }, [actions, actionsLoaded, router]);
-    
   // Reset profile form when initialData changes
   // Sync address form when editing
   useEffect(() => {
@@ -146,7 +169,7 @@ const MyProfile = ({ initialData }) => {
     try {
       await dispatch(
         editProfile({
-          userId: initialData._id,
+          userId: initialData.user._id,
           profile: data,
         })
       ).unwrap();

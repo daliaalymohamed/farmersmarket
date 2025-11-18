@@ -17,10 +17,8 @@ const CartSummary = () => {
   const total = useSelector(selectCartTotal);
   const count = useSelector(selectCartCount);
 
-  console.log('🛒 CartSummary rendered:', { total, count }); // Debug: will log only when values change
-
   const handleCheckout = () => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     if (!token) {
       toast.info(t('pleaseLoginToCheckout'));
       router.push(`/login?redirect=/cart`);

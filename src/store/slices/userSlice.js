@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import { customersApi } from "@/lib/services/apis/userApi";
+import { getCustomerById } from "@/app/actions/users/serverUserByIdData";
 
 // Get token and user from localStorage if available
 const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -20,6 +21,19 @@ export const toggleUserActiveStatus = createAsyncThunk(
   async ({ userId, active }) => {
     const data = await customersApi.toggleUserActiveStatus(userId, active);
     return data;
+  }
+);
+
+// ✅ Async fetchUser Profile Thunk
+export const fetchUserProfile = createAsyncThunk(
+  "users/fetchUserProfile",
+  async (id, { rejectWithValue }) => {
+    try {
+      const data = await getCustomerById(id);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
 );
 

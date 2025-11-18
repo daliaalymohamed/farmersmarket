@@ -405,6 +405,8 @@ export const ar = {
     // cart page
     failedToUpdateCart: "فشل تحديث العربة",
     itemRemovedFromCart: "تمت إزالة العنصر من العربة",
+    decreaseQuantity: "قلل كمية",
+    increaseQuantity: "زد كمية",
     failedToRemoveItem: "فشل إزالة العنصر",
     pleaseLoginToCheckout: "يرجى تسجيل الدخول لإتمام الشراء",
     yourCartIsEmpty: "عربتك فارغة",
@@ -415,6 +417,24 @@ export const ar = {
     proceedToCheckout: "المتابعة إلى الدفع",
     isAddedToCart: "تمت إضافته إلى العربة",
     errorAddingToCart: "خطأ في إضافة إلى العربة",
+    // checkout
+    checkout: "الدفع",
+    shippingInformation: "معلومات الشحن",
+    fullName: "الاسم الكامل",
+    paymentMethod: "طريقة الدفع",
+    cashOnDelivery: "الدفع عند الاستلام",
+    onlinePayment: "الدفع عبر الإنترنت",
+    orderSummary: "ملخص الطلب",
+    subtotal: "المجموع الفرعي",
+    qty: "الكمية",
+    processing: "جار المعالجة...",
+    placeOrder: "إتمام الطلب",
+    orderPlacedSuccessfully: "تم إتمام الطلب بنجاح",
+    failedToPlaceOrder: "فشل إتمام الطلب",
+    networkError: "خطأ في الشبكة، يرجى المحاولة مرة أخرى",
+    useSavedAddress: "استخدم عنوان محفوظ",
+    savedAddresses: "العناوين المحفوظة",
+    enterNewAddress: "أدخل عنوان جديد",
 }
 
   
