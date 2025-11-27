@@ -19,7 +19,7 @@ const VendorSchema = new mongoose.Schema({
   });
 
 // Add compound index for active status
-VendorSchema.index({ name: 1, isActive: 1 });
+VendorSchema.index({ name: 1, active: 1 });
 
 
 export default mongoose.models.Vendor || mongoose.model("Vendor", VendorSchema);

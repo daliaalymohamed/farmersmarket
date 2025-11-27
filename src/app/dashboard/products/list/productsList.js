@@ -96,7 +96,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
     useEffect(() => {
         if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
 
-        const requiredPermissions = ["view_dashboard","bulk_toggle_vendor_status"];
+        const requiredPermissions = ["view_dashboard","bulk_toggle_product_status"];
         const hasAccess = checkPermission(actions, requiredPermissions);
         
         if (!hasAccess) {
@@ -516,7 +516,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                             >
                                 <MenuItem value="all">{t('allStatus')}</MenuItem>
                                 <MenuItem value="active">{t('active')}</MenuItem>
-                                <MenuItem value="inactive">{t('inActive')}</MenuItem>
+                                <MenuItem value="inactive">{t('inactive')}</MenuItem>
                             </TextField>
                             <Button
                                 variant="outlined"
@@ -591,7 +591,7 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                                             selectedProducts.length < displayProducts.length
                                         }                                        
                                         onChange={handleSelectAll}
-                                        inputProps={{ 'aria-label': t('selectAllVendors') }}
+                                        inputProps={{ 'aria-label': t('selectAllProducts') }}
                                     />
                                 </TableCell>
                                 <TableCell scope="col">{t('product')}</TableCell>
@@ -758,67 +758,10 @@ const ProductsList = ({initialData, initialFilters, initialCategories, initialVe
                     rowsPerPage={limit}
                     onRowsPerPageChange={handleRowsPerPageChange}
                     rowsPerPageOptions={[3, 5, 10, 25]}
-                    aria-label="Products table pagination"
+                    aria-label={t('productsPagination')}
                     sx={{ borderTop: 1, borderColor: 'divider', bgcolor: '#f5f5f5' }}
                 />
             </Card>
-
-            {/* Context Menu */}
-            {/* <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                aria-label="Product context menu"
-            >
-                <MenuItem onClick={handleMenuClose} aria-label={t('viewDetails')}>
-                    <VisibilityIcon sx={{ mr: 1 }} fontSize="small" />
-                    {t('viewDetails')}
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose} aria-label={t('editProduct')}>
-                    <EditIcon sx={{ mr: 1 }} fontSize="small" />
-                    {t('editProduct')}
-                </MenuItem>
-                <MenuItem onClick={handleDeleteClick} aria-label={t('deleteProduct')} sx={{ color: 'error.main' }}>
-                    <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-                    {t('deleteProduct')}
-                </MenuItem>
-            </Menu> */}
-
-            {/* Delete Dialog */}
-            {/* <Dialog
-                open={deleteDialog}
-                onClose={() => setDeleteDialog(false)}
-                aria-labelledby="dialog-title"
-                aria-describedby="dialog-description"
-            >
-                <DialogTitle id="dialog-title">Delete Product</DialogTitle>
-                <DialogContent>
-                    <Typography id="dialog-description">
-                        Are you sure you want to delete "{selectedProduct?.name}"? This action cannot be undone.
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteDialog(false)} color="inherit">
-                        Cancel
-                    </Button>
-                    <Button 
-                        onClick={handleDeleteConfirm} 
-                        color="error" 
-                        variant="contained"
-                    >
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog> */}
-
-            {/* Floating Action Button */}
-            {/* <Fab
-                color="primary"
-                sx={{ position: 'fixed', bottom: 24, right: 24 }}
-                aria-label="Add new product"
-            >
-                <AddIcon />
-            </Fab> */}
         </Dashboard>
     );
 };

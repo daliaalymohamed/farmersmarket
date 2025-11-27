@@ -15,13 +15,16 @@ import { vendorSchema } from '@/lib/utils/validation';
 import { toast } from "react-toastify";
 
 const countries = [
-  { code: "EG", dialCode: "+20", flag: "🇪🇬", name: "Egypt" },
-  { code: "SA", dialCode: "+966", flag: "🇸🇦", name: "Saudi Arabia" },
-  { code: "US", dialCode: "+1", flag: "🇺🇸", name: "United States" },
+    { code: "EG", dialCode: "+20", flag: "🇪🇬", name: "Egypt" },
+    { code: "SA", dialCode: "+966", flag: "🇸🇦", name: "Saudi Arabia" },
+    { code: "US", dialCode: "+1", flag: "🇺🇸", name: "United States" },
+    { code: "GB", dialCode: "+44", flag: "🇬🇧", name: "United Kingdom" },
+    { code: "AE", dialCode: "+971", flag: "🇦🇪", name: "UAE" },
+    { code: "JO", dialCode: "+962", flag: "🇯🇴", name: "Jordan"}
 ];
 
 // Vendor modal to edit and add new vendor
-const VendorModal = memo(({ open, handleClose, vendor, t, loading, language }) => {
+const VendorModal = memo(({ open, handleClose, vendor, t, loading }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const [selectedCountry, setSelectedCountry] = useState(countries[0]); // Default country
@@ -136,16 +139,17 @@ const VendorModal = memo(({ open, handleClose, vendor, t, loading, language }) =
         try {
             let payload;
 
+            // Edit existing vendor
+            const contactPhoneNumber = `${data.countryCode} ${data.contactPhone}`;
+            payload = { 
+                name: data.name,
+                contactPhone: contactPhoneNumber,
+                location: data.location,
+                about: data.about,
+                socialLinks: { facebook: data.socialLinks.facebook, instagram: data.socialLinks.instagram },
+            };
             if (isEditMode) {
-                // Edit existing vendor
-                const contactPhoneNumber = `${data.countryCode} ${data.contactPhone}`;
-                payload = { 
-                    name: data.name,
-                    contactPhone: contactPhoneNumber,
-                    location: data.location,
-                    about: data.about,
-                    socialLinks: { facebook: data.socialLinks.facebook, instagram: data.socialLinks.instagram },
-                };
+                
                 const result = await dispatch(editVendor({
                     vendorId: vendor._id, 
                     vendorData: payload
@@ -159,18 +163,6 @@ const VendorModal = memo(({ open, handleClose, vendor, t, loading, language }) =
                 toast.success(t('vendorUpdatedSuccessfully'));
             } else {
                 // Add new vendor - always use FormData for new vendors
-                const contactPhoneNumber = `${selectedCountry.dialCode} ${data.contactPhone}`
-                payload = {
-                    name: data.name,
-                    contactPhone: contactPhoneNumber,
-                    location: data.location,
-                    about: data.about,
-                    socialLinks: {
-                        facebook: data.socialLinks.facebook || '',
-                        instagram: data.socialLinks.instagram || ''
-                    }
-                };
-                
                 const result = await dispatch(addVendor(payload)).unwrap();
                 // Ensure UI reflects changes immediately
                 if (result?.vendor) {

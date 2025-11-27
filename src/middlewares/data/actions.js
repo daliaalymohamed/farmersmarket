@@ -7,4 +7,5 @@ export const defaultActions = [
     "view_vendors", "add_vendor", "edit_vendor", "view_vendor", "toggle_vendor_status", 
     "bulk_toggle_vendor_status","add_to_cart","remove_from_cart","view_cart", "view_checkout",
     "view_my_orders", "place_order",
+    "view_shipping_zones", "add_shipping_zone", "edit_shipping_zone", "view_shipping_zone","toggle_shipping_zone_status", "bulk_toggle_shipping_zone_status"
 ];

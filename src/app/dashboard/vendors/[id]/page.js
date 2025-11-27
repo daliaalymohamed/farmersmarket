@@ -1,8 +1,7 @@
 // This is server-side code for a Next.js page that fetches vendor data based on the provided ID.import { getVendorById } from '@/app/actions/vendor/serverVendorByIdData';
 import { getVendorById } from '@/app/actions/vendors/serverVendorByIdData';
 import Vendor from './vendor';
-import { redirect } from 'next/navigation';
-
+import Error from '@/components/UI/error';
 
 const VendorPage = async ({ params }) => {
   const { id } = await params;
@@ -11,8 +10,7 @@ const VendorPage = async ({ params }) => {
     const vendorResult = await getVendorById(id);
 
     if (!vendorResult || !vendorResult.vendorSuccess || !vendorResult.vendor) {
-      // If no vendor found, redirect to /home
-      redirect('/home');
+      return <Error error={result.error || 'Failed to load vendor data.'} />;
     }
 
     const vendor = vendorResult.vendor;

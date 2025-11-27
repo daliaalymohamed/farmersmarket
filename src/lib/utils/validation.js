@@ -278,3 +278,27 @@ export const vendorSchema = (t, isEditMode = false) => yup.object().shape({
     instagram: yup.string().url(t("invalidInstagramUrl")),
   })
 })
+
+// Shipping Zone validation Schema (for both create and update)
+export const shippingZoneSchema = (t) => yup.object().shape({
+  name: yup.object().shape({
+    en: yup.string()
+          .min(3, t("zoneNameLength"))
+          .max(50, t("zoneNameLength"))
+          .required(t("zoneNameEnRequired")),
+    ar: yup.string()
+          .min(3, t("zoneNameLength"))
+          .max(50, t("zoneNameLength"))
+          .required(t("zoneNameArRequired"))
+  }),
+  country: yup.string().required(t('countryRequired')),
+  zipCodes: yup.array().of(yup.string().trim()).min(1, t('atLeastOneZipRequired')),
+  cityNames: yup.array().of(
+    yup.object().shape({
+      en: yup.string().min(2, t('cityNameLength')).max(50, t('cityNameLength')).required(t('cityNameRequired')),
+      ar: yup.string().min(2, t('cityNameLength')).max(50, t('cityNameLength')).required(t('cityNameRequired'))
+    })
+  ),
+  shippingFee: yup.number().min(0).required(t('shippingFeeRequired')),
+  taxRate: yup.number().min(0).max(1).required(t('taxRateRequired'))
+});

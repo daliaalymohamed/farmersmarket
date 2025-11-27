@@ -3,7 +3,7 @@ import { getProductById } from '@/app/actions/products/serverProductByIdData';
 import { getCategories } from '@/app/actions/categories/serverCategoriesData';
 import { getVendors } from '@/app/actions/vendors/serverVendorsData';
 import Product from './product';
-import { redirect } from 'next/navigation';
+import Error from '@/components/UI/error';
 
 const ProductPage = async ({ params }) => {
   const { id } = await params;
@@ -12,20 +12,17 @@ const ProductPage = async ({ params }) => {
 
   // ✅ Check if result exists and has data
   if (!productResult || !productResult.prodSuccess || !productResult.product) {
-    // If no product found, redirect to /home
-    redirect('/home');
+    return <Error error={result.error || 'Failed to load product data.'} />;
   }
 
   const categoryResult = await getCategories({});
   if (!categoryResult || !categoryResult.categories || !categoryResult?.success) {
-    // If no categories found, redirect to /home
-    redirect('/home');
+    return <Error error={result.error || 'Failed to load category data.'} />;
   }
 
   const vendorResult = await getVendors({ noLimit: true, active: true });
   if (!vendorResult || !vendorResult.vendors || !vendorResult?.vendorSuccess) {
-    // If no vendors found, redirect to /home
-    redirect('/home');
+    return <Error error={result.error || 'Failed to load vendor data.'} />;
   }
 
   const product = productResult.product;

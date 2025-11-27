@@ -4,6 +4,7 @@ import authReducer from "./slices/authSlice";
 import categoriesReducer from "./slices/categorySlice";
 import productsReducer from './slices/productSlice';
 import vendorsReducer from "./slices/vendorSlice";
+import shippingZonesReducer from "./slices/shippingZonesSlice";
 import usersReducer from "./slices/userSlice";
 import cartReducer from './slices/cartSlice'
 
@@ -14,6 +15,7 @@ export const makeStore = () =>
       categories: categoriesReducer,
       products: productsReducer,
       vendors: vendorsReducer,
+      zones: shippingZonesReducer,
       auth: authReducer,
       users: usersReducer,
       cart: cartReducer,

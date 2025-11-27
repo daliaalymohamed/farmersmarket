@@ -422,6 +422,7 @@ const CustomersListPage = () => {
                         rowsPerPage={filtersObj?.limit || 3}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         rowsPerPageOptions={[3, 5, 10, 25]}
+                        aria-label={t('customersPagination')}
                     />
                 </TableContainer>
             </Box>

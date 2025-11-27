@@ -305,7 +305,6 @@ const VendorsList = ({initialData, initialFilters}) => {
                 open={modalOpen}
                 handleClose={handleCloseModal}
                 vendor={selectedVendor}
-                language={language}
                 t={t}
                 loading={loading}
             />
@@ -625,7 +624,7 @@ const VendorsList = ({initialData, initialFilters}) => {
                     rowsPerPage={limit}
                     onRowsPerPageChange={handleRowsPerPageChange}
                     rowsPerPageOptions={[3, 5, 10, 25]}
-                    aria-label="Vendors table pagination"
+                    aria-label={t('vendorsPagination')}
                     sx={{ borderTop: 1, borderColor: 'divider', bgcolor: '#f5f5f5' }}
                 />
             </Card>
