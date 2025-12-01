@@ -19,6 +19,7 @@ import {
   ListItemButton,
   ListItemText,
   Select,
+  Chip
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import PersonAdd from "@mui/icons-material/PersonAdd";
@@ -31,10 +32,11 @@ import LanguageIcon from "@mui/icons-material/Language"
 import Image from "next/image";
 import Link from "next/link";
 import logo from '../assets/new-logo.jpg';
-import { borderRadius, styled } from "@mui/system";
+import { styled } from "@mui/system";
 import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../store/slices/authSlice"; 
+import { selectCartCount } from "../store/slices/cartSlice";
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   minWidth: "100px",
@@ -62,7 +64,8 @@ export default function HeaderNav() {
   const dispatch = useDispatch();
   const loggedIn = useSelector((state) => state.auth.isloggedIn);
   const user = useSelector((state) => state.auth.user);
-
+  const cartItemCount = useSelector(selectCartCount);
+console.log("cartItemCount ", cartItemCount)
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -162,7 +165,27 @@ export default function HeaderNav() {
                   <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
                     <ListItemButton component="a">
                       <ListItemIcon><HomeIcon /></ListItemIcon>
-                      <ListItemText primary={t("cart")} />
+                      <ListItemText 
+                        primary={
+                          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                            {t("cart")}
+                            {cartItemCount > 0 && (
+                              <Chip
+                                label={cartItemCount}
+                                color="error"
+                                size="small"
+                                sx={{
+                                  ml: 1,
+                                  height: 16,
+                                  minWidth: 20,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 'bold'
+                                }}
+                              />
+                            )}
+                          </Box>
+                        } 
+                      />
                     </ListItemButton>
                   </ListItem>
                 </Link>
@@ -267,12 +290,33 @@ export default function HeaderNav() {
               <Link href="/about" passHref>
                 <StyledTypography>{t("about")}</StyledTypography>
               </Link>
-              <Link href="/cart" passHref>
-                <StyledTypography>{t("cart")}</StyledTypography>
-              </Link>
             {
               loggedIn ? (
                 <>
+                  <Box sx={{ position: 'relative', mx: 1 }}>
+                    <Link href="/cart" passHref>
+                      <StyledTypography component="span">
+                        {t("cart")}
+                      </StyledTypography>
+                    </Link>
+                    {cartItemCount > 0 && (
+                      <Chip
+                        label={cartItemCount}
+                        color="error"
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -20,
+                          height: 16,
+                          minWidth: 20,
+                          fontSize: '0.65rem',
+                          fontWeight: 'bold',
+                          padding: 0
+                        }}
+                      />
+                    )}
+                  </Box>
                   <Link href="/orders" passHref>
                     <StyledTypography>{t("orders")}</StyledTypography>
                   </Link>

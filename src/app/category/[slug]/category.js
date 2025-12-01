@@ -59,7 +59,6 @@ const Category = ({ category, categories = [], relatedProducts = [], pagination 
 
   // Handle Add to Cart
   const handleAddToCart = (e, product) => {
-    e.stopPropagation(); // ✅ Prevents card navigation
     const item = {
       productId: product._id,
       name: product.name[language] || product.name.en,

@@ -72,7 +72,7 @@ export const GET = authMiddleware(async (req) => {
         return NextResponse.json(
             {
                 cart: {
-                  cartItems: cart ? populatedCartItems : []
+                  items: cart ? populatedCartItems : []
                 },
                 cartSuccess: true
             },
@@ -248,7 +248,7 @@ export const POST = authMiddleware(async (req) => {
 
     return NextResponse.json({
       message: qty > 0 ? 'Item added to cart successfully' : 'Item quantity updated',
-      cart: { cartItems },
+      cart: { items: cartItems },
       cartSuccess: true
     }, { status: 200 }); // ✅ Created
     
@@ -329,7 +329,7 @@ export const DELETE = authMiddleware(async (req) => {
         // Find and update cart
         const cart = await Cart.findOne({ userId });
         if (!cart) {
-          return NextResponse.json({ cart: { cartItems: [] }, cartSuccess: true }, { status: 200 });
+          return NextResponse.json({ cart: { items: [] }, cartSuccess: true }, { status: 200 });
         }
 
         // Remove item by productId
@@ -358,7 +358,7 @@ export const DELETE = authMiddleware(async (req) => {
 
         return NextResponse.json({
           message: "Cart removed successfully",
-          cart: { cartItems: populatedCartItems },
+          cart: { items: populatedCartItems },
           cartSuccess: true
         }, { status: 200 });
         } catch (error) {

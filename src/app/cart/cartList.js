@@ -59,8 +59,8 @@ const CartList = ({ initialData }) => {
     
     // ✅ Initialize Redux with server data on mount
     useEffect(() => {
-        if (initialData?.cartItems && Array.isArray(initialData.cartItems)) {
-        dispatch(initializeCartItems({ cartItems: initialData.cartItems }));
+        if (initialData?.items && Array.isArray(initialData.items)) {
+        dispatch(initializeCartItems({ items: initialData.items }));
         }
     }, [dispatch, initialData]);
 

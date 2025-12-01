@@ -8,7 +8,7 @@ export const fetchCart = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const data = await getCartItems(filters);
-      return data.cart || { cartItems: [] };
+      return data.cart || { items: [] };
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch cart');
     }
@@ -21,7 +21,6 @@ export const addItemToCart = createAsyncThunk(
   async (itemData, { rejectWithValue }) => {
     try {
       const data = await cartApi.addItemToCart(itemData);
-      console.log("data ", data)
       return data.cart;
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to add item');
@@ -44,7 +43,7 @@ export const removeItemFromCart = createAsyncThunk(
 
 // ✅ Initial state for the cart slice
 const initialState = {
-    cartItems: [],
+    items: [],
     loading: false,
     error: null,
  };
@@ -57,19 +56,19 @@ const cartSlice = createSlice({
     // This is useful when the modal opens or when the page loads
     // It sets the cartList
     initializeCartItems: (state, action) => {
-        const { cartItems } = action.payload;
-        state.cartItems = cartItems || [];
+        const { items } = action.payload;
+        state.items = items || [];
     },
     // Optional: Local-only update (e.g., quantity change before API sync - when not loggedin)
     updateItemQuantity: (state, action) => {
       const { productId, quantity } = action.payload;
-      const item = state.cartItems.find(i => i.productId === productId);
+      const item = state.items.find(i => i.productId === productId);
       if (item && quantity > 0) {
         item.quantity = quantity;
       }
     },
     clearCart: (state) => {
-      state.cartItems = [];
+      state.items = [];
     }
   },
   extraReducers: (builder) => {
@@ -82,8 +81,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
         state.loaded = true;
-        state.cartItems = action.payload?.cart?.cartItems || 
-                    action.payload?.cart?.items || [];
+        state.items = action.payload?.cart?.items || [];
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
@@ -97,7 +95,7 @@ const cartSlice = createSlice({
       })
       .addCase(addItemToCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems =  action.payload.cartItems || [];
+        state.items =  action.payload.items || [];
       })
       .addCase(addItemToCart.rejected, (state, action) => {
         state.loading = false;
@@ -111,7 +109,7 @@ const cartSlice = createSlice({
       })
       .addCase(removeItemFromCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems =  action.payload.cartItems || [];
+        state.items =  action.payload.items || [];
       })
       .addCase(removeItemFromCart.rejected, (state, action) => {
         state.loading = false;
@@ -123,14 +121,14 @@ const cartSlice = createSlice({
 
 // ✅ Selectors
 // ✅ createSelector memoizes the result
-// ✅ Only recalculates when cartItems actually changes (by reference)
+// ✅ Only recalculates when items cart actually changes (by reference)
 // ✅ Prevents unnecessary re-renders
 // ✅ Eliminates the warning
 const selectCartState = (state) => state.cart;
 
 export const selectCartItems = createSelector(
   [selectCartState],
-  (cart) => cart.cartItems || []
+  (cart) => cart.items || []
 );
 
 export const selectCartLoading = (state) => state.cart.loading;

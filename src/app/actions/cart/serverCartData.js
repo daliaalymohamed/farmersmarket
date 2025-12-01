@@ -12,7 +12,7 @@ export const getCartItems = async (filters) => {
     // If no auth headers, return empty cart early
     if (!headers['Authorization']) {
       return {
-        cart: { cartItems: [] },
+        cart: { items: [] },
         cartSuccess: true
       };
     }
@@ -50,12 +50,12 @@ export const getCartItems = async (filters) => {
       case 403:
         // Treat unauthorized as empty cart
         return {
-          cart: { cartItems: [] },
+          cart: { items: [] },
           cartSuccess: true
         };
       case 404:
         return {
-          cart: { cartItems: [] },
+          cart: { items: [] },
           cartSuccess: true
         };
       default:
