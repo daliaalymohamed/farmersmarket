@@ -5,6 +5,7 @@ import { getCustomerById } from '@/app/actions/users/serverUserByIdData';
 import { getCheckoutData } from '@/app/actions/checkout/serverCheckoutData';
 import CheckoutForm from './checkoutForm';
 import Error from '@/components/UI/error';
+import CheckoutSkeleton from '@/components/SKELETONS/checkoutSkeleton';
 
 export async function generateMetadata() {
   return {
@@ -33,9 +34,9 @@ const CheckoutPage = async () => {
   console.log("🚀 Checkout data fetched:", result.data); // Log fetched data
 
   return (
-   // <Suspense fallback={<CheckoutSkeleton />}>
+    <Suspense fallback={<CheckoutSkeleton />}>
       <CheckoutForm initialData={result.data} profileData={userData}/>
-    // </Suspense>
+    </Suspense>
   );
 };
 

@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { getCartItems } from '@/app/actions/cart/serverCartData';
 import CartList from './cartList';
 import Error from '@/components/UI/error';
+import CartPageSleleton from '@/components/SKELETONS/cartPageSkeleton';
 
 // ✅ Dynamic Metadata
 export async function generateMetadata() {
@@ -21,11 +22,9 @@ const CartPage = async () => {
     }
 
     return (
-        // <Suspense fallback={<CartListSkeleton />}>
-            <CartList 
-                initialData={result.cart} 
-            />
-        // </Suspense>
+        <Suspense fallback={<CartPageSleleton />}>
+            <CartList initialData={result.cart} />
+        </Suspense>
     );
   } catch (error) {
     console.error('Error loading cart:', error);
