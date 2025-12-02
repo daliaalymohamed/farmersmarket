@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from '@/contexts/translationContext';
+import { useDispatch } from "react-redux";
 import {
   Box,
   Typography,
@@ -18,12 +19,13 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import AddToCart from '@/components/UI/addToCart';
-// import { addToCart } from "@/store/slices/cartSlice";
+import { addItemToCart } from "@/store/slices/cartSlice";
 import { toast } from "react-toastify";
 import Image from 'next/image';
 
 const Category = ({ category, categories = [], relatedProducts = [], pagination }) => {
   const { t, language } = useTranslation();
+  const dispatch = useDispatch();
 
   const [productList, setProductList] = useState(relatedProducts);
   const [paginationState, setPaginationState] = useState(pagination);
@@ -58,17 +60,28 @@ const Category = ({ category, categories = [], relatedProducts = [], pagination 
   };
 
   // Handle Add to Cart
-  const handleAddToCart = (e, product) => {
-    const item = {
+  const handleAddToCart = async (product) => {
+    const cartItem = {
       productId: product._id,
-      name: product.name[language] || product.name.en,
-      price: product.isOnSale ? product.salePrice : product.price,
+      name: { 
+        en: product.name.en || 'Unnamed Product',
+        ar: product.name.ar || 'اسم المنتج غير معروف'
+      },
+      price: product.salePrice > 0 ? product.salePrice : product.price,
       image: product.image,
-      slug: product.slug,
-      quantity: 1
+      quantity: 1,
+      maxStock: product.stock || null
     };
-    // dispatch(addToCart(item)); // if using Redux
-    toast.success(`${item.name} added to cart!`);
+    try{
+      // ✅ Dispatch and wait for result
+      await dispatch(addItemToCart(cartItem)).unwrap();
+      
+      // Only show success if API succeeded
+      toast.success(`${cartItem.name[language]} ${t('isAddedToCart')}`);
+    } catch (error) {
+      console.error("Error adding to cart: ", error);
+      toast.error(t('errorAddingToCart'));
+    }
   };
 
   return (

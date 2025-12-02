@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from '@/contexts/translationContext';
+import { useDispatch } from "react-redux";
 import {
   Box,
   Typography,
@@ -16,9 +17,8 @@ import {
 } from '@mui/material';
 import Grid from "@mui/material/Grid2"; // ✅ Correct import
 import { Add, Remove } from '@mui/icons-material';
-import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import AddToCart from '@/components/UI/addToCart';
-// import { addToCart } from "@/store/slices/cartSlice";
+import { addItemToCart } from "@/store/slices/cartSlice";
 import { toast } from "react-toastify";
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,24 +39,35 @@ const StockIndicator = ({ stock }) => {
 
 const ProductPage = ({ productData, relatedProducts, categories }) => {
   const { t, language } = useTranslation();
+  const dispatch = useDispatch();
   const [quantity, setQuantity] = useState(1);
 
   const handleIncrease = () => setQuantity((q) => q + 1);
   const handleDecrease = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   // Handle Add to Cart
-  const handleAddToCart = (product) => {
-      const cartItem = {
-        productId: product._id,
-        name: product.name[language] || product.name.en,
-        price: product.salePrice > 0 ? product.salePrice : product.price,
-        image: product.image,
-        quantity: 1,
-        slug: productData.slug,
-      };
-  
-      // dispatch(addToCart(cartItem));
-      toast.success(`${cartItem.name[language] || cartItem.name} added to cart!`);
+  const handleAddToCart = async (product) => {
+    const cartItem = {
+      productId: product._id,
+      name: { 
+        en: product.name.en || 'Unnamed Product',
+        ar: product.name.ar || 'اسم المنتج غير معروف'
+      },
+      price: product.salePrice > 0 ? product.salePrice : product.price,
+      image: product.image,
+      quantity: 1,
+      maxStock: product.stock || null
+    };
+    try{
+      // ✅ Dispatch and wait for result
+      await dispatch(addItemToCart(cartItem)).unwrap();
+      
+      // Only show success if API succeeded
+      toast.success(`${cartItem.name[language]} ${t('isAddedToCart')}`);
+    } catch (error) {
+      console.error("Error adding to cart: ", error);
+      toast.error(t('errorAddingToCart'));
+    }
   };
   
   const hasRelatedProducts = Array.isArray(relatedProducts) && relatedProducts.length > 0;

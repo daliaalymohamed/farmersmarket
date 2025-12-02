@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef } from "react";
 import { useDispatch } from "react-redux";
-// import { addToCart } from "@/store/slices/cartSlice";
+import { addItemToCart } from "@/store/slices/cartSlice";
 import { toast } from "react-toastify";
 import Image from "next/image"; // Import Next.js Image
 import { Box, Card, CardContent, CardActionArea, Typography, Chip, Stack, Button } from "@mui/material";
@@ -13,18 +13,28 @@ const NewArrivals = ({ initialData }) => {
   const dispatch = useDispatch();
     
   // Handle Add to Cart
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     const cartItem = {
       productId: product._id,
-      name: product.name[language] || product.name.en,
+      name: { 
+        en: product.name.en || 'Unnamed Product',
+        ar: product.name.ar || 'اسم المنتج غير معروف'
+      },
       price: product.salePrice > 0 ? product.salePrice : product.price,
       image: product.image,
       quantity: 1,
       maxStock: product.stock || null
     };
-
-    // dispatch(addToCart(cartItem));
-    toast.success(`${cartItem.name[language] || cartItem.name} added to cart!`);
+    try{
+      // ✅ Dispatch and wait for result
+      await dispatch(addItemToCart(cartItem)).unwrap();
+      
+      // Only show success if API succeeded
+      toast.success(`${cartItem.name[language]} ${t('isAddedToCart')}`);
+    } catch (error) {
+      console.error("Error adding to cart: ", error);
+      toast.error(t('errorAddingToCart'));
+    }
   };
 
   // Ref for scroll container
