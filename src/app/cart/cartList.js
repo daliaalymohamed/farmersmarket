@@ -1,7 +1,7 @@
 // app/cart/page.js
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/translationContext';
@@ -24,7 +24,7 @@ import {
 import { Add, Remove, Delete as DeleteIcon, ShoppingCart } from '@mui/icons-material';
 import { checkPermission } from '@/middlewares/frontend_helpers';
 import { initializeCartItems, addItemToCart, removeItemFromCart, updateItemQuantity } from '@/store/slices/cartSlice';
-import { selectCartItems, selectCartTotal, selectCartCount } from '@/store/slices/cartSlice';
+import { selectCartItems, selectCartCount } from '@/store/slices/cartSlice';
 import CartSummary from '@/components/cartSummary';
 
 const CartList = ({ initialData }) => {
@@ -37,9 +37,7 @@ const CartList = ({ initialData }) => {
     const actions = useSelector(state => state.auth.actions, shallowEqual);
     const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
     const items = useSelector(selectCartItems);
-    const total = useSelector(selectCartTotal);
     const count = useSelector(selectCartCount);
-    const loading = useSelector(state => state.cart.loading);
     const error = useSelector(state => state.cart.error);
     
     // Check permissions on mount
@@ -58,11 +56,15 @@ const CartList = ({ initialData }) => {
     }, [actions, actionsLoaded , router]);
     
     // ✅ Initialize Redux with server data on mount
+    // Only initialize if Redux is empty AND we have fresh data
     useEffect(() => {
-        if (initialData?.items && Array.isArray(initialData.items)) {
+    const hasValidItems = initialData?.items && Array.isArray(initialData.items);
+    const isReduxEmpty = items.length === 0;
+
+    if (hasValidItems && isReduxEmpty) {
         dispatch(initializeCartItems({ items: initialData.items }));
-        }
-    }, [dispatch, initialData]);
+    }
+    }, [dispatch, initialData, items.length]);
 
     // Update Item Quantity
     const handleUpdateQuantity = async (item, change) => {

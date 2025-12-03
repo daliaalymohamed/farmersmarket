@@ -65,7 +65,7 @@ export default function HeaderNav() {
   const loggedIn = useSelector((state) => state.auth.isloggedIn);
   const user = useSelector((state) => state.auth.user);
   const cartItemCount = useSelector(selectCartCount);
-console.log("cartItemCount ", cartItemCount)
+
   useEffect(() => {
     setMounted(true);
   }, []);

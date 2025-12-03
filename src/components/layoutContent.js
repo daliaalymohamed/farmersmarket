@@ -6,12 +6,15 @@ import { usePathname } from 'next/navigation';
 import { useTranslation } from "../contexts/translationContext";
 import { Container, Box } from "@mui/material";
 import HeaderNav from "@/components/headerNav";
+import CartInitializer from "./cartInitializer";
 import Footer from "@/components/footer";
+import { useSelector } from "react-redux";
 
 const LayoutContent = ({ children }) => {
   const { t } = useTranslation();
   const pathname = usePathname(); // Get current path
   const [mounted, setMounted] = useState(false);
+  const user = useSelector((state) => state.auth.user);
 
 // Update the dashboard check to include all dashboard routes
   const isDashboard = pathname.startsWith('/dashboard');
@@ -45,7 +48,10 @@ const LayoutContent = ({ children }) => {
             padding: isDashboard ? 0 : undefined, // Remove padding for dashboard
           }}
         >
-          {!isDashboard && <HeaderNav />} {/* Only render HeaderNav if not in dashboard */}
+          {!isDashboard && <>
+            {user && <CartInitializer /> } {/* Only initialize cart if user is logged in */}
+            <HeaderNav />
+          </>} {/* Only render HeaderNav if not in dashboard */}
           <main className="main-content">{children}</main>
           {!isDashboard && <Footer /> } {/* Only render this footer if not in dashboard */}
         </Container>

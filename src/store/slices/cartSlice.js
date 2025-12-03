@@ -8,7 +8,7 @@ export const fetchCart = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const data = await getCartItems(filters);
-      return data.cart || { items: [] };
+      return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch cart');
     }
@@ -45,6 +45,7 @@ export const removeItemFromCart = createAsyncThunk(
 const initialState = {
     items: [],
     loading: false,
+    loaded: false,
     error: null,
  };
   
@@ -81,10 +82,19 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
         state.loaded = true;
-        state.items = action.payload?.cart?.items || [];
+        // state.items = action.payload?.cart?.items || [];
+        const items = action.payload?.cart?.items;
+        if (Array.isArray(items)) {
+          state.items = items;
+          console.log(`✅ Updated cart with ${items.length} items`);
+        } else {
+          console.warn('⚠️ Unexpected payload format:', action.payload);
+          state.items = [];
+        }
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
+        state.loaded = true;
         state.error = action.payload;
       })
 
@@ -132,11 +142,15 @@ export const selectCartItems = createSelector(
 );
 
 export const selectCartLoading = (state) => state.cart.loading;
+export const selectCartLoaded = (state) => state.cart.loaded;
 export const selectCartError = (state) => state.cart.error;
 
 export const selectCartCount = createSelector(
   [selectCartItems],
-  (items) => items.reduce((total, item) => total + item.quantity, 0)
+  (items) => {
+    const count = items.reduce((total, item) => total + item.quantity, 0);
+    return count;
+  }
 );
 
 export const selectCartTotal = createSelector(
