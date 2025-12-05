@@ -17,6 +17,9 @@ export async function generateMetadata() {
 const CheckoutPage = async () => {
   // Get authenticated user data - this already handles token verification
   const { user: authUser } = await getAuthenticatedUser();
+  if (!authUser) {
+    return <Error error="You must be logged in to access the checkout page." />;
+  }
 
   // Get full profile data
   const userProfile = await getCustomerById(authUser.userId);
@@ -30,8 +33,6 @@ const CheckoutPage = async () => {
   if (!result.success) {
     return <Error error={result.error} />;
   }
-  console.log("🚀 User data fetched:", userData); // Log fetched user data
-  console.log("🚀 Checkout data fetched:", result.data); // Log fetched data
 
   return (
     <Suspense fallback={<CheckoutSkeleton />}>

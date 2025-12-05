@@ -1,4 +1,4 @@
-import ShippingZone from '@/models/shippingZones'; // Import the shipping zone model
+import ShippingZone from '@/models/shippingZone'; // Import the shipping zone model
 import mongoose from 'mongoose';
 
 // Fetch a shipping zone by ID

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
 import Cart from "@/models/cart";
-import Product from '@/models/product';
+import User from "@/models/user";
+import ShippingZone from "@/models/shippingZone";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';
@@ -44,22 +45,64 @@ export const GET = authMiddleware(async (req) => {
         return NextResponse.json({ error: "User ID not found" }, { status: 400 });
         }
 
-        // 🔹Fetch cart
-        const cart = await Cart.findOne({ userId })
-          .populate(
-            {
-              path: 'items.productId',
-              select: 'name price salePrice image stock isActive slug'
-            }
-          )
-          .lean(); // Populate product details
+        // 🔹 Fetch cart with populated product data
+        const cart = await Cart.findOne({ userId }).populate({
+          path: 'items.productId',
+          select: 'name price isOnSale salePrice image stock isActive slug'
+        }).lean();
 
         if (!cart || cart.items.length === 0) {
-            return NextResponse.json(
-                { error: 'Your cart is empty' },
-                { status: 400 }
-            );
+          return NextResponse.json(
+            { error: 'Your cart is empty' },
+            { status: 400 }
+          );
         }
+
+        
+        // 🔹 Fetch user's default shipping address
+        const userProfile = await User.findById(userId).select('addresses').lean();
+        const defaultShipping = userProfile?.addresses?.find(a => a.isDefaultShipping);
+
+        if (!defaultShipping) {
+          return NextResponse.json(
+            { error: 'Please set a default shipping address.' },
+            { status: 400 }
+          );
+        }
+
+        // 🔹 Find matching shipping zone using city name OR zip code
+        let shippingZone = null;
+
+        // First: Try match by zip code
+        if (defaultShipping.zipCode) {
+          shippingZone = await ShippingZone.findOne({
+            active: true,
+            // check if zipCodes array contains the user's zip code
+            zipCodes: defaultShipping.zipCode
+          });
+        }
+
+        // Second: If no ZIP match, try by city name (English)
+        if (!shippingZone && defaultShipping.city) {
+          shippingZone = await ShippingZone.findOne({
+            active: true,
+            "cityNames.en": defaultShipping.city
+          });
+        }
+
+        // Optional: Fallback to country-level zone if needed
+        if (!shippingZone && defaultShipping.country) {
+          shippingZone = await ShippingZone.findOne({
+            active: true,
+            country: defaultShipping.country
+          });
+        }
+
+        // Final fallback values
+        const shippingFee = shippingZone?.shippingFee ?? 50; // EGP
+        const taxRate = shippingZone?.taxRate ?? 0.14; // 14%
+        
+
         const invalidItems = [];
         const validItems = [];
         let total = 0;
@@ -82,7 +125,14 @@ export const GET = authMiddleware(async (req) => {
           console.warn(`📉 Stock mismatch: need=${item.quantity}, have=${product.stock}`);
         }
 
-        const price = product.isOnSale && product.salePrice > 0 ? product.salePrice : product.price;
+        // ✅ Safe price calculation with proper fallbacks
+        const isOnSale = product.isOnSale === true;
+        const salePrice = typeof product.salePrice === 'number' ? product.salePrice : 0;
+        const regularPrice = typeof product.price === 'number' ? product.price : 0;
+        
+        // Calculate final price
+        const price = isOnSale && salePrice > 0 ? salePrice : regularPrice;
+
         total += price * item.quantity;
 
         validItems.push({
@@ -98,19 +148,25 @@ export const GET = authMiddleware(async (req) => {
         if (invalidItems.length > 0) {
         return NextResponse.json(
             { 
-            error: 'Some items are out of stock or unavailable',
-            invalidItems,
-            validItems,
-            subtotal: total
+              error: 'Some items are out of stock or unavailable',
+              invalidItems,
+              validItems,
+              subtotal: total,
             },
             { status: 400 }
         );
         }
 
         return NextResponse.json({
-        cart: { items: validItems },
-        subtotal: total,
-        success: true
+          cart: { items: validItems },
+          subtotal: total,
+          shippingFee: parseFloat(shippingFee.toFixed(2)),
+          taxRate: parseFloat(taxRate.toFixed(4)),
+          taxAmount: parseFloat((total * taxRate).toFixed(2)),
+          totalWithTaxAndShipping: parseFloat((total + (total * taxRate) + shippingFee).toFixed(2)),
+          // 👇 Useful for showing delivery estimate
+          shippingZoneName: shippingZone?.name,
+          success: true
         }, {
               status: 200,
               headers: {

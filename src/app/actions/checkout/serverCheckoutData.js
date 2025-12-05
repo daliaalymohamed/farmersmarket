@@ -2,6 +2,7 @@
 'use server';
 
 import { getAuthenticatedUser } from '@/lib/auth/serverAuth';
+import { redirect } from 'next/navigation';
 
 // This is a server-side function to fetch checkout data
 export const getCheckoutData = async () => {
@@ -26,7 +27,7 @@ export const getCheckoutData = async () => {
         return { success: true, data };
       case 401:
       case 403:
-        return { success: false, error: 'Unauthorized' };
+        redirect('/login');
       default:
         return { success: false, error: data.error || 'Failed to load checkout data' };
     }

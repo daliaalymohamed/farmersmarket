@@ -1,7 +1,7 @@
 // (Get, Update, Delete by ID)
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/utils/dbConnection";
-import ShippingZone from "@/models/shippingZones";
+import ShippingZone from "@/models/shippingZone";
 import checkPermission from '@/middlewares/backend_checkPermissionMiddleware';
 import { authMiddleware } from '@/middlewares/backend_authMiddleware';
 import { ensureActionExistsAndAssignToAdmin } from '@/middlewares/backend_helpers';

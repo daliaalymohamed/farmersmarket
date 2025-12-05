@@ -86,7 +86,6 @@ const cartSlice = createSlice({
         const items = action.payload?.cart?.items;
         if (Array.isArray(items)) {
           state.items = items;
-          console.log(`✅ Updated cart with ${items.length} items`);
         } else {
           console.warn('⚠️ Unexpected payload format:', action.payload);
           state.items = [];

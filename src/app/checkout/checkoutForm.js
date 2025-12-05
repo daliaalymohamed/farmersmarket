@@ -31,7 +31,7 @@ const CheckoutForm = ({ initialData, profileData }) => {
   const { t, language } = useTranslation();
   const router = useRouter();
 
-  const { cart, subtotal } = initialData;
+  const { cart, shippingZoneName, subtotal, shippingFee, taxAmount, totalWithTaxAndShipping} = initialData;
   const [loading, setLoading] = useState(false);
 
   if (!cart?.items?.length) return null;
@@ -76,7 +76,7 @@ const CheckoutForm = ({ initialData, profileData }) => {
             quantity: i.quantity,
             price: i.price
           })),
-          total: subtotal
+          total: totalWithTaxAndShipping
         })
       });
 
@@ -224,6 +224,9 @@ const CheckoutForm = ({ initialData, profileData }) => {
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
                 {t('orderSummary')}
               </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {t('shippingTo')}: {shippingZoneName?.[language] || shippingZoneName.en}
+              </Typography>
 
               <Table size="small">
                 <TableHead>
@@ -260,12 +263,54 @@ const CheckoutForm = ({ initialData, profileData }) => {
                     </TableRow>
                   ))}
 
+                  {/* Subtotal */}
                   <TableRow>
                     <TableCell colSpan={3} align="right">
-                      <strong>{t('subtotal')}:</strong>
+                      <Typography variant="body2">{t('subtotal')}:</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <strong>{t('EGP')} {subtotal.toFixed(2)}</strong>
+                      <Typography variant="body2">{t('EGP')} {subtotal.toFixed(2)}</Typography>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Shipping Fee */}
+                  <TableRow>
+                    <TableCell colSpan={3} align="right">
+                      <Typography variant="body2">{t('shipping')}:</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2">{t('EGP')} {shippingFee.toFixed(2)}</Typography>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Tax Amount */}
+                  <TableRow>
+                    <TableCell colSpan={3} align="right">
+                      <Typography variant="body2">
+                        {t('tax')} ({(initialData.taxRate * 100).toFixed(0)}%):
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2">{t('EGP')} {taxAmount.toFixed(2)}</Typography>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Divider */}
+                  <TableRow>
+                    <TableCell colSpan={4} sx={{ py: 0.5 }}>
+                      <Divider />
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Total */}
+                  <TableRow>
+                    <TableCell colSpan={3} align="right">
+                      <Typography variant="h6" fontWeight="bold">{t('total')}:</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="h6" fontWeight="bold">
+                        {t('EGP')} {totalWithTaxAndShipping.toFixed(2)}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 </TableBody>

@@ -26,5 +26,14 @@ const shippingZoneSchema = new mongoose.Schema({
 
 // Add compound index for active status
 shippingZoneSchema.index({ name: 1, active: 1 });
+// For ZIP code lookup
+shippingZoneSchema.index({ "zipCodes": 1, active: 1 });
+
+// For city name lookup
+shippingZoneSchema.index({ "cityNames.en": 1, active: 1 });
+shippingZoneSchema.index({ "cityNames.ar": 1, active: 1 });
+
+// For country fallback
+shippingZoneSchema.index({ country: 1, active: 1 });
 
 export default mongoose.models.ShippingZone || mongoose.model('ShippingZone', shippingZoneSchema);
