@@ -26,6 +26,7 @@ import Grid from '@mui/material/Grid2';
 import Image from 'next/image';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
+import withAuth from '@/components/withAuth';
 
 const CheckoutForm = ({ initialData, profileData }) => {
   const { t, language } = useTranslation();
@@ -345,4 +346,4 @@ const CheckoutForm = ({ initialData, profileData }) => {
   );
 };
 
-export default CheckoutForm;
+export default withAuth(CheckoutForm);

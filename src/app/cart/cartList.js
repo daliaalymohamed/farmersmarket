@@ -26,6 +26,7 @@ import { checkPermission } from '@/middlewares/frontend_helpers';
 import { initializeCartItems, addItemToCart, removeItemFromCart, updateItemQuantity } from '@/store/slices/cartSlice';
 import { selectCartItems, selectCartCount } from '@/store/slices/cartSlice';
 import CartSummary from '@/components/cartSummary';
+import withAuth  from "@/components/withAuth"; // Import withAuth HOC
 
 const CartList = ({ initialData }) => {
     const { t, language } = useTranslation();
@@ -257,4 +258,4 @@ const CartList = ({ initialData }) => {
     );
 };
 
-export default CartList;
+export default withAuth(CartList);
