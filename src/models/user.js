@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
+    phoneNumber: { type: String, required: false, default: '' },
     roleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true }, // Reference to Role
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }], // Reference to Order
     active: { type: Boolean, default: true }, // For soft delete

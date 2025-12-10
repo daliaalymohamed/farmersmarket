@@ -42,7 +42,6 @@ export const getUserById = async (id) => {
 export const registerUser = async (userData) => {
     try {
         const { firstName, lastName, email, phoneNumber, password } = userData;
-        console.log('userData:', userData);
         // Check if the user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {

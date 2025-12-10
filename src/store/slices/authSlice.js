@@ -126,7 +126,6 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        console.log("Registration successful:", action.payload.message);
         // No state updates for registration since the user is redirected to login
       })
       .addCase(registerUser.rejected, (state, action) => {

@@ -60,6 +60,7 @@ export const ar = {
     rememberMe: "تذكرني",
     hidePassword: "إخفاء كلمة المرور",
     showPassword: "إظهار كلمة المرور",
+    signInWithGoogle: "تسجيل الدخول بجوجل",
     // login validation
     loginSuccessfullMsg: "تم تسجيل الدخول بنجاح",
     invalidEmail: "البريد الإلكتروني خطأ",

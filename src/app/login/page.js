@@ -8,6 +8,7 @@ import { TextField, Button, Box, Typography, Container, Checkbox, FormControlLab
 import Grid from "@mui/material/Grid2";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import Image from "next/image";
+import GoogleSignInButton from '@/components/UI/googleSignInButton';
 import { loginSchema } from "../../lib/utils/validation";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "@/store/slices/authSlice";
@@ -87,6 +88,11 @@ const Login = () => {
             <Typography variant="body1" color="textSecondary" mb={3}>
               {t("slogan")}
             </Typography>
+
+            {/* ✅ Google Sign-In Button */}
+            <Box sx={{ width: '100%', maxWidth: 400, mb: 2 }}>
+              <GoogleSignInButton />
+            </Box>
 
             {/* Add a key to the form to force re-render on route change */}
             <form key={pathname} onSubmit={handleSubmit(onSubmit)}>

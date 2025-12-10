@@ -7,6 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { TextField, Button, Box, Typography, Container, Link, MenuItem, Select } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Image from "next/image";
+import GoogleSignInButton from '@/components/UI/googleSignInButton';
 import { registerSchema } from "../../lib/utils/validation";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "@/store/slices/authSlice";
@@ -111,6 +112,11 @@ const Register = () => {
             <Typography variant="body1" color="textSecondary" mb={3}>
               {t("slogan")}
             </Typography>
+
+            {/* ✅ Google Sign-In Button */}
+            <Box sx={{ width: '100%', maxWidth: 400, mb: 2 }}>
+              <GoogleSignInButton />
+            </Box>
 
             <form key={pathname} onSubmit={handleSubmit(onSubmit)}>
               <TextField fullWidth label={t("firstName")} {...register("firstName")} error={!!errors.firstName} helperText={errors.firstName?.message} margin="normal" />

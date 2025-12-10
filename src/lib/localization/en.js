@@ -60,6 +60,7 @@ export const en = {
     rememberMe: "Remember Me",
     hidePassword: "Hide Password",
     showPassword: "Show Password",
+    signInWithGoogle: "Sign in with Google",
     // login validation
     loginSuccessfullMsg: "Login successful! Welcome back",
     invalidEmail: "Invalid Email",
