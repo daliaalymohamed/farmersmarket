@@ -302,3 +302,10 @@ export const shippingZoneSchema = (t) => yup.object().shape({
   shippingFee: yup.number().min(0).required(t('shippingFeeRequired')),
   taxRate: yup.number().min(0).max(1).required(t('taxRateRequired'))
 });
+
+// Role validation Schema (for both create and update)
+export const roleSchema = (t, isEditMode = false) => yup.object().shape({
+  name: yup.string()
+            .min(3, t("roleNameLength"))
+            .max(50, t("roleNameLength"))
+            .required(t("roleNameRequired"))})

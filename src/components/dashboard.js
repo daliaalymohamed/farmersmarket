@@ -40,7 +40,7 @@ const menuItems = [
   { text: 'Shipping Zones', icon: <AirportShuttleIcon />, path: '/dashboard/shipping-zones/list' },
   { text: 'Reports', icon: <TableChartIcon />, path: '/dashboard/reports' },
   { text: 'Analytics', icon: <BarChartIcon />, path: '/dashboard/analytics' },
-  { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles' },  
+  { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles-management/list' },  
   { text: 'Warehouses', icon: <WarehouseIcon />, path: '/dashboard/warehouses' },
   { text: 'Inventories', icon: <InventoryIcon />, path: '/dashboard/inventories' },
   { text: 'Vendors', icon: <AirportShuttleIcon />, path: '/dashboard/vendors/list' },

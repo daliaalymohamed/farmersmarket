@@ -497,6 +497,30 @@ export const ar = {
     useSavedAddress: "استخدم عنوان محفوظ",
     savedAddresses: "العناوين المحفوظة",
     enterNewAddress: "أدخل عنوان جديد",
+    // Roles Management
+    rolesManagement: "إدارة الأدوار",
+    roles: "الأدوار",
+    rolesList: "قائمة الأدوار",
+    rolesSubtitle: "إدارة أدوار المستخدمين والأذونات",
+    addRole: "إضافة دور جديد",
+    editRole: "تعديل الدور",
+    searchRoles: "ابحث عن الأدوار بالاسم...",
+    noRolesFound: "لا توجد أدوار",
+    permissions: "الأذونات",
+    roleName: "اسم الدور",
+    roleUpdatedSuccessfully: "تم تحديث الدور بنجاح",
+    roleAddedSuccessfully: "تمت إضافة الدور بنجاح",
+    roleSaveFailed: "فشل حفظ الدور",
+    managePermissions: "إدارة الأذونات",
+    for: "لـ",
+    noActionsFound: "لا توجد أذونات متاحة",
+    actionsAssignedSuccessfully: "تم تعيين الأذونات بنجاح",
+    actionsRemovedSuccessfully: "تمت إزالة الأذونات بنجاح",
+    noPermissionsChanged: "لم تتغير الأذونات",
+    failedToUpdatePermissions: "فشل تحديث الأذونات",
+    // validation messages
+    roleNameLength: "يجب أن يكون اسم الدور بين 3 و50 حرفًا",
+    roleNameRequired: "اسم الدور مطلوب",
 }
 
   
