@@ -33,7 +33,18 @@ export const PUT = authMiddleware(async (req, context) => {
    
     // Update the role
     const updateData = await req.json();
-    const updatedRole = await Role.findByIdAndUpdate(roleId, { ...updateData }, {
+    
+    // Only update allowed fields, preserve actions
+    const allowedFields = ['name']; // Define which fields can be updated
+    const fieldsToUpdate = {};
+    
+    allowedFields.forEach(field => {
+      if (field in updateData) {
+        fieldsToUpdate[field] = updateData[field];
+      }
+    });
+
+    const updatedRole = await Role.findByIdAndUpdate(roleId, fieldsToUpdate, {
       new: true,
       runValidators: true
     })
