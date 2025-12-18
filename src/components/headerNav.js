@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
@@ -33,10 +34,11 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from '../assets/new-logo.jpg';
 import { styled } from "@mui/system";
-import { useTranslation } from "../contexts/translationContext"; // Import useTranslation
+import { useTranslation } from "../contexts/translationContext";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../store/slices/authSlice"; 
+import { logoutUser } from "../store/slices/authSlice";
 import { selectCartCount } from "../store/slices/cartSlice";
+import { checkPermission } from '@/middlewares/frontend_helpers';
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   minWidth: "100px",
@@ -64,7 +66,11 @@ export default function HeaderNav() {
   const dispatch = useDispatch();
   const loggedIn = useSelector((state) => state.auth.isloggedIn);
   const user = useSelector((state) => state.auth.user);
+  const actions = useSelector((state) => state.auth.actions || []);
   const cartItemCount = useSelector(selectCartCount);
+
+  // Check if user has permission to view dashboard
+  const canViewDashboard = checkPermission(actions, ['view_dashboard']);
 
   useEffect(() => {
     setMounted(true);
@@ -105,12 +111,18 @@ export default function HeaderNav() {
 
   // Function to handle logout
   // This will dispatch the logout action and close the menu
-  const handleLogout = (event) => {
-    event.preventDefault(); // optional: prevent default link behavior
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    
+    // Clear Redux state and localStorage
     dispatch(logoutUser());
-    handleClose(); // close menu
-    setDrawerOpen(false); // optional: close drawer on mobile
-    router.push("/home"); // Navigate to the home page
+    
+    // Clear NextAuth session (this also clears NextAuth cookies)
+    await signOut({ redirect: false });
+    
+    handleClose();
+    setDrawerOpen(false);
+    router.push("/home");
   };
   return (
     <React.Fragment>
@@ -202,14 +214,16 @@ export default function HeaderNav() {
                     </Link>
                     
                     <Divider />
-                    <Link href="/dashboard" passHref legacyBehavior>
-                      <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
-                        <ListItemButton component="a">
-                          <ListItemIcon><PersonAdd /></ListItemIcon>
-                          <ListItemText primary={t("dashboard")} />
-                        </ListItemButton>
-                      </ListItem>
-                    </Link>
+                    {canViewDashboard && (
+                      <Link href="/dashboard" passHref legacyBehavior>
+                        <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
+                          <ListItemButton component="a">
+                            <ListItemIcon><PersonAdd /></ListItemIcon>
+                            <ListItemText primary={t("dashboard")} />
+                          </ListItemButton>
+                        </ListItem>
+                      </Link>
+                    )}
                     <Link href="/home" passHref legacyBehavior>
                       <ListItem disablePadding onClick={toggleDrawer(false)} sx={{ color: "text.secondary" }}>
                         <ListItemButton component="a">
@@ -320,9 +334,11 @@ export default function HeaderNav() {
                   <Link href="/orders" passHref>
                     <StyledTypography>{t("orders")}</StyledTypography>
                   </Link>
-                  <Link href="/dashboard" passHref>
-                    <StyledTypography>{t("dashboard")}</StyledTypography>
-                  </Link>
+                  {canViewDashboard && (
+                    <Link href="/dashboard" passHref>
+                      <StyledTypography>{t("dashboard")}</StyledTypography>
+                    </Link>
+                  )}
                 </>
               ) : 
                   <Link href="/login" passHref>

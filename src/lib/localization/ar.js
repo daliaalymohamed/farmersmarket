@@ -83,6 +83,10 @@ export const ar = {
     passwordRegexError: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل وحرف خاص واحد على الأقل",
     phoneNumberRequired: "رقم الهاتف مطلوب",
     phoneNumberRegex: "يجب أن يبدأ رقم الهاتف بـ 010 أو 011 أو 012 أو 015 وأن يكون مكونًا من 11 رقمًا",
+    // Register/Login through google provider
+    googleSignInError: "فشل تسجيل الدخول عبر جوجل. يرجى المحاولة مرة أخرى.",
+    googleAccountEmailInUse: "البريد الإلكتروني لحساب جوجل مستخدم بالفعل. يرجى استخدام بريد إلكتروني مختلف.",
+    continueWithGoogle: "المتابعة عبر جوجل",
     // dashboard
     dashboard: "لوحة التحكم",
     welcomeToDashboardMsg: "مرحبًا بك في لوحة التحكم",

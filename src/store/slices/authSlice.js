@@ -67,6 +67,44 @@ export const checkAuth = createAsyncThunk(
   }
 );
 
+// ✅ Async Sync Google Login Thunk
+export const syncGoogleLogin = createAsyncThunk(
+  "auth/syncGoogleLogin",
+  async (payload, { rejectWithValue }) => {
+    try {
+      // Handle both old format (session) and new format (token + user object)
+      let token, user;
+      
+      if (payload?.token && payload?.user) {
+        // New format: { token, user }
+        token = payload.token;
+        user = payload.user;
+      } else if (payload?.user?.customToken) {
+        // Session format: { user: { customToken, ... } }
+        token = payload.user.customToken;
+        user = {
+          _id: payload.user.userId,
+          email: payload.user.email,
+          firstName: payload.user.firstName || "",
+          lastName: payload.user.lastName || "",
+          roleId: payload.user.roleId,
+        };
+      }
+
+      if (!token) {
+        return rejectWithValue("No token available");
+      }
+
+      return {
+        token,
+        user,
+      };
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to sync Google login");
+    }
+  }
+);
+
 // ✅ Initial state for the auth slice
 // This state is used to manage the authentication status of the user
 const initialState = {
@@ -162,7 +200,29 @@ const authSlice = createSlice({
         state.actionsLoaded = true; // ✅ Even if rejected, we know there are no actions
         localStorage.removeItem("token");
         localStorage.removeItem("user")
-      });
+      })
+      // Sync Google Login
+      .addCase(syncGoogleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(syncGoogleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+        state.user = action.payload.user;
+        state.isloggedIn = true;
+        state.actions = action.payload.user.roleId?.actions || [];
+        state.actionsLoaded = true;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", action.payload.token);
+          localStorage.setItem("user", JSON.stringify(action.payload.user));
+        }
+      })
+      .addCase(syncGoogleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Google login failed";
+      })
   },
 });
 

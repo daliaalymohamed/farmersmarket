@@ -11,12 +11,23 @@ export const getCustomerById = async (id) => {
     }
 
     // Get authenticated user data and headers
-    const { headers } = await getAuthenticatedUser();
+    const { headers, user } = await getAuthenticatedUser();
     
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('🔐 getCustomerById - User:', user?.userId);
+    //   console.log('🔐 getCustomerById - Headers:', Object.keys(headers).join(', '));
+    //   console.log('🔐 getCustomerById - Auth header exists:', !!headers['Authorization']);
+    // }
+
     // Get base URL from environment
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
     if (!baseUrl) {
       throw new Error('API URL is not configured');
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📡 Fetching:', `${baseUrl}/api/users/${id}`);
+      console.log('📡 With headers:', headers);
     }
 
     // Make the API request
@@ -25,6 +36,10 @@ export const getCustomerById = async (id) => {
       headers,
       cache: 'no-store'
     });
+
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('📡 Response status:', response.status);
+    // }
 
     // Handle response
     const data = await response.json();

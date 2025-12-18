@@ -23,7 +23,8 @@ const UserSchema = new mongoose.Schema(
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }], // Reference to Order
     active: { type: Boolean, default: true }, // For soft delete
     tokenVersion: { type: Number, default: 0 }, // For token invalidation,
-    addresses: [AddressSchema]
+    addresses: [AddressSchema],
+    googleId: { type: String, sparse: true, default: null}, // For Google OAuth users
   },
   { 
     timestamps: true,

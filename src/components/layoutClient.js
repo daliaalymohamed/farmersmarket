@@ -14,28 +14,31 @@ import { CssBaseline } from "@mui/material";
 import LayoutContent from "@/components/layoutContent"; // ✅ Moved dynamic logic here
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { SessionProvider } from "next-auth/react"; // Use next-auth session management here in a client component
 
 const LayoutClient = ({ children }) => {
 
     return (
-        <ReduxProvider>
-            <MuiThemeProvider theme={theme}>
-                <StyledThemeProvider theme={theme}>
-                    <TranslationProvider> {/* ✅ Now inside Client Component */}
-                        <CssBaseline />
-                        <LayoutContent>{children}</LayoutContent>
-                         {/* ✅ Add ToastContainer for react-toastify */}
-                        <ToastContainer
-                            position="top-right"
-                            autoClose={3000}
-                            pauseOnHover
-                            hideProgressBar={false}
-                            closeOnClick
-                        />
-                    </TranslationProvider>
-                </StyledThemeProvider>
-            </MuiThemeProvider>
-        </ReduxProvider>
+        <SessionProvider>
+            <ReduxProvider>
+                <MuiThemeProvider theme={theme}>
+                    <StyledThemeProvider theme={theme}>
+                        <TranslationProvider> {/* ✅ Now inside Client Component */}
+                            <CssBaseline />
+                            <LayoutContent>{children}</LayoutContent>
+                            {/* ✅ Add ToastContainer for react-toastify */}
+                            <ToastContainer
+                                position="top-right"
+                                autoClose={3000}
+                                pauseOnHover
+                                hideProgressBar={false}
+                                closeOnClick
+                            />
+                        </TranslationProvider>
+                    </StyledThemeProvider>
+                </MuiThemeProvider>
+            </ReduxProvider>
+        </SessionProvider>
     );
 };
 

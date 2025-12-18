@@ -1,20 +1,78 @@
 "use client";
 
-import { signIn } from 'next-auth/react';
+import { useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@mui/material';
 import { useTranslation } from '@/contexts/translationContext';
 import { useDispatch } from 'react-redux';
 import { syncGoogleLogin } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 export default function GoogleSignInButton() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const router = useRouter();
+  const { data: session, status } = useSession();
 
-  const handleGoogleSignIn = () => {
-    // This will redirect user to Google
-    signIn('google', { callbackUrl: '/home' });
+  // Effect to handle session changes
+  useEffect(() => {
+    if (session?.user?.customToken) {
+      const setupSession = async () => {
+        try {
+          // Build user data from session
+          const userData = {
+            _id: session.user.userId,
+            firstName: session.user.firstName || "",
+            lastName: session.user.lastName || "",
+            email: session.user.email,
+            roleId: session.user.roleId,
+            token: session.user.customToken,
+          };
+
+          // Save to localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", session.user.customToken);
+            localStorage.setItem("user", JSON.stringify(userData));
+          }
+
+          // Call API to set token as cookie (so server can access it)
+          const response = await fetch('/api/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: session.user.customToken }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to set token cookie');
+          }
+
+          // Dispatch to Redux - wait for it to complete
+          const result = await dispatch(syncGoogleLogin({
+            token: session.user.customToken,
+            user: userData,
+          }));
+
+          // Check if dispatch was successful
+          if (result.payload) {
+            toast.success("Google login successful!");
+            router.push('/home');
+          } else {
+            toast.error("Failed to sync user data");
+          }
+        } catch (error) {
+          toast.error("Failed to sync Google login");
+          console.error("Setup error:", error);
+        }
+      };
+
+      setupSession();
+    }
+  }, [session, dispatch, router]);
+
+  // This will redirect user to Google
+  const handleGoogleSignIn = async () => {
+    await signIn('google', { redirect: false });
   };
 
   return (
@@ -22,6 +80,7 @@ export default function GoogleSignInButton() {
       fullWidth
       variant="outlined"
       onClick={handleGoogleSignIn}
+      disabled={status === 'loading'}
       sx={{
         mb: 2,
         py: 1.5,

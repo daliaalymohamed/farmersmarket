@@ -8,12 +8,17 @@
 import jwt from 'jsonwebtoken';
 import User from '@/models/user';
 import { NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/utils/dbConnection';
 
 // Auth Middleware for Next.js API Routes
 export const authMiddleware = (handler) => async (req, context) => {
   try {
     // Get token from Authorization header
     const authHeader = req.headers.get('authorization');
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('🔐 Auth Middleware - Auth header exists:', !!authHeader);
+    // }
+    
     if (!authHeader) {
       return NextResponse.json({ message: 'You have no authorization to access' }, { status: 401 });
     }
@@ -30,20 +35,44 @@ export const authMiddleware = (handler) => async (req, context) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 Auth Middleware - Token verified, userId:', decoded.userId);
+      }
+    } catch (err) {
+      console.error('🔐 Auth Middleware - JWT verification failed:', err.message);
+      return NextResponse.json({ message: 'Invalid token' }, { status: 400 });
+    }
 
-     // Fetch user from database
+    // Connect to database to verify user
+    await connectToDatabase();
+    
+    // Fetch user from database
     const user = await User.findById(decoded.userId);
-    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+    
+    if (!user) {
+      // console.warn('🔐 Auth Middleware - User not found in DB:', decoded.userId);
+      return NextResponse.json({ message: 'User not found' }, { status: 401 });
+    }
+
+    if (user.tokenVersion !== decoded.tokenVersion) {
+      // console.warn('🔐 Auth Middleware - Token version mismatch. DB:', user.tokenVersion, 'Token:', decoded.tokenVersion);
       return NextResponse.json({ message: 'Token is invalidated' }, { status: 401 });
     }
+
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('✅ Auth Middleware - User authenticated:', decoded.userId);
+    // }
+
     req.user = decoded; // Attach user data to request
 
     // Continue to the actual API handler
     // ✅ Pass both req and context!
     return handler(req, context);
   } catch (err) {
-    console.error('Invalid token', err);
-    return NextResponse.json({ message: 'Invalid token' }, { status: 400 });
+    console.error('❌ Auth Middleware - Error:', err.message);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 };

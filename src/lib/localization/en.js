@@ -83,6 +83,11 @@ export const en = {
     passwordRegexError: "Password must contain at least one letter and one special character.",
     phoneNumberRequired: "Phone number is required",
     phoneNumberRegex: "Phone number must start with 010, 011, 012, or 015 and be 11 digits long",
+    // Register/Login through google provider
+    googleSignInError: "Google sign-in failed. Please try again.",
+    googleAccountEmailInUse: "The Google account email is already in use. Please use a different email.",
+    continueWithGoogle: "Continue with Google",
+    // common validation messages
     // dashboard
     dashboard: "Dashboard",
     welcomeToDashboardMsg: "Welcome to the Dashboard",
