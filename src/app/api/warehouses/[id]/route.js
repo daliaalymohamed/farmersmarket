@@ -186,15 +186,9 @@ export const PATCH = authMiddleware(async (req, context) => {
       return NextResponse.json({ error: "Warehouse not found" }, { status: 404 }); // ❌ Not found
     }
 
-    // Update active status of related products if any
-    const inventoryUpdateResult = await Inventory.updateMany(
-      { warehouseId: id },
-      { active }
-    );
-
     const message = active 
-        ? `Warehouse has been activated successfully. ${inventoryUpdateResult.modifiedCount} inventories were also activated.`
-        : `Warehouse has been deactivated successfully. ${inventoryUpdateResult.modifiedCount} inventories were also deactivated.`;
+        ? 'Warehouse has been activated successfully'
+        : 'Warehouse has been deactivated successfully';
 
     // ✅ Populate related documents
     const populatedWarehouse = await Warehouse.populate(updatedWarehouse, [
@@ -205,9 +199,6 @@ export const PATCH = authMiddleware(async (req, context) => {
     return NextResponse.json({
       message,
       warehouse: populatedWarehouse, // ✅ Now includes full objects
-      meta: {
-          inventoriesAffected: inventoryUpdateResult.modifiedCount,
-      }
     }, { status: 200 });// ✅ Success
   } catch (error) {
     console.error("❌ Error toggling warehouse status:", error);

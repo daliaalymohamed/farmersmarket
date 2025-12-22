@@ -253,22 +253,13 @@ export const PATCH = authMiddleware(async (req) => {
       );
     }
 
-    // Update active status of related inventories if any
-    const inventoryUpdateResult = await Inventory.updateMany(
-      { warehouseId: { $in: warehouseIds } },
-      { active, managerId: userId }
-    );
-
     // Fetch updated warehouses with populated managerId
     const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } })
       .populate('managerId', 'firstName lastName email');
 
     return NextResponse.json({
-      message: `Updated ${updateResult.modifiedCount} warehouses successfully. ${inventoryUpdateResult.modifiedCount} related inventories were also updated.`,
-      warehouses: warehouses,
-      meta: {
-          inventoriesAffected: inventoryUpdateResult.modifiedCount,
-        }
+      message: `Updated ${updateResult.modifiedCount} warehouses successfully`,
+      warehouses: warehouses
     }, { status: 200 });
 
   } catch (error) {
