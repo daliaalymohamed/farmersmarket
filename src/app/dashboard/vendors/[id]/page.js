@@ -10,7 +10,7 @@ const VendorPage = async ({ params }) => {
     const vendorResult = await getVendorById(id);
 
     if (!vendorResult || !vendorResult.vendorSuccess || !vendorResult.vendor) {
-      return <Error error={result.error || 'Failed to load vendor data.'} />;
+      return <Error error={vendorResult.error || 'Failed to load vendor data.'} />;
     }
 
     const vendor = vendorResult.vendor;

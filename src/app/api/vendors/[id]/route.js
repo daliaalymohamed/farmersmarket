@@ -28,7 +28,7 @@ export const GET = authMiddleware(async (req, context) => {
     if (permissionCheck) return permissionCheck; // ❌ If unauthorized, return response
 
     // ✅ Proceed with the request
-    // Fetch the category by ID
+    // Fetch the vendor by ID
     const vendor = await getVendorById(id);
     if (!vendor) {
       return NextResponse.json('Vendor not found', { status: 404 }); // ❌ Not found

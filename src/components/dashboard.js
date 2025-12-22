@@ -41,7 +41,7 @@ const menuItems = [
   { text: 'Reports', icon: <TableChartIcon />, path: '/dashboard/reports' },
   { text: 'Analytics', icon: <BarChartIcon />, path: '/dashboard/analytics' },
   { text: 'Roles Management', icon: <SupervisorAccountIcon />, path: '/dashboard/roles-management/list' },  
-  { text: 'Warehouses', icon: <WarehouseIcon />, path: '/dashboard/warehouses' },
+  { text: 'Warehouses', icon: <WarehouseIcon />, path: '/dashboard/warehouses/list' },
   { text: 'Inventories', icon: <InventoryIcon />, path: '/dashboard/inventories' },
   { text: 'Vendors', icon: <AirportShuttleIcon />, path: '/dashboard/vendors/list' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings' },

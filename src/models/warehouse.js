@@ -28,5 +28,8 @@ const WarehouseSchema = new mongoose.Schema({
     toObject: { virtuals: true },
 });
 
+// Add compound index for active status
+WarehouseSchema.index({ name: 1, active: 1 });
 
-export default mongoose.models.Inventory || mongoose.model("Warehouse", WarehouseSchema);
+
+export default mongoose.models.Warehouse || mongoose.model("Warehouse", WarehouseSchema);

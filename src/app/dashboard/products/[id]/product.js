@@ -34,7 +34,7 @@ import ButtonLoader from '@/components/UI/buttonLoader';
 import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 import dynamic from 'next/dynamic';
-const ProductModal = dynamic(() => import('./productModal'), {
+const ProductModal = dynamic(() => import('../productModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });

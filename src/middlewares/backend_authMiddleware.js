@@ -38,9 +38,9 @@ export const authMiddleware = (handler) => async (req, context) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔐 Auth Middleware - Token verified, userId:', decoded.userId);
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log('🔐 Auth Middleware - Token verified, userId:', decoded.userId);
+      // }
     } catch (err) {
       console.error('🔐 Auth Middleware - JWT verification failed:', err.message);
       return NextResponse.json({ message: 'Invalid token' }, { status: 400 });

@@ -279,6 +279,24 @@ export const vendorSchema = (t, isEditMode = false) => yup.object().shape({
   })
 })
 
+// Warehouse validation Schema (for both create and update)
+export const warehouseSchema = (t, isEditMode = false) => yup.object().shape({
+  name: yup.string().min(2, t("warehouseNameLength")).max(100, t("warehouseNameLength")).required(t("warehouseNameRequired")),
+  address: yup.object().shape({
+    street: yup.string().min(3, t("streetLength")).max(100, t("streetLength")).required(t("streetRequired")),
+    city: yup.string().min(2, t("cityLength")).max(50, t("cityLength")).required(t("cityRequired")),
+    state: yup.string().min(2, t("stateLength")).max(50, t("stateLength")).required(t("stateRequired")),
+    zipCode: yup.string().min(3, t("zipCodeLength")).max(10, t("zipCodeLength")).required(t("zipCodeRequired")),
+    country: yup.string().min(2, t("countryLength")).max(50, t("countryLength")).required(t("countryRequired"))
+  }),
+  contactInfo: yup.object().shape({
+    phone: yup.string().matches(/^[0-9+-]*$/, t("invalidPhone")),
+    email: yup.string().email(t("invalidEmail")).nullable(),
+    contactPerson: yup.string().min(2, t("contactPersonLength")).max(50, t("contactPersonLength"))
+  }),
+  capacity: yup.number().positive(t("capacityPositive")).required(t("capacityRequired")),
+})
+
 // Shipping Zone validation Schema (for both create and update)
 export const shippingZoneSchema = (t) => yup.object().shape({
   name: yup.object().shape({

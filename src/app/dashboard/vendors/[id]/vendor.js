@@ -33,7 +33,7 @@ import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
-const VendorModal = dynamic(() => import('./vendorModal'), {
+const VendorModal = dynamic(() => import('../vendorModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });

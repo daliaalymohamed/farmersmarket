@@ -29,11 +29,9 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import AirportShuttleIcon from '@mui/icons-material/AirportShuttle'
-import Facebook from '@mui/icons-material/Facebook';
-import Instagram from '@mui/icons-material/Instagram';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 import { checkPermission } from '@/middlewares/frontend_helpers';
-import { initializeVendors, updateVendorInList, bulkToggleVendorStatus } from '@/store/slices/vendorSlice';
+import { fetchWarehouses, updateWarehouseInList, bulkToggleWarehouseActiveStatus } from '@/store/slices/warehouseSlice';
 import { useSearchParams } from 'next/navigation';
 import ButtonLoader from '@/components/UI/buttonLoader';
 import Loading from "@/components/UI/loading";
@@ -42,7 +40,7 @@ import withAuth from "@/components/withAuth";
 import { useDebouncedCallback } from 'use-debounce'; 
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
-const VendorModal = dynamic(() => import('../vendorModal'), {
+const WarehouseModal = dynamic(() => import('../warehouseModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });
@@ -52,15 +50,15 @@ const ConfirmationDialog = dynamic(() => import('@/components/confirmDialog'), {
 });
 
 
-const VendorsList = ({initialData, initialFilters}) => {
+const WarehousesList = ({initialData, initialFilters}) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t, language } = useTranslation();
     const dispatch = useDispatch();
     // Local state for search (debounced)
     const [searchInput, setSearchInput] = useState(initialFilters.search || '');
-    const [selectedVendors, setSelectedVendors] = useState([]);
-    const [selectedVendor, setSelectedVendor] = useState(null);
+    const [selectedWarehouses, setSelectedWarehouses] = useState([]);
+    const [selectedWarehouse, setSelectedWarehouse] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({
             open: false,
@@ -73,10 +71,10 @@ const VendorsList = ({initialData, initialFilters}) => {
     // ✅ Separate selectors to avoid object creation
     const actions = useSelector(state => state.auth.actions, shallowEqual);
     const actionsLoaded = useSelector(state => state.auth.actionsLoaded);
-    const loading = useSelector(state => state.vendors?.loading || false);
-    const error = useSelector(state => state.vendors?.error || null);
-    const vendorsList = useSelector(state => state.vendors?.vendorsList || [], shallowEqual);
-    const pagination = useSelector(state => state.vendors?.pagination || {}, shallowEqual);
+    const loading = useSelector(state => state.warehouses?.loading || false);
+    const error = useSelector(state => state.warehouses?.error || null);
+    const warehousesList = useSelector(state => state.warehouses?.warehousesList || [], shallowEqual);
+    const pagination = useSelector(state => state.warehouses?.pagination || {}, shallowEqual);
    
     // Check permissions on mount
     // This effect runs once when the component mounts
@@ -85,7 +83,7 @@ const VendorsList = ({initialData, initialFilters}) => {
     useEffect(() => {
         if (!actionsLoaded) return; // ⏳ Wait until actions are loaded
 
-        const requiredPermissions = ["view_dashboard", "view_vendors", "bulk_toggle_vendor_status"];
+        const requiredPermissions = ["view_dashboard", "view_warehouses", "bulk_toggle_warehouse_status"];
         const hasAccess = checkPermission(actions, requiredPermissions);
 
         if (!hasAccess) {
@@ -93,15 +91,14 @@ const VendorsList = ({initialData, initialFilters}) => {
         }
     }, [actions, actionsLoaded, router]);
 
-    // Initialize Redux with server-side data
+    // 🔁 Refetch when search params change
     useEffect(() => {
-        if (initialData?.vendors?.length >= 0) {
-            dispatch(initializeVendors({
-            vendors: initialData.vendors,
-            pagination: initialData.pagination,
-            }));
-        }
-    }, [dispatch, initialData]);
+        const search = searchParams.get('search') || '';
+        setSearchInput(search);
+
+        const filters = { search };
+        dispatch(fetchWarehouses(filters)); // Always sync with backend
+    }, [dispatch, searchParams]);
 
     
     // Get current filter values from URL
@@ -128,7 +125,7 @@ const VendorsList = ({initialData, initialFilters}) => {
             query.append('page', filters.page.toString());
         }
         
-        return `/dashboard/vendors/list?${query.toString()}`;
+        return `/dashboard/warehouses/list?${query.toString()}`;
     }, []);
 
     // Handle search input change
@@ -154,40 +151,40 @@ const VendorsList = ({initialData, initialFilters}) => {
 
 
     // Use server-side filtered data directly (no client-side filtering needed)
-    const displayVendors = Array.isArray(vendorsList) ? vendorsList : [];
+    const displayWarehouses = Array.isArray(warehousesList) ? warehousesList : [];
 
     // Table selection, menu, activate/deactivate logic
-    // Handle vendor selection
-    const handleSelectVendor = (vendorId) => {
-        setSelectedVendors(prev =>
-            prev.includes(vendorId)
-                ? prev.filter(id => id !== vendorId)
-                : [...prev, vendorId]
+    // Handle warehouse selection
+    const handleSelectWarehouse = (warehouseId) => {
+        setSelectedWarehouses(prev =>
+            prev.includes(warehouseId)
+                ? prev.filter(id => id !== warehouseId)
+                : [...prev, warehouseId]
         );
     };
 
-    // Handle select all vendors in the current page
+    // Handle select all warehouses in the current page
     const handleSelectAll = (event) => {
         if (event.target.checked) {
-            const newSelected = displayVendors.map(vendor => vendor._id); 
-            setSelectedVendors(newSelected);
+            const newSelected = displayWarehouses.map(warehouse => warehouse._id); 
+            setSelectedWarehouses(newSelected);
         } else {
-            setSelectedVendors([]);
+            setSelectedWarehouses([]);
         }
     };
 
-    // Get the action for bulk toggle based on selected vendors
+    // Get the action for bulk toggle based on selected warehouses
     // Bulk toggle logic
     const getBulkToggleAction = () => {
-        if (selectedVendors.length === 0) return null;
-        const selected = vendorsList.filter((v) => selectedVendors.includes(v._id));
+        if (selectedWarehouses.length === 0) return null;
+        const selected = warehousesList.filter((v) => selectedWarehouses.includes(v._id));
         const allActive = selected.every((v) => v.active);
         const allInactive = selected.every((v) => !v.active);
         return allActive ? 'deactivate' : allInactive ? 'activate' : 'mixed';
     };
 
     const handleBulkToggle = async () => {
-        if (selectedVendors.length === 0) return;
+        if (selectedWarehouses.length === 0) return;
 
         const action = getBulkToggleAction();
         const newStatus = action === 'activate';
@@ -195,23 +192,23 @@ const VendorsList = ({initialData, initialFilters}) => {
         const performToggle = async () => {
             try {
             const result = await dispatch(
-                bulkToggleVendorStatus({
-                vendorIds: selectedVendors,
+                bulkToggleWarehouseActiveStatus({
+                warehouseIds: selectedWarehouses,
                 active: newStatus,
-                })
+            })
             ).unwrap();
 
             // Update Redux
-            result.vendors.forEach((vendor) => dispatch(updateVendorInList(vendor)));
+            result.warehouses.forEach((warehouse) => dispatch(updateWarehouseInList(warehouse)));
 
             // Reset selection
-            setSelectedVendors([]);
+            setSelectedWarehouses([]);
             
             // Show success
             toast.success(
                 newStatus
-                ? t('vendorsActivatedSuccessfully')
-                : t('vendorsDeactivatedSuccessfully')
+                ? t('warehousesActivatedSuccessfully')
+                : t('warehousesDeactivatedSuccessfully')
             )
             // Optionally show message from server
             // toast.success(result.message);
@@ -225,7 +222,7 @@ const VendorsList = ({initialData, initialFilters}) => {
             setConfirmDialog({
             open: true,
             title: t('mixedStatusWarning'),
-            message: t('someVendorsHaveMixedStatus'),
+            message: t('someWarehousesHaveMixedStatus'),
             onConfirm: performToggle,
             });
         } else {
@@ -235,14 +232,14 @@ const VendorsList = ({initialData, initialFilters}) => {
 
     // handle add click
     const handleAdd = () => {
-        setSelectedVendor(null);
+        setSelectedWarehouse(null);
         setModalOpen(true);
     };
 
     // Handle modal close
     const handleCloseModal = () => {
         setModalOpen(false);
-        setSelectedVendor(null);
+        setSelectedWarehouse(null);
     };
 
     // Handle pagination change
@@ -282,7 +279,7 @@ const VendorsList = ({initialData, initialFilters}) => {
     }, []);
 
     // Helper function to get colors for status
-    // Returns 'success' for active vendors and 'error' for inactive ones
+    // Returns 'success' for active warehouses and 'error' for inactive ones
     // useCallback to prevent unnecessary re-renders
     const getStatusColor = useCallback((isActive) => {
         return isActive === true ? 'success' : 'error';
@@ -301,41 +298,41 @@ const VendorsList = ({initialData, initialFilters}) => {
                 cancelColor="inherit"
                 cancelButtonText={t('cancel')}
             />
-            <VendorModal
+            <WarehouseModal
                 open={modalOpen}
                 handleClose={handleCloseModal}
-                vendor={selectedVendor}
+                warehouse={selectedWarehouse}
                 t={t}
                 loading={loading}
             />
             <Box sx={{ p: 3 }}>
                 <Breadcrumb 
-                    sideNavItem={t("vendors")} 
-                    href="/dashboard/vendors/list" 
-                    urlText={t("vendorsList")}
-                    aria-label="/dashboard/vendors/list" 
+                    sideNavItem={t("warehouses")} 
+                    href="/dashboard/warehouses/list" 
+                    urlText={t("warehousesList")}
+                    aria-label="/dashboard/warehouses/list" 
                 />
             </Box>
             {/* Header */}
             <Box mb={4}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
                     <Box>
-                        <Typography variant="h4" id="vendors-management-heading">
-                            {t('vendorsManagement')}
+                        <Typography variant="h4" id="warehouses-management-heading">
+                            {t('warehousesManagement')}
                         </Typography>
                         <Typography variant="body1" color="#666">
-                            {t('vendorsSubtitle')}
+                            {t('warehousesSubtitle')}
                         </Typography>
                     </Box>
                     <Stack direction="row" spacing={2}>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
-                            aria-label={t('addVendor')}
+                            aria-label={t('addWarehouse')}
                             sx={{ borderRadius: 2, bgcolor: '#1976d2' }}
                             onClick={handleAdd}
                         >
-                            {t('addVendor')}
+                            {t('addWarehouse')}
                         </Button>
                     </Stack>
                 </Box>
@@ -345,36 +342,36 @@ const VendorsList = ({initialData, initialFilters}) => {
                     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
                         <TextField
                             fullWidth
-                            placeholder={t('searchVendor')}
+                            placeholder={t('searchWarehouse')}
                             value={searchInput}
                             onChange={handleSearchChange}
                             InputProps={{
                                 startAdornment: <SearchIcon sx={{ color: '#666', mr: 1 }} />,
-                                'aria-label': t('searchVendor')
+                                'aria-label': t('searchWarehouse')
                             }}
                             label={t('search')}
-                            aria-label={t('searchVendor')}
+                            aria-label={t('searchWarehouse')}
                             sx={{ borderRadius: 2 }}
                         />
                     </Stack>
                 </Card>
             </Box>
 
-            {/* Vendors Table */}
-            <Card sx={{ borderRadius: 2, boxShadow: 1 }} aria-label={t('vendorsTable')}>
+            {/* Warehouses Table */}
+            <Card sx={{ borderRadius: 2, boxShadow: 1 }} aria-label={t('warehousesTable')}>
                 <Box p={3} borderBottom={1} borderColor="divider">
                     <Box display="flex" alignItems="center" justifyContent="space-between">
                         <Box>
                             <Typography variant="h6" fontWeight="bold" id="table-title">
-                                {t('vendors')} ({pagination.total || 0})
+                                {t('warehouses')} ({pagination.total || 0})
                             </Typography>
-                            {selectedVendors.length > 0 && (
+                            {selectedWarehouses.length > 0 && (
                                 <Typography variant="body2" color="#666" mt={0.5}>
-                                    {selectedVendors.length} {t('selectedItems')}
+                                    {selectedWarehouses.length} {t('selectedItems')}
                                 </Typography>
                             )}
                         </Box>
-                        {selectedVendors.length > 0 && (
+                        {selectedWarehouses.length > 0 && (
                             <Stack direction="row" spacing={1}>
                                 <Button 
                                     variant="contained"
@@ -411,23 +408,24 @@ const VendorsList = ({initialData, initialFilters}) => {
                                 <TableCell padding="checkbox">
                                     <Checkbox
                                         checked={
-                                            displayVendors.length > 0 &&
-                                            displayVendors.every(p => selectedVendors.includes(p.id))
+                                            displayWarehouses.length > 0 &&
+                                            displayWarehouses.every(p => selectedWarehouses.includes(p.id))
                                         }
                                         indeterminate={
-                                            selectedVendors.length > 0 &&
-                                            selectedVendors.length < displayVendors.length
+                                            selectedWarehouses.length > 0 &&
+                                            selectedWarehouses.length < displayWarehouses.length
                                         }                                        
                                         onChange={handleSelectAll}
                                         inputProps={{ 'aria-label': t('selectAllProducts') }}
                                     />
                                 </TableCell>
-                                <TableCell scope="col">{t('vendorName')}</TableCell>
-                                <TableCell scope="col">{t('contactPhone')}</TableCell>
-                                <TableCell scope="col">{t('location')}</TableCell>
-                                <TableCell scope="col">{t('aboutVendor')}</TableCell>
+                                <TableCell scope="col">{t('warehouseName')}</TableCell>
+                                <TableCell scope="col">{t('phone')}</TableCell>
+                                <TableCell scope="col">{t('email')}</TableCell>
+                                <TableCell scope="col">{t('contactPerson')}</TableCell>
                                 <TableCell scope="col">{t('status')}</TableCell>
-                                <TableCell scope="col">{t('socialLinks')}</TableCell>
+                                <TableCell scope="col">{t('capacity')}</TableCell>
+                                <TableCell scope="col">{t('warehouseManager')}</TableCell>
                                 <TableCell scope="col">{t('actions')}</TableCell>
                             </TableRow>
                         </TableHead>
@@ -444,19 +442,19 @@ const VendorsList = ({initialData, initialFilters}) => {
                                             <Error message={error} />
                                         </TableCell>
                                     </TableRow>
-                                ) : !displayVendors || displayVendors.length === 0 ? 
+                                ) : !displayWarehouses || displayWarehouses.length === 0 ? 
                                 <TableRow>
                                     <TableCell colSpan={9} align="center">
-                                        <Typography>{t('noVendorsFound')}</Typography>
+                                        <Typography>{t('noWarehousesFound')}</Typography>
                                     </TableCell>
                                 </TableRow>
                                 :
                                 (
-                                    displayVendors.map((vendor) => {
-                                        const isSelected = selectedVendors.includes(vendor?._id);
+                                    displayWarehouses.map((warehouse) => {
+                                        const isSelected = selectedWarehouses.includes(warehouse?._id);
                                         return (
                                             <TableRow
-                                                key={vendor?._id}
+                                                key={warehouse?._id}
                                                 hover
                                                 selected={isSelected}
                                                 tabIndex={0}
@@ -465,8 +463,8 @@ const VendorsList = ({initialData, initialFilters}) => {
                                                 <TableCell padding="checkbox">
                                                     <Checkbox
                                                         checked={isSelected}
-                                                        onChange={() => handleSelectVendor(vendor?._id)}
-                                                        inputProps={{ 'aria-label': `Select ${vendor?.name}` }}
+                                                        onChange={() => handleSelectWarehouse(warehouse?._id)}
+                                                        inputProps={{ 'aria-label': `Select ${warehouse?.name}` }}
                                                     />
                                                 </TableCell>
                                                 <TableCell role="cell">
@@ -480,127 +478,60 @@ const VendorsList = ({initialData, initialFilters}) => {
                                                                 color: '#666'
                                                             }}
                                                         >
-                                                            <AirportShuttleIcon aria-hidden="true" />
+                                                            <WarehouseIcon fontSize="small" aria-hidden="true" />
                                                         </Avatar>
                                                         <Box>
                                                             <Typography variant="body2" fontWeight="bold">
-                                                                {vendor?.name}
+                                                                {warehouse?.name}
                                                             </Typography>
                                                             <Typography variant="caption" color="#666">
-                                                                {t('vendorAddedAtDate')} {new Date(vendor?.createdAt).toLocaleDateString()}
+                                                                {t('warehouseAddedAtDate')} {new Date(warehouse?.createdAt).toLocaleDateString()}
                                                             </Typography>
                                                         </Box>
                                                     </Box>
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Typography variant="body2">
-                                                        {vendor?.contactPhone || t('noContactPhone')}
+                                                        {warehouse?.contactInfo?.phone || t('noContactPhone')}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Typography variant="body2">
-                                                        {vendor?.location || t('noLocation')}
+                                                        {warehouse?.contactInfo?.email || t('noContactEmail')}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Typography variant="body2">
-                                                        {vendor?.about || t('noData')}
+                                                        {warehouse?.contactInfo?.contactPerson || t('noContactPerson')}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell role="cell">
                                                     <Chip
-                                                        label={vendor.active ? t('active') : t('inactive')}
-                                                        color={getStatusColor(vendor.active)}
+                                                        label={warehouse.active ? t('active') : t('inactive')}
+                                                        color={getStatusColor(warehouse.active)}
                                                         variant="outlined"
                                                         size="small"
                                                     />
                                                 </TableCell>
                                                 <TableCell role="cell">
-                                                    {vendor?.socialLinks ? (
-                                                        <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
-                                                        {/* Facebook */}
-                                                        {vendor.socialLinks.facebook ? (
-                                                            <Link
-                                                                href={vendor.socialLinks.facebook}
-                                                                target="_blank"
-                                                                rel="noopener"
-                                                                aria-label={`${t('openFacebookPageFor')} ${vendor.name}`}
-                                                                style={{ textDecoration: 'none' }}
-                                                            >
-                                                            <Chip
-                                                                icon={<Facebook fontSize="small" />}
-                                                                label={trimUrl(vendor.socialLinks.facebook)}
-                                                                color="primary"
-                                                                variant="outlined"
-                                                                size="small"
-                                                                clickable
-                                                                sx={{
-                                                                    '&:hover': {
-                                                                        bgcolor: 'primary.light',
-                                                                        color: 'primary'
-                                                                    }
-                                                                }}
-                                                            />
-                                                            </Link>
-                                                        ) : (
-                                                            <Chip
-                                                                icon={<Facebook fontSize="small" />}
-                                                                label={t('noFaceBookAccount')}
-                                                                variant="outlined"
-                                                                size="small"
-                                                                sx={{ color: 'text.secondary', borderColor: 'divider' }}
-                                                            />
-                                                        )}
-
-                                                        {/* Instagram */}
-                                                        {vendor.socialLinks.instagram ? (
-                                                            <Link
-                                                                href={vendor.socialLinks.instagram}
-                                                                target="_blank"
-                                                                rel="noopener"
-                                                                aria-label={`${t('openInstagramPageFor')} ${vendor.name}`}
-                                                                style={{ textDecoration: 'none' }}
-                                                            >
-                                                            <Chip
-                                                                icon={<Instagram fontSize="small" />}
-                                                                label={trimUrl(vendor.socialLinks.instagram)}
-                                                                color="error"
-                                                                variant="outlined"
-                                                                size="small"
-                                                                clickable
-                                                                sx={{
-                                                                '&:hover': {
-                                                                    bgcolor: 'error.light',
-                                                                    color: 'error'
-                                                                }
-                                                                }}
-                                                            />
-                                                            </Link>
-                                                        ) : (
-                                                            <Chip
-                                                                icon={<Instagram fontSize="small" />}
-                                                                label={t('noInstagramAccount')}
-                                                                variant="outlined"
-                                                                size="small"
-                                                                sx={{ color: 'text.secondary', borderColor: 'divider' }}
-                                                            />
-                                                        )}
-                                                        </Stack>
-                                                    ) : (
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {t('noSocialLinks')}
-                                                        </Typography>
-                                                    )}
-                                                </TableCell>
+                                                    <Typography variant="body2">
+                                                        {warehouse?.capacity || t('noData')}
+                                                    </Typography>
+                                                </TableCell>   
+                                                <TableCell role="cell">
+                                                    <Typography variant="body2">
+                                                        {warehouse?.managerId?.firstName || t('noManagerAssigned')}
+                                                    </Typography>
+                                                </TableCell> 
                                                 <TableCell role="cell">
                                                     <Stack direction="row" spacing={0.5}>
                                                         <Link 
-                                                            href={`/dashboard/vendors/${vendor?._id}`}
+                                                            href={`/dashboard/warehouses/${warehouse?._id}`}
                                                             passHref
                                                         >
                                                             <IconButton
                                                                 size="small"
-                                                                aria-label={`${t('viewDetailsFor')} ${vendor?.name || ''}`}
+                                                                aria-label={`${t('viewDetailsFor')} ${warehouse?.name || ''}`}
                                                                 color="primary"
                                                                 title={t('viewDetails')}
                                                             >
@@ -624,7 +555,7 @@ const VendorsList = ({initialData, initialFilters}) => {
                     rowsPerPage={limit}
                     onRowsPerPageChange={handleRowsPerPageChange}
                     rowsPerPageOptions={[3, 5, 10, 25]}
-                    aria-label={t('vendorsPagination')}
+                    aria-label={t('warehousesPagination')}
                     sx={{ borderTop: 1, borderColor: 'divider', bgcolor: '#f5f5f5' }}
                 />
             </Card>
@@ -632,4 +563,4 @@ const VendorsList = ({initialData, initialFilters}) => {
     );
 };
 
-export default memo(withAuth(VendorsList));
+export default memo(withAuth(WarehousesList));

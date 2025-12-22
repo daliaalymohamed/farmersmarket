@@ -20,7 +20,7 @@ import withAuth from "@/components/withAuth";
 import { useDebouncedCallback } from 'use-debounce'; 
 import dynamic from 'next/dynamic';
 
-const RoleModal = dynamic(() => import('./roleModal'), {
+const RoleModal = dynamic(() => import('../roleModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });

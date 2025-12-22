@@ -45,7 +45,7 @@ import { toast } from "react-toastify";
 import { useDebouncedCallback } from 'use-debounce'; 
 import dynamic from 'next/dynamic';
 import { ContactSupportOutlined } from '@mui/icons-material';
-const ZoneModal = dynamic(() => import('../[id]/shippingZoneModal'), {
+const ZoneModal = dynamic(() => import('../shippingZoneModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });

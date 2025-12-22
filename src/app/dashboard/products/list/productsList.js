@@ -52,7 +52,7 @@ import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import { useDebouncedCallback } from 'use-debounce'; 
 import dynamic from 'next/dynamic';
-const ProductModal = dynamic(() => import('../[id]/productModal'), {
+const ProductModal = dynamic(() => import('../productModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });

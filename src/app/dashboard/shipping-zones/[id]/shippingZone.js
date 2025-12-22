@@ -29,7 +29,7 @@ import Error from "@/components/UI/error";
 import withAuth from "@/components/withAuth";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
-const ZoneModal = dynamic(() => import('./shippingZoneModal'), {
+const ZoneModal = dynamic(() => import('../shippingZoneModal'), {
   loading: () => <Skeleton height={400} />,
   ssr: false // Safe if modal uses window/document
 });
